@@ -143,7 +143,8 @@ public class JavaFileParser {
                                                         c.isFinal(),
                                                         c.isPublic(),
                                                         end - start + 1,
-                                                        sourceFile
+                                                        sourceFile,
+                                                        start
                                                 )
                                         );
                                     });
@@ -167,7 +168,8 @@ public class JavaFileParser {
                                                         false,
                                                         e.isPublic(),
                                                         end - start + 1,
-                                                        sourceFile
+                                                        sourceFile,
+                                                        start
                                                 )
                                         );
                                     });
@@ -191,7 +193,8 @@ public class JavaFileParser {
                                                         r.isFinal(),
                                                         r.isPublic(),
                                                         end - start + 1,
-                                                        sourceFile
+                                                        sourceFile,
+                                                        start
                                                 )
                                         );
                                     });
@@ -248,6 +251,25 @@ public class JavaFileParser {
 
 
         return depMap;
+    }
+    public List<String > getFileClasses(File file){
+        List<String> classes=new ArrayList<>();
+        try{
+            CompilationUnit cu = StaticJavaParser.parse(file);
+            for(ClassOrInterfaceDeclaration clazz:cu.findAll(ClassOrInterfaceDeclaration.class)){
+                classes.add(clazz.getNameAsString());
+            }
+            for(EnumDeclaration clazz:cu.findAll(EnumDeclaration.class)){
+                classes.add(clazz.getNameAsString());
+            }
+            for(RecordDeclaration clazz:cu.findAll(RecordDeclaration.class)){
+                classes.add(clazz.getNameAsString());
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return classes;
     }
 
 

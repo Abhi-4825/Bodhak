@@ -2,20 +2,21 @@ package com.example.bodhakfrontend.ui.overviewButton;
 
 import javafx.geometry.Insets;
 import javafx.scene.Node;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
-public class ClassOverviewView {
+public class OverviewView {
     private final VBox root=new VBox(8);
     private final StackPane contentArea=new StackPane();
     private final ToggleButton depsBtn=new ToggleButton("Dependencies");
     private final ToggleButton methodBtn=new ToggleButton("Methods");
     private final ToggleButton healthBtn=new ToggleButton("Health");
 
-    public ClassOverviewView(
+    public OverviewView(
             Node dependenciesView,
             Node methodsView,
             Node healthView
@@ -54,13 +55,14 @@ public class ClassOverviewView {
         depsBtn.setOnAction(e -> show(dependenciesView));
         methodBtn.setOnAction(e -> show(methodsView));
         healthBtn.setOnAction(e -> show(healthView));
-        root.getChildren().add(contentArea);
-    }
+        ScrollPane pane=new ScrollPane(contentArea);
+        pane.setFitToWidth(true);
+        pane.setFitToHeight(true);
 
+        root.getChildren().add(pane);
+    }
     private void show(Node node) {
         contentArea.getChildren().forEach(n -> {n.setVisible(false);});
         node.setVisible(true);
     }
-
-
 }

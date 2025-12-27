@@ -30,6 +30,7 @@ public class UiFeatures {
         }
 
         CodeArea codeArea = new CodeArea();
+        codeArea.getStyleClass().add("code-area");
         codeArea.setEditable(true);
 
         try {
@@ -56,21 +57,21 @@ public class UiFeatures {
     // ===============================
     // OPEN + HIGHLIGHT
     // ===============================
-    public void openAndHighlight(DependencyNode node) {
+    public void openAndHighlight(String name,int beginLine,File sourceFile) {
 
-        Tab tab = openFile(node.getSourceFile());
-        highlight(tab, node);
+        Tab tab = openFile(sourceFile);
+        highlight(tab,beginLine,name);
     }
 
     // ===============================
     // HIGHLIGHT LOGIC
     // ===============================
-    private void highlight(Tab tab, DependencyNode node) {
+    private void highlight(Tab tab, int beginLine,String name) {
 
         CodeArea codeArea = (CodeArea) tab.getContent();
 
-        int lineIndex = node.getBeginLine() - 1;
-        String className = node.getClassName();
+        int lineIndex = beginLine - 1;
+        String className = name;
         int paragraphCount =
                 ((java.util.List<?>) codeArea.getParagraphs()).size();
         if (lineIndex < 0 || lineIndex >=paragraphCount) {

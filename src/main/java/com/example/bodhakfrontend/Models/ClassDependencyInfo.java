@@ -1,18 +1,17 @@
 package com.example.bodhakfrontend.Models;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class ClassDependencyInfo {
+    private Map<String,List<ConstructorInfo>> constructorInfos;
+    private Map<String , List<MethodsInfo>> methods;
     private Map<String, DependencyNode> classInfo;
     private Map<String, Set<String>> classDependencies;
     private Map<String, Set<String>> reverseClassDependencies;
     private Set<Set<String>> circularDependencyGroups;
     private Set<String> classesInCycles;
 
-    public ClassDependencyInfo(Map<String, DependencyNode> classInfo, Map<String, Set<String>> classDependencies, Map<String, Set<String>> reverseClassDependencies, Set<Set<String>> circularDependencyGroups) {
+    public ClassDependencyInfo(Map<String,List<ConstructorInfo>> constructorInfos,Map<String, DependencyNode> classInfo, Map<String, Set<String>> classDependencies, Map<String, Set<String>> reverseClassDependencies, Set<Set<String>> circularDependencyGroups,Map<String,List<MethodsInfo>> methods) {
         this.classInfo = classInfo;
         this.classDependencies = classDependencies;
         this.reverseClassDependencies = reverseClassDependencies;
@@ -21,8 +20,13 @@ public class ClassDependencyInfo {
         for(Set<String> set : circularDependencyGroups){
             classesInCycles.addAll(set);
         }
+        this.methods = methods;
+        this.constructorInfos = constructorInfos;
     }
 
+    public Map<String, List<ConstructorInfo>> getConstructorInfos() {
+        return constructorInfos;
+    }
 
     public Map<String, Set<String>> getReverseClassDependencies() {
         return reverseClassDependencies;
@@ -46,5 +50,8 @@ public class ClassDependencyInfo {
 
     public Set<String> getClassesInCycles() {
         return classesInCycles;
+    }
+    public Map<String, List<MethodsInfo>> getMethods() {
+        return methods;
     }
 }

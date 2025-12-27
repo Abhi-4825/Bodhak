@@ -22,9 +22,11 @@ public class AnalysisViewBuilder {
     private final UiFeatures uiFeatures;
     private final VBox root = new VBox();
 
+
     public AnalysisViewBuilder(UiFeatures uiFeatures) {
         this.uiFeatures = uiFeatures;
         root.setPadding(new Insets(10));
+        root.getStyleClass().add("card");
     }
 
     private void addSection(String title, Node content) {
@@ -98,6 +100,7 @@ public class AnalysisViewBuilder {
 
     private Node buildEntryPointSection(PackageAnalysisInfo result) {
         VBox box = new VBox();
+        box.getStyleClass().add("card");
         box.setPadding(new Insets(5));
         Label typeLabel = new Label("Project Type:" + result.getEntryPointInfo().getProjectType().toString());
         typeLabel.setStyle("-fx-font-weight: bold");
@@ -210,7 +213,13 @@ public class AnalysisViewBuilder {
             container.getChildren().add(grid);
 
 
+            grid.setOnMouseClicked(event -> {
+                uiFeatures.openAndHighlight(cls.getName(),cls.getBeginLine(),cls.getSourceFile());
+            });
+
+
         }
+
         return container;
 
 
@@ -437,7 +446,7 @@ public class AnalysisViewBuilder {
 
             // 🔗 click navigation
             card.setOnMouseClicked(e -> {
-                        uiFeatures.openAndHighlight(dependencyNode);
+                        uiFeatures.openAndHighlight(dependencyNode.getClassName(),dependencyNode.getBeginLine(),dependencyNode.getSourceFile());
                     }
             );
 
@@ -481,8 +490,9 @@ public class AnalysisViewBuilder {
             row.getChildren().addAll(name, meta);
 
             // 🔗 navigation
-            row.setOnMouseClicked(e ->
-                    uiFeatures.openAndHighlight(uc.getDependencyNode())
+            row.setOnMouseClicked(e ->{
+                     DependencyNode dependencyNode = uc.getDependencyNode();
+                    uiFeatures.openAndHighlight(dependencyNode.getClassName(),dependencyNode.getBeginLine(),dependencyNode.getSourceFile());}
             );
 
             box.getChildren().add(row);

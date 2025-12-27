@@ -14,9 +14,10 @@ public class ClassInfo {
     private boolean isFinal;
    private boolean isPublic;
    private int linesOfCode;
+   private int beginLine;
    private File sourceFile;
 
-    public ClassInfo(String name, String pkg, ClassKind kind, int methodCount, int fieldCount, int constructorCount, boolean isAbstract, boolean isFinal, boolean isPublic, int linesOfCode, File sourceFile) {
+    public ClassInfo(String name, String pkg, ClassKind kind, int methodCount, int fieldCount, int constructorCount, boolean isAbstract, boolean isFinal, boolean isPublic, int linesOfCode, File sourceFile,int beginLine) {
         this.name = name;
         this.pkg = pkg;
         this.kind = kind;
@@ -28,6 +29,7 @@ public class ClassInfo {
         this.isPublic = isPublic;
         this.linesOfCode = linesOfCode;
         this.sourceFile = sourceFile;
+        this.beginLine = beginLine;
     }
 
     public String getName() {
@@ -73,4 +75,5 @@ public class ClassInfo {
     public File getSourceFile() {
         return sourceFile;
     }
+    public int getBeginLine() {return beginLine;}
 }

@@ -8,6 +8,8 @@ module com.example.bodhakfrontend {
     requires javafx.graphics;
 
     requires javafx.base;
+    requires com.github.javaparser.symbolsolver.core;
+    requires org.javassist;
 
 
     opens com.example.bodhakfrontend to javafx.fxml;

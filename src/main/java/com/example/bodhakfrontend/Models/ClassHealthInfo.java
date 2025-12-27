@@ -119,5 +119,9 @@ public class ClassHealthInfo {
     public void setWarning(Set<String> warnings) {
         this.warnings = warnings;
     }
+
+    public String getPackage() {
+        return dependencyNode.getPackageName();
+    }
 }
 

@@ -1,0 +1,213 @@
+.app-root {
+    -fx-background-color: #F5F7FB;
+    -fx-font-family: "Segoe UI", "Inter", sans-serif;
+}
+/* =========================
+   APP ROOT
+   ========================= */
+.app-root {
+    -fx-background-color: #F5F7FB;
+    -fx-font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+/* =========================
+   SIDEBAR
+   ========================= */
+.sidebar {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E5E7EB;
+    -fx-border-width: 0 1 0 0;
+}
+
+/* Tree rows */
+.tree-cell {
+    -fx-padding: 6 10;
+    -fx-font-size: 13px;
+}
+
+.tree-cell:selected {
+    -fx-background-color: #c6d2fa;
+}
+
+/* =========================
+   EDITOR
+   ========================= */
+.editor-area {
+    -fx-background-color: #FFFFFF;
+}
+
+.text-area {
+    -fx-font-family: "JetBrains Mono", "Consolas";
+    -fx-font-size: 13px;
+    -fx-background-color: #FFFFFF;
+}
+
+/* =========================
+   RIGHT PANEL
+   ========================= */
+.right-panel {
+    -fx-background-color: #F9FAFB;
+    -fx-padding: 12;
+}
+
+/* =========================
+   CARD
+   ========================= */
+.card {
+    -fx-background-color: #a31e1e;
+    -fx-background-radius: 14;
+    -fx-padding: 14;
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(0,0,0,0.08),
+            14, 0.25, 0, 4
+    );
+}
+
+.card:hover {
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(0,0,0,0.15),
+            18, 0.3, 0, 6
+    );
+}
+
+.card-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+/* =========================
+   CODE EDITOR AREA
+   ========================= */
+
+/* Whole editor region */
+.editor-area {
+    -fx-background-color: #FFFFFF;
+}
+
+/* Tabs */
+.tab-pane {
+    -fx-background-color: #FFFFFF;
+}
+
+.tab-pane .tab-header-area {
+    -fx-background-color: #F3F4F6;
+}
+
+/* Individual tab */
+.tab {
+    -fx-background-radius: 8 8 0 0;
+    -fx-padding: 6 14;
+}
+
+/* Selected tab */
+.tab:selected {
+    -fx-background-color: #FFFFFF;
+}
+
+/* =========================
+   CODE TEXT AREA
+   ========================= */
+
+/* =========================
+   RICHTEXTFX CODE AREA
+   ========================= */
+/* ===============================
+   ROOT CODE AREA
+   =============================== */
+
+.code-area {
+    -fx-font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    -fx-font-size: 13px;
+    -fx-background-color: #ffffff;
+    -fx-padding: 8;
+}
+
+/* Remove default focus ring */
+.code-area:focused {
+    -fx-background-insets: 0;
+}
+
+/* ===============================
+   TEXT & CARET
+   =============================== */
+
+.code-area .text {
+    -fx-fill: #24292e; /* GitHub-like text color */
+}
+
+.code-area .caret {
+    -fx-stroke: #0969da;
+    -fx-stroke-width: 1.2;
+}
+
+/* ===============================
+   SELECTION
+   =============================== */
+
+.code-area .selection {
+    -fx-fill: #cce3ff;
+}
+
+/* ===============================
+   LINE NUMBERS
+   =============================== */
+
+.lineno {
+    -fx-background-color: #f6f8fa;
+    -fx-text-fill: #6e7781;
+    -fx-padding: 0 10 0 10;
+    -fx-font-size: 12px;
+    -fx-alignment: center-right;
+}
+
+/* Current line number */
+.lineno.current {
+    -fx-text-fill: #24292e;
+    -fx-font-weight: bold;
+}
+
+/* ===============================
+   CURRENT LINE HIGHLIGHT
+   =============================== */
+
+.code-area .paragraph-box.caret {
+    -fx-background-color: #f0f6ff;
+}
+
+/* ===============================
+   SCROLLBARS
+   =============================== */
+
+.scroll-bar:vertical,
+.scroll-bar:horizontal {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: rgba(0,0,0,0.25);
+    -fx-background-radius: 4;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: rgba(0,0,0,0.4);
+}
+
+/* ===============================
+   CONTEXT MENU (right click)
+   =============================== */
+
+.context-menu {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #d0d7de;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+
+.menu-item:focused {
+    -fx-background-color: #0969da;
+}
+
+.menu-item:focused .label {
+    -fx-text-fill: white;
+}

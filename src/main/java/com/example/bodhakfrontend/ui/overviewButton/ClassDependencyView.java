@@ -27,7 +27,7 @@ public class ClassDependencyView {
 
     // showing Dependencies in TreeView
     public TreeView<DependencyNode> build(
-            File userFile
+            String className
 
     ) {
         TreeView<DependencyNode> treeView = new TreeView<>();
@@ -35,33 +35,31 @@ public class ClassDependencyView {
                 new TreeItem<>(new DependencyNode("ROOT", null, null,-1));
         root.setExpanded(true);
 
-        Map<String, DependencyNode> classInfo =
-                classDependencyInfo.getClassInfo();
+        DependencyNode dependencyNode=classDependencyInfo.getClassInfo().get(className);
+        Set<String> dependencies=classDependencyInfo.getClassDependencies().getOrDefault(className,Set.of());
+        if(dependencyNode==null){
+            TreeItem<DependencyNode> error =
+                    new TreeItem<>(new DependencyNode(
+                            "Class not found: " + className,
+                            null, null, -1
+                    ));
+            treeView.setRoot(error);
+            return treeView;
 
-        Map<String, Set<String>> depMap =
-                classDependencyInfo.getClassDependencies();
 
-        classInfo.values().stream()
-                .filter(node ->
-                        node.getSourceFile() != null &&
-                                node.getSourceFile().getAbsolutePath()
-                                        .equals(userFile.getAbsolutePath())
-                )
-                .forEach(node -> {
-
+        }
                     TreeItem<DependencyNode> classItem =
-                            new TreeItem<>(node);
+                            new TreeItem<>(dependencyNode);
                     classItem.setExpanded(true);
 
                     // ---------- Depends On ----------
                     TreeItem<DependencyNode> dependsOn =
                             new TreeItem<>(new DependencyNode("Depends On", null, null,-1));
 
-                    Set<String> deps =
-                            depMap.getOrDefault(node.getClassName(), Set.of());
+ Set<String> visited=new HashSet<>();
 
-                    for (String dep : deps) {
-                        DependencyNode depNode = classInfo.get(dep);
+                    for (String dep : dependencies) {
+                        DependencyNode depNode = classDependencyInfo.getClassInfo().get(dep);
                         if (depNode != null) {
                             TreeItem<DependencyNode> child =
                                     new TreeItem<>(depNode);
@@ -71,7 +69,7 @@ public class ClassDependencyView {
                                     child,
                                     depNode,
                                     classDependencyInfo,
-                                    new HashSet<>()
+                                    visited
                             );
                         }
                     }
@@ -82,13 +80,13 @@ public class ClassDependencyView {
 
                     showAffectedDependencies(
                             usedBy,
-                            node,
+                            dependencyNode,
                             classDependencyInfo
                     );
 
                     classItem.getChildren().addAll(dependsOn,usedBy);
                     root.getChildren().add(classItem);
-                });
+
 
         treeView.setRoot(root);
         treeView.setShowRoot(false);
@@ -177,7 +175,7 @@ public class ClassDependencyView {
                 TreeItem<DependencyNode> treeItem=dependencyTreeView.getSelectionModel().getSelectedItem();
                 if(treeItem==null){return;}
                 DependencyNode selectedNode=(DependencyNode)treeItem.getValue();
-                uiFeatures.openAndHighlight(selectedNode);
+                uiFeatures.openAndHighlight(selectedNode.getClassName(),selectedNode.getBeginLine(),selectedNode.getSourceFile());
             }
         });
     }

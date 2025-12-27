@@ -102,7 +102,7 @@ public class classHealthAnalyserViewBuilder {
             DependencyNode dependencyNode = info.getDependencyNode();
             if (dependencyNode == null) return;
 
-            uiFeatures.openAndHighlight(dependencyNode);
+            uiFeatures.openAndHighlight(dependencyNode.getClassName(),dependencyNode.getBeginLine(),dependencyNode.getSourceFile());
         });
     }
 

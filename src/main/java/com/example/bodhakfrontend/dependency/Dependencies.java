@@ -1,6 +1,10 @@
 package com.example.bodhakfrontend.dependency;
 
 import com.example.bodhakfrontend.Models.ClassDependencyInfo;
+import com.example.bodhakfrontend.Models.ConstructorInfo;
+import com.example.bodhakfrontend.Models.MethodsInfo;
+import com.example.bodhakfrontend.Overview.ConstructorInfoBuilder;
+import com.example.bodhakfrontend.Overview.MethodInfoBuilder;
 import com.example.bodhakfrontend.Parser.javaParser.JavaFileParser;
 import com.example.bodhakfrontend.Models.DependencyNode;
 import com.example.bodhakfrontend.util.MultiModuleSourceRootDetector;
@@ -16,6 +20,8 @@ public class Dependencies {
       private MultiModuleSourceRootDetector detector;
       private JavaFileParser javaFileParser;
       private CircularDependency circularDependency=new CircularDependency();
+      private MethodInfoBuilder methodInfoBuilder=new MethodInfoBuilder();
+      private ConstructorInfoBuilder constructorInfoBuilder=new ConstructorInfoBuilder();
   public Dependencies(MultiModuleSourceRootDetector detector,JavaFileParser javaFileParser) {
       this.detector=detector;
       this.javaFileParser=javaFileParser;
@@ -59,8 +65,10 @@ public class Dependencies {
                         .add(from);
             }
         }
+        Map<String,List<MethodsInfo>> methods=methodInfoBuilder.build(projectRoot.toPath());
+        Map<String,List<ConstructorInfo>> constructor=constructorInfoBuilder.build(projectRoot.toPath());
 
-      return new ClassDependencyInfo(classInfo,depMap,revDepMap,circularDependencyGroup);
+      return new ClassDependencyInfo(constructor,classInfo,depMap,revDepMap,circularDependencyGroup,methods);
 
 
     }

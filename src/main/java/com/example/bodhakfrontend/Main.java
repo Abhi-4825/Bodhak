@@ -1,6 +1,4 @@
 package com.example.bodhakfrontend;
-
-
 import com.example.bodhakfrontend.Models.*;
 import com.example.bodhakfrontend.Parser.AstLabelProvider;
 import com.example.bodhakfrontend.Parser.javaParser.JavaFileParser;
@@ -8,8 +6,8 @@ import com.example.bodhakfrontend.Parser.Parsermanager;
 import com.example.bodhakfrontend.dependency.Dependencies;
 import com.example.bodhakfrontend.projectAnalysis.*;
 import com.example.bodhakfrontend.projectAnalysis.ui.AnalysisViewBuilder;
-import com.example.bodhakfrontend.ui.overviewButton.ClassDependencyView;
-import com.example.bodhakfrontend.ui.overviewButton.ClassOverviewView;
+import com.example.bodhakfrontend.ui.OverviewContentFactory;
+import com.example.bodhakfrontend.ui.overviewButton.*;
 import com.example.bodhakfrontend.ui.rightPanel.RightPanelTabManager;
 import com.example.bodhakfrontend.uiHelper.UiFeatures;
 import com.example.bodhakfrontend.util.BuildClassIndex;
@@ -18,6 +16,7 @@ import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import javafx.application.Application;
+import javafx.beans.binding.BooleanBinding;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -31,13 +30,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.DirectoryChooser;
-import javafx.util.Duration;
-
-
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,15 +39,11 @@ import java.util.*;
 
 public class Main extends Application {
 
-
-     LanguageDetector detector = new LanguageDetector();
-     JavaFileParser javaFileParser = new JavaFileParser();
-     Parsermanager  parsermanager = new Parsermanager();
-   private ProjectAnalysisResultBuilder projectAnalysisResultBuilder=new ProjectAnalysisResultBuilder();
-
-
-    MultiModuleSourceRootDetector rootDetector = new MultiModuleSourceRootDetector();
-     private TextArea outputPanel;
+    LanguageDetector detector = new LanguageDetector();
+    JavaFileParser javaFileParser = new JavaFileParser();
+    Parsermanager  parsermanager = new Parsermanager();
+    private ProjectAnalysisResultBuilder projectAnalysisResultBuilder=new ProjectAnalysisResultBuilder();
+    MultiModuleSourceRootDetector rootDetector = new MultiModuleSourceRootDetector();private TextArea outputPanel;
     private TreeView<File> FileTreeView;
     private File projectFolder;
     private List<Path> srcRoot;
@@ -67,10 +57,10 @@ public class Main extends Application {
     BuildClassIndex buildClassIndex=new BuildClassIndex(classIndex);
     private BorderPane rightPanel;
     private TreeItem<File> selected;
-   private ClassDependencyInfo classDependencyInfo;
+    private ClassDependencyInfo classDependencyInfo;
+    private ProjectAnalysisResult projectAnalysisResult;
+    private AnalysisViewBuilder analysisViewBuilder;
     private Dependencies dependencies=new Dependencies(rootDetector,javaFileParser);
-
-
     @Override
     public void start(Stage stage) throws Exception {
 
@@ -78,7 +68,8 @@ public class Main extends Application {
                 .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_17);
 
         BorderPane root=new BorderPane();
-        Scene scene=new Scene(root);
+        Scene scene=new Scene(root,1200,800);
+//        scene.getStylesheets().add(getClass().getResource("/styles/bodhak.css").toExternalForm());
         stage.setScene(scene);
         stage.setTitle("Bodhak");
         stage.show();
@@ -95,8 +86,8 @@ public class Main extends Application {
         Button AnalyzeBtn=new Button("Analyze");
         //button for Ast
         Button Ast=new Button("Show AST");
-        Button dependenciesBtn=new Button("Dependencies");
-        hBox.getChildren().addAll(AnalyzeBtn,Ast,dependenciesBtn);
+        Button overviewBtn=new Button("overview");
+        hBox.getChildren().addAll(AnalyzeBtn,Ast,overviewBtn);
         hBox.setPadding(new Insets(10));
         hBox.setAlignment(Pos.CENTER_RIGHT);
         root.setBottom(hBox);
@@ -123,6 +114,21 @@ public class Main extends Application {
         splitPane.getItems().addAll(FileTreeView,codeTabPane,rightTabPane);
         splitPane.setDividerPositions(0.18,0.65);
         root.setCenter(splitPane);
+        root.getStyleClass().add("app-root");
+        FileTreeView.getStyleClass().add("sidebar");
+        codeTabPane.getStyleClass().add("editor-area");
+        rightPanel.getStyleClass().add("right-panel");
+       //for showing and disabling overview,ast btn
+        BooleanBinding hasTab =
+                codeTabPane.getSelectionModel()
+                        .selectedItemProperty()
+                        .isNotNull();
+
+        overviewBtn.disableProperty().bind(hasTab.not());
+        Ast.disableProperty().bind(hasTab.not());
+
+        overviewBtn.visibleProperty().bind(hasTab);
+        Ast.visibleProperty().bind(hasTab);
 
 
 
@@ -162,12 +168,10 @@ public class Main extends Application {
                 buildClassIndex.buildClassIndex(projectFolder);
                 classDependencyInfo =dependencies.getProjectDependecyInfo(projectFolder,classIndex);
                 Set<Set<String>> c= classDependencyInfo.getCircularDependencyGroups();
-                if(c.size()==0){
-                    System.out.println("No circular dependency groups found");
-                }
-                for(Set<String> group:c){
-                    System.out.println(group.toString());
-                }
+                projectAnalysisResult =projectAnalysisResultBuilder.build(projectFolder.toPath(), classDependencyInfo);
+                Map<String,List<MethodsInfo>> methods=classDependencyInfo.getMethods();
+
+
             }
         });
    // for dependencies tree view working
@@ -177,7 +181,7 @@ public class Main extends Application {
                 TreeItem<DependencyNode> treeItem=dependencyTreeView.getSelectionModel().getSelectedItem();
                 if(treeItem==null){return;}
                 DependencyNode selectedNode=(DependencyNode)treeItem.getValue();
-                uiFeatures.openAndHighlight(selectedNode);
+                uiFeatures.openAndHighlight(selectedNode.getClassName(),selectedNode.getBeginLine(),selectedNode.getSourceFile());
             }
         });
 
@@ -203,27 +207,35 @@ public class Main extends Application {
         AnalyzeBtn.setOnAction(e -> {
 
             if (projectFolder == null || classDependencyInfo == null ) return;
-
-
-            ProjectAnalysisResult result=projectAnalysisResultBuilder.build(projectFolder.toPath(), classDependencyInfo);
-            AnalysisViewBuilder builder=new AnalysisViewBuilder(uiFeatures);
-            Node analyzeView=builder.build(result);
+            analysisViewBuilder =new AnalysisViewBuilder(uiFeatures);
+            Node analyzeView= analysisViewBuilder.build(projectAnalysisResult);
             rightPanelTabManager.openAnalyzeTab(analyzeView);
         });
-
-
-
         // Ast button functioning
         Ast.setOnAction(e -> showASTWindow());
-        // Depencies button
-        dependenciesBtn.setOnAction(e ->{
+        // overview button
+        overviewBtn.setOnAction(e ->{
+            MethodsViewBuilder methodsViewBuilder=new MethodsViewBuilder(uiFeatures,classDependencyInfo);
             ClassDependencyView classDependencyView=new ClassDependencyView(uiFeatures,classDependencyInfo);
+            HealthAnalyserViewBuilder healthAnalyserViewBuilder=new HealthAnalyserViewBuilder();
+
             Tab selectedTab = codeTabPane.getSelectionModel().getSelectedItem();
-            Object userData = selectedTab.getUserData();
-            File selectedFile = (File)userData;
-            if(selectedFile!=null){
-                rightPanelTabManager.openOverviewTab(selectedFile,new ClassOverviewView(classDependencyView.build(selectedFile),new Pane(),new Pane()).getRoot());
-            }});
+            if(selectedTab==null){return;}
+            File file=(File)selectedTab.getUserData();
+            List<String> classes=javaFileParser.getFileClasses(file);
+            OverviewContentFactory factory=classname -> {
+                ClassHealthInfo healthInfo=projectAnalysisResult.getClassHealthInfoMap().get(classname);
+                return new OverviewView(
+                        classDependencyView.build(classname), methodsViewBuilder.build(classname),healthAnalyserViewBuilder.build(healthInfo)
+                ).getRoot();
+            };
+
+            ClassOverviewContainer container=new ClassOverviewContainer(file,classes,factory);
+
+            rightPanelTabManager.openOverviewTab(file,container.getRoot());
+           });
+
+
 
 
     }
@@ -398,38 +410,10 @@ private void showASTWindow() {
 
         return item;
     }
-// for depencies feature
-//private void showDependencies() {
-//       Tab selectedTab = codeTabPane.getSelectionModel().getSelectedItem();
-//
-//    if (selectedTab == null) {
-//        outputPanel.setText("No file selected.");
-//        return;
-//    }
-//    Object userData = selectedTab.getUserData();
-//    if (!(userData instanceof File)) {
-//        outputPanel.setText("Current tab is not linked to a file.");
-//        return;
-//    }
-//    File file = (File) userData;
-//    if (!file.isFile()) {
-//        outputPanel.setText("Please select a file.");
-//        return;
-//    }
-//
-//    try {
-//     dependencies.showDependencies(file, classDependencyInfo,dependencyTreeView);
-//    } catch (Exception e) {
-//        outputPanel.setText(e.getMessage());
-//    }
-//}
-//
-//    public static void main(String[] args) {
-//        launch();
-//    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
 }
 
-class A{
-    Main m;
-}
 
