@@ -1,0 +1,72 @@
+[
+  {
+    "requiredIssues": ["GOD_CLASS", "HIGH_COUPLING"],
+    "severity": "HIGH",
+    "message": "Large, tightly coupled class with very high maintenance risk."
+  },
+  {
+    "requiredIssues": ["GOD_CLASS", "CIRCULAR_DEPENDENCY"],
+    "severity": "HIGH",
+    "message": "God class involved in circular dependencies. Refactoring is critical."
+  },
+  {
+    "requiredIssues": ["HIGH_COUPLING", "CIRCULAR_DEPENDENCY"],
+    "severity": "HIGH",
+    "message": "Highly coupled class participating in circular dependencies. Design is fragile."
+  },
+  {
+    "requiredIssues": ["GOD_CLASS", "HIGH_COUPLING", "CIRCULAR_DEPENDENCY"],
+    "severity": "HIGH",
+    "message": "Severely problematic class: large size, tight coupling, and circular dependencies."
+  },
+  {
+    "requiredIssues": ["LAYER_VIOLATION", "HIGH_COUPLING"],
+    "severity": "HIGH",
+    "message": "Layer violation combined with high coupling. Architectural boundaries are broken."
+  }
+
+,
+  {
+    "requiredIssues": ["GOD_CLASS"],
+    "forbiddenIssues": ["HIGH_COUPLING", "CIRCULAR_DEPENDENCY"],
+    "severity": "MEDIUM",
+    "message": "God class detected. Class has too many responsibilities."
+  },
+  {
+    "requiredIssues": ["HIGH_COUPLING"],
+    "forbiddenIssues": ["CIRCULAR_DEPENDENCY"],
+    "severity": "MEDIUM",
+    "message": "Highly coupled class. Changes may have widespread impact."
+  },
+  {
+    "requiredIssues": ["LOW_COHESION"],
+    "severity": "MEDIUM",
+    "message": "Low cohesion detected. Class methods may represent multiple responsibilities."
+  },
+  {
+    "requiredIssues": ["LONG_METHOD"],
+    "severity": "MEDIUM",
+    "message": "Long method detected. Method is difficult to understand and maintain."
+  },
+  {
+    "requiredIssues": ["LAYER_VIOLATION"],
+    "severity": "MEDIUM",
+    "message": "Layer violation detected. Lower layers depend on higher layers."
+  }
+,
+  {
+    "requiredIssues": ["ANEMIC_DOMAIN"],
+    "severity": "LOW",
+    "message": "Anemic domain model detected. Business logic may be misplaced."
+  },
+  {
+    "requiredIssues": ["LOW_COHESION", "LONG_METHOD"],
+    "severity": "LOW",
+    "message": "Low cohesion combined with long methods. Refactoring may improve clarity."
+  }
+]
+
+
+
+
+

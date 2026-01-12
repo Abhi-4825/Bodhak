@@ -1,22 +1,30 @@
 package com.example.bodhakfrontend.projectAnalysis;
 
 import com.example.bodhakfrontend.LanguageDetector;
-import com.example.bodhakfrontend.Models.EntryPointInfo;
-import com.example.bodhakfrontend.Models.PackageAnalysisInfo;
-import com.github.javaparser.StaticJavaParser;
+import com.example.bodhakfrontend.Models.PackageAnalysis.EntryPointInfo;
+import com.example.bodhakfrontend.Models.PackageAnalysis.FileEntryContribution;
+import com.example.bodhakfrontend.Models.PackageAnalysis.PackageAnalysisInfo;
+import com.example.bodhakfrontend.Parser.javaParser.JavaFileParser;
+import com.example.bodhakfrontend.util.ParseCache;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import com.github.javaparser.ast.body.MethodDeclaration;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class FileAnalyzer {
 
-    private final LanguageDetector languageDetector = new LanguageDetector();
+    private final LanguageDetector languageDetector;
+    private  final JavaFileParser parser;
+    private final ParseCache cache;
+
+    public FileAnalyzer(LanguageDetector languageDetector, JavaFileParser parser, ParseCache cache) {
+        this.languageDetector = languageDetector;
+        this.parser = parser;
+        this.cache = cache;
+    }
 
     /* =========================================================
        PHASE A — PROJECT STRUCTURE OVERVIEW
@@ -24,9 +32,9 @@ public class FileAnalyzer {
 
     public PackageAnalysisInfo buildPackageAnalysisInfo(Path rootFolder) {
 
-        AtomicInteger folderCount = new AtomicInteger();
-        AtomicInteger fileCount   = new AtomicInteger();
-        Map<String, Integer> languageCount = new HashMap<>();
+        Set<Path> folders=new HashSet<>();
+        Set<Path> files=new HashSet<>();
+        Map<String, Set<Path>> languageCount = new HashMap<>();
 
         try {
             Files.walk(rootFolder)
@@ -35,17 +43,16 @@ public class FileAnalyzer {
                         File file = path.toFile();
 
                         if (file.isDirectory()) {
-                            folderCount.incrementAndGet();
+                            folders.add(path.toAbsolutePath().normalize());
                         } else if (file.isFile()) {
-                            fileCount.incrementAndGet();
+                            files.add(path.toAbsolutePath().normalize());
 
                             String language =
                                     languageDetector.detectFileType(file);
 
-                            languageCount.put(
-                                    language,
-                                    languageCount.getOrDefault(language, 0) + 1
-                            );
+                            languageCount
+                                    .computeIfAbsent(language, k -> new HashSet<>())
+                                    .add(path.toAbsolutePath().normalize());
                         }
                     });
 
@@ -54,8 +61,8 @@ public class FileAnalyzer {
         }
 
         return new PackageAnalysisInfo(
-                folderCount.get(),
-                fileCount.get(),
+                folders,
+                files,
                 languageCount,
                 analyzeEntryPoints(rootFolder),
                 analyzeLargestFiles(rootFolder)
@@ -65,123 +72,92 @@ public class FileAnalyzer {
     /* =========================================================
        ENTRY POINT ANALYSIS
        ========================================================= */
+    private Map<Path,FileEntryContribution> analyzeEntryPoints(Path projectRoot) {
 
-    private EntryPointInfo analyzeEntryPoints(Path projectRoot) {
+       Map<Path,FileEntryContribution> map = new HashMap<>();
 
-        class EntryState {
-            EntryPointInfo.ProjectType projectType =
-                    EntryPointInfo.ProjectType.PLAIN_JAVA;
-            String primary = null;
-            List<String> secondary = new ArrayList<>();
-        }
-
-        EntryState state = new EntryState();
 
         try {
             Files.walk(projectRoot)
                     .filter(this::isJavaFile)
                     .forEach(path -> {
                         try {
-                            CompilationUnit cu =
-                                    StaticJavaParser.parse(path);
-
-                            String fileName =
-                                    path.getFileName().toString();
-
-                            // ---- SPRING BOOT ----
-                            boolean isSpringBoot =
-                                    cu.findAll(ClassOrInterfaceDeclaration.class)
-                                            .stream()
-                                            .anyMatch(c ->
-                                                    c.getAnnotations()
-                                                            .stream()
-                                                            .anyMatch(a ->
-                                                                    a.getNameAsString()
-                                                                            .equals("SpringBootApplication")
-                                                            )
-                                            );
-
-                            if (isSpringBoot) {
-                                if (state.projectType
-                                        != EntryPointInfo.ProjectType.SPRING_BOOT) {
-                                    state.projectType =
-                                            EntryPointInfo.ProjectType.SPRING_BOOT;
-                                    state.primary = fileName;
-                                } else {
-                                    state.secondary.add(fileName);
-                                }
-                                return;
+                            FileEntryContribution contribution=analyzeEntryContribution(path);
+                            if (contribution != null) {
+                                map.put(
+                                        path.toAbsolutePath().normalize(),
+                                        contribution
+                                );
                             }
-
-                            // ---- JAVAFX ----
-                            boolean isJavaFx =
-                                    cu.findAll(ClassOrInterfaceDeclaration.class)
-                                            .stream()
-                                            .anyMatch(c ->
-                                                    c.getExtendedTypes()
-                                                            .stream()
-                                                            .anyMatch(t ->
-                                                                    t.getNameAsString()
-                                                                            .equals("Application")
-                                                            )
-                                            );
-
-                            if (isJavaFx
-                                    && state.projectType
-                                    == EntryPointInfo.ProjectType.PLAIN_JAVA) {
-
-                                state.projectType =
-                                        EntryPointInfo.ProjectType.JAVAFX;
-
-                                if (state.primary == null) {
-                                    state.primary = fileName;
-                                } else {
-                                    state.secondary.add(fileName);
-                                }
-                                return;
-                            }
-
-                            // ---- MAIN METHOD ----
-                            boolean hasMain =
-                                    cu.findAll(MethodDeclaration.class)
-                                            .stream()
-                                            .anyMatch(m ->
-                                                    m.isPublic()
-                                                            && m.isStatic()
-                                                            && m.getNameAsString()
-                                                            .equals("main")
-                                            );
-
-                            if (hasMain
-                                    && state.projectType
-                                    == EntryPointInfo.ProjectType.PLAIN_JAVA) {
-
-                                if (state.primary == null) {
-                                    state.primary = fileName;
-                                } else {
-                                    state.secondary.add(fileName);
-                                }
-                            }
-
                         } catch (Exception ignored) {}
                     });
 
         } catch (Exception ignored) {}
 
-        return new EntryPointInfo(
-                state.projectType,
-                state.primary,
-                state.secondary
-        );
+      return map;
     }
+
+
+
+public FileEntryContribution analyzeEntryContribution(Path javaFile){
+       CompilationUnit cu = cache.get(javaFile);
+       if (cu == null) {return null;}
+       FileEntryContribution c = new FileEntryContribution();
+       for (ClassOrInterfaceDeclaration cls : cu.findAll(ClassOrInterfaceDeclaration.class)) {
+           String name=cls.getNameAsString();
+           c.addClassName(name);
+           /* ---------- SPRING BOOT ---------- */
+           boolean isSpringBoot =
+                   cls.getAnnotations()
+                           .stream()
+                           .anyMatch(a ->
+                                   a.getNameAsString()
+                                           .equals("SpringBootApplication")
+                           );
+           if(isSpringBoot){
+               c.setHasSpringBoot(true);
+           }  /* ---------- JAVAFX ---------- */
+           boolean isJavaFx =
+                   cls.getExtendedTypes()
+                           .stream()
+                           .anyMatch(t ->
+                                   t.getNameAsString()
+                                           .equals("Application")
+                           );
+           if(isJavaFx){
+               c.setHasJavaFx(true);
+           }
+           /* ---------- MAIN METHOD ---------- */
+           boolean hasMain =
+                   cls.getMethodsByName("main")
+                           .stream()
+                           .anyMatch(m ->
+                                   m.isPublic() && m.isStatic()
+                           );
+
+           if(hasMain){
+               c.setHasMain(true);
+           }
+           if(!c.hasMain() && !c.hasSpringBoot()&& c.hasJavaFx()){
+               return null;
+           }
+       }
+
+
+    return c;
+
+}
+
+
+
 
     /* =========================================================
        LARGEST FILES (LOC)
        ========================================================= */
 
-    private Map<String,Integer> analyzeLargestFiles(Path root) {
+    private List<PackageAnalysisInfo.LargestFileInfo> analyzeLargestFiles(Path root) {
 
-        Map<String, Integer> locMap = new HashMap<>();
+      List<PackageAnalysisInfo.LargestFileInfo> largestFiles = new ArrayList<>();
 
         try {
             Files.walk(root)
@@ -192,26 +168,23 @@ public class FileAnalyzer {
                                     .map(String::trim)
                                     .filter(this::isCodeLine)
                                     .count();
-
-                            locMap.put(
-                                    p.getFileName().toString(),
-                                    loc
-                            );
+                            CompilationUnit cu = cache.get(p);
+                           largestFiles.add(new PackageAnalysisInfo.LargestFileInfo(p.getFileName().toString(),p.toFile(),loc));
                         } catch (Exception ignored) {}
                     });
 
         } catch (Exception ignored) {}
 
-        return locMap.entrySet()
-                .stream()
-                .sorted((a, b) ->
-                        Integer.compare(b.getValue(), a.getValue()))
-                .limit(5)
-                .collect(
-                        LinkedHashMap::new,
-                        (m, e) -> m.put(e.getKey(), e.getValue()),
-                        Map::putAll
-                );
+        List<PackageAnalysisInfo.LargestFileInfo> top5 =
+                largestFiles.stream()
+                        .sorted(
+                                Comparator.comparingInt(
+                                        PackageAnalysisInfo.LargestFileInfo::getLoc
+                                ).reversed()
+                        )
+                        .limit(5)
+                        .toList();
+        return top5;
     }
 
     /* =========================================================
@@ -237,4 +210,15 @@ public class FileAnalyzer {
                 && !line.startsWith("*")
                 && !line.startsWith("*/");
     }
+
+    public class EntryState {
+        EntryPointInfo.ProjectType projectType =
+                EntryPointInfo.ProjectType.PLAIN_JAVA;
+        String primary = null;
+        Set<String> secondary = new LinkedHashSet<>();
+    }
+
+
+
+
 }

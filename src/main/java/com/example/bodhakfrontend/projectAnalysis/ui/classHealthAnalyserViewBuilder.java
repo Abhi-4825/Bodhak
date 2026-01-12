@@ -2,16 +2,26 @@ package com.example.bodhakfrontend.projectAnalysis.ui;
 
 import com.example.bodhakfrontend.Models.ClassHealthInfo;
 import com.example.bodhakfrontend.Models.DependencyNode;
+import com.example.bodhakfrontend.Models.Severity;
+import com.example.bodhakfrontend.Models.WarningRule;
+import com.example.bodhakfrontend.projectAnalysis.warning.WarningBuilder;
 import com.example.bodhakfrontend.uiHelper.UiFeatures;
 import javafx.scene.Node;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.layout.Region;
 
 import java.util.Map;
 
 public class classHealthAnalyserViewBuilder {
+
+
+
+
+
     protected Node buildClassHealthTree(Map<String, ClassHealthInfo> classHealthInfos,UiFeatures uiFeatures) {
+        WarningBuilder warningBuilder = new WarningBuilder();
         TreeItem<ClassHealthInfo> root = new TreeItem<>(new ClassHealthInfo("🏥 Class Health"));
         root.setExpanded(true);
         TreeItem<ClassHealthInfo> risky = new TreeItem<>(new ClassHealthInfo("🔴 Risky Classes"));
@@ -29,18 +39,16 @@ public class classHealthAnalyserViewBuilder {
             );
             classNode.getChildren().add(new TreeItem<>(new ClassHealthInfo("Depends On: "+ci.getOutgoingDependencies() + " Classes")));
             classNode.getChildren().add(new TreeItem<>(new ClassHealthInfo("Used By: "+ci.getIncomingDependencies() + " Classes")));
-            for(String warningName : ci.getWarnings()){
-                classNode.getChildren().add(new TreeItem<>(new ClassHealthInfo("⚠ "+warningName)));
-            }
-
-            // classification of classes
-            if(ci.isInCircularDependency()|| ci.isGodClass() ){
+            var warnings=warningBuilder.buildWarnings(ci);
+            boolean hasHigh=warnings.stream().anyMatch(w->
+                    w.getSeverity()== Severity.HIGH);
+            boolean hasMedium=warnings.stream().anyMatch(w->
+                    w.getSeverity()== Severity.MEDIUM);
+            if (hasHigh) {
                 risky.getChildren().add(classNode);
-            }
-            else if(!ci.getWarnings().isEmpty()){
+            } else if (hasMedium) {
                 warning.getChildren().add(classNode);
-            }
-            else {
+            } else {
                 healthy.getChildren().add(classNode);
             }
 
@@ -61,22 +69,20 @@ public class classHealthAnalyserViewBuilder {
                 setText(item.toString());
 
                 if (item.toString().startsWith("🔴")) {
-                    setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+                    getStyleClass().add("health-tree-risky");
                 } else if (item.toString().startsWith("🟡")) {
-                    setStyle("-fx-text-fill: orange;");
+                    getStyleClass().add("health-tree-warning");
                 } else if (item.toString().startsWith("🟢")) {
-                    setStyle("-fx-text-fill: green;");
+                    getStyleClass().add("health-tree-healthy");
                 } else if (item.toString().startsWith("⚠")) {
-                    setStyle("-fx-text-fill: #c47f00;");
-                } else {
-                    setStyle("");
+                    getStyleClass().add("health-tree-warning-icon");
                 }
             }
         });
         setTreeViewClicker(uiFeatures,treeView);
 
         treeView.setShowRoot(false);
-        treeView.setPrefHeight(400);
+        treeView.setPrefHeight(Region.USE_COMPUTED_SIZE);
         return treeView;
 
     }
@@ -102,7 +108,7 @@ public class classHealthAnalyserViewBuilder {
             DependencyNode dependencyNode = info.getDependencyNode();
             if (dependencyNode == null) return;
 
-            uiFeatures.openAndHighlight(dependencyNode.getClassName(),dependencyNode.getBeginLine(),dependencyNode.getSourceFile());
+            uiFeatures.openAndHighlight(dependencyNode.getClassName(),dependencyNode.getBeginLine(),dependencyNode.getBeginColumn(),dependencyNode.getSourceFile());
         });
     }
 

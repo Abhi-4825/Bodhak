@@ -1,6 +1,7 @@
 package com.example.bodhakfrontend.projectAnalysis;
 
 import com.example.bodhakfrontend.Models.*;
+import com.example.bodhakfrontend.Models.PackageAnalysis.EntryPointInfo;
 
 import java.util.*;
 
@@ -12,47 +13,109 @@ public class UnusedClassAnalyzer {
             EntryPointInfo entryPointInfo
     ) {
 
-        List<UnusedClassInfo> unused = new ArrayList<>();
-
-        Set<String> entryPoints = new HashSet<>();
+        List<UnusedClassInfo> result = new ArrayList<>();
+// Collect all roots
+        Set<String> roots = new HashSet<>();
         if (entryPointInfo.getPrimaryEntry() != null) {
-            entryPoints.add(entryPointInfo.getPrimaryEntry());
+            roots.add(entryPointInfo.getPrimaryEntry());
         }
-        entryPoints.addAll(entryPointInfo.getSecondaryEntries());
+        roots.addAll(entryPointInfo.getSecondaryEntries());
+        roots.addAll(entryPointInfo.getFrameworkRoots());
 
-        Map<String, Set<String>> incoming =
-                dependencyInfo.getReverseClassDependencies();
+        //Reachability analysis
+        Set<String> reachable=findReachableClasses(roots,dependencyInfo.getClassDependencies());
+        Set<String > cycleClasses=dependencyInfo.getClassesInCycles();
 
-        Set<String> cycleClasses =
-                dependencyInfo.getClassesInCycles();
 
+        // class Classification
         for (ClassInfo cls : classes) {
-            DependencyNode dependencyNode=dependencyInfo.getClassInfo().get(cls.getName());
             String name = cls.getName();
+            DependencyNode dependencyNode=dependencyInfo.getClassInfo().get(name);
 
-            boolean hasIncoming =
-                    incoming.containsKey(name)
-                            && !incoming.get(name).isEmpty();
 
-            boolean isEntryPoint =
-                    entryPoints.contains(name);
+            boolean isReachable=reachable.contains(name);
 
-            boolean inCycle =
-                    cycleClasses.contains(name);
+            boolean isFrameworkClass=isFrameworkAnnotated(cls);
+            boolean hasLogic=hasBehavior(cls);
 
-            if (!hasIncoming && !isEntryPoint && !inCycle) {
-                unused.add(
-                        new UnusedClassInfo(
-                                name,
-                                dependencyNode,
-                                cls.getPkg(),
-                                cls.getLinesOfCode()
+
+            UsageStatus status;
+            String reason;
+            // for cycles
+            boolean inCycle=cycleClasses.contains(name);
+            boolean reachableCycle=inCycle && reachable.contains(name);
+            if(isReachable || reachableCycle){
+                status = UsageStatus.USED;
+                reason = "Possibly reachable from entry Point or cycle";
+            }
+            else if(isFrameworkClass && hasLogic){
+                status = UsageStatus.FRAMEWORK_REACHABLE;
+                reason = "Framework-managed class";
+            }
+            else if(isFrameworkClass){
+                status = UsageStatus.SUSPICIOUS;
+                reason = "Framework annotation but no behavior detected";
+
+            }
+            else{
+                status = UsageStatus.UNUSED;
+                reason = "Possibly No reference or frameWork Usage";
+
+            }
+            if(status != UsageStatus.USED && status != UsageStatus.FRAMEWORK_REACHABLE){
+                result.add(
+                        new  UnusedClassInfo(
+                                name,dependencyNode, cls.getPkg(), cls.getLinesOfCode(), status,reason
                         )
                 );
             }
+
+
+
+
+        }
+        return result;
         }
 
-        return unused;
+
+        private Set<String> findReachableClasses(Set<String> roots, Map<String, Set<String>> classDependencies) {
+        Set<String> visited = new HashSet<>();
+            Deque<String> stack = new ArrayDeque<>(roots);
+        while(!stack.isEmpty()){
+            String current=stack.pop();
+            if(!visited.add(current)){continue;}
+            for(String dep:classDependencies.getOrDefault(current,Set.of())){
+            stack.push(dep);}
+
+        }
+        return visited;
+
+        }
+    // ---------- Framework detection ----------
+    private boolean isFrameworkAnnotated(ClassInfo cls) {
+        return cls.hasAnyAnnotation(
+                "RestController",
+                "Controller",
+                "Service",
+                "Component",
+                "Repository",
+                "Configuration",
+                "Entity",
+                "Scheduled",
+                "EventListener"
+        );
     }
-}
+    private boolean hasBehavior(ClassInfo cls) {
+        return cls.getMethodCount()>0 ||
+                cls.getFieldCount()>0  ||
+                cls.hasAnyAnnotation(
+                        "Bean",
+                        "Autowired",
+                        "Value",
+                        "PostConstruct"
+                );
+    }
+
+    }
+
 

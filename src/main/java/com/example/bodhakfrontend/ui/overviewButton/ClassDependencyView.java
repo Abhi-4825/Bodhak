@@ -8,11 +8,8 @@ import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.util.Duration;
-
-import java.io.File;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
 public class ClassDependencyView {
@@ -32,7 +29,7 @@ public class ClassDependencyView {
     ) {
         TreeView<DependencyNode> treeView = new TreeView<>();
         TreeItem<DependencyNode> root =
-                new TreeItem<>(new DependencyNode("ROOT", null, null,-1));
+                new TreeItem<>(new DependencyNode("ROOT", null, null,-1,-1));
         root.setExpanded(true);
 
         DependencyNode dependencyNode=classDependencyInfo.getClassInfo().get(className);
@@ -41,7 +38,7 @@ public class ClassDependencyView {
             TreeItem<DependencyNode> error =
                     new TreeItem<>(new DependencyNode(
                             "Class not found: " + className,
-                            null, null, -1
+                            null, null, -1,-1
                     ));
             treeView.setRoot(error);
             return treeView;
@@ -54,7 +51,7 @@ public class ClassDependencyView {
 
                     // ---------- Depends On ----------
                     TreeItem<DependencyNode> dependsOn =
-                            new TreeItem<>(new DependencyNode("Depends On", null, null,-1));
+                            new TreeItem<>(new DependencyNode("Depends On", null, null,-1,-1));
 
  Set<String> visited=new HashSet<>();
 
@@ -76,7 +73,7 @@ public class ClassDependencyView {
 
                     // ---------- Used By ----------
                     TreeItem<DependencyNode> usedBy =
-                            new TreeItem<>(new DependencyNode("Affects / Used By", null, null,-1));
+                            new TreeItem<>(new DependencyNode("Affects / Used By", null, null,-1,-1));
 
                     showAffectedDependencies(
                             usedBy,
@@ -150,7 +147,7 @@ public class ClassDependencyView {
                                     "No classes are affected",
                                     null,
                                     null,
-                                    -1
+                                    -1,-1
                             )
                     )
             );
@@ -175,7 +172,7 @@ public class ClassDependencyView {
                 TreeItem<DependencyNode> treeItem=dependencyTreeView.getSelectionModel().getSelectedItem();
                 if(treeItem==null){return;}
                 DependencyNode selectedNode=(DependencyNode)treeItem.getValue();
-                uiFeatures.openAndHighlight(selectedNode.getClassName(),selectedNode.getBeginLine(),selectedNode.getSourceFile());
+                uiFeatures.openAndHighlight(selectedNode.getClassName(),selectedNode.getBeginLine(),selectedNode.getBeginColumn(),selectedNode.getSourceFile());
             }
         });
     }

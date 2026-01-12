@@ -1,5 +1,10 @@
-package com.example.bodhakfrontend.Models;
+package com.example.bodhakfrontend.Models.PackageAnalysis;
 
+import com.example.bodhakfrontend.Models.*;
+import com.example.bodhakfrontend.Models.Incremental.FileChangeEvent;
+import com.example.bodhakfrontend.projectAnalysis.FileAnalyzer;
+
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -8,8 +13,8 @@ public class ProjectAnalysisResult {
    private final PackageAnalysisInfo packageAnalysisInfo;
    private final Map<String, PackageInfo> packageInfoMap;
    private final List<ClassInfo> classInfos;
-    private final Map<String,ClassHealthInfo> classHealthInfoMap;
-    private final ProjectHealthSummary  projectHealthSummary;
+    private final Map<String, ClassHealthInfo> classHealthInfoMap;
+    private final ProjectHealthSummary projectHealthSummary;
     private final List<HotspotInfo> hotspotInfos;
     private final List<UnusedClassInfo> unusedClassInfos;
 
@@ -49,4 +54,17 @@ public class ProjectAnalysisResult {
     public ProjectHealthSummary getProjectHealthSummary() {
            return projectHealthSummary;
     }
+
+
+
+
+
+
+
+
+
+
 }
+
+
+

@@ -10,6 +10,7 @@ public class ConstructorInfo {
     private List<ModifierKind> modifiers;
     private int startLine;
     private int endLine;
+    private int startColumn;
     private File sourceFile;
 
     public ConstructorInfo(
@@ -18,6 +19,7 @@ public class ConstructorInfo {
             List<ModifierKind> modifiers,
             int startLine,
             int endLine,
+            int startColumn,
             File sourceFile
     ) {
         this.constructorName = constructorName;
@@ -26,8 +28,11 @@ public class ConstructorInfo {
         this.startLine = startLine;
         this.endLine = endLine;
         this.sourceFile = sourceFile;
+        this.startColumn = startColumn;
     }
-
+   public int getStartColumn() {
+        return startColumn;
+    }
     public String getConstructorName() {
         return constructorName;
     }

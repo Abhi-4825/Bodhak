@@ -1,5 +1,7 @@
 package com.example.bodhakfrontend.Models;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class ClassHealthInfo {
@@ -15,14 +17,13 @@ public class ClassHealthInfo {
     // Dependency signals
     private int outgoingDependencies;
     private int incomingDependencies;
+    //issue types
+
+    Set<IssueType> issueTypes=new HashSet<>();
+
 
     // Risk flags
-    private boolean godClass;
-    private boolean highlyCoupled;
-    private boolean inCircularDependency;
 
-    // Human-readable warnings
-    private Set<String> warnings;
 
     public ClassHealthInfo(
             String className
@@ -31,13 +32,14 @@ public class ClassHealthInfo {
 
     }
 
-    public void setHighlyCoupled(boolean highlyCoupled) {
-        this.highlyCoupled = highlyCoupled;
+    public void setIssueTypes(Set<IssueType> issueTypes) {
+        this.issueTypes = issueTypes;
+    }
+    public Set<IssueType> getIssueTypes() {
+        return issueTypes;
     }
 
-    public void setGodClass(boolean godClass) {
-        this.godClass = godClass;
-    }
+
 
     public void setIncomingDependencies(int incomingDependencies) {
         this.incomingDependencies = incomingDependencies;
@@ -63,9 +65,6 @@ public class ClassHealthInfo {
         this.dependencyNode = dependencyNode;
     }
 
-    public void setInCircularDependency(boolean inCircularDependency) {
-        this.inCircularDependency = inCircularDependency;
-    }
 
     public String getClassName() {
         return className;
@@ -91,21 +90,10 @@ public class ClassHealthInfo {
         return incomingDependencies;
     }
 
-    public boolean isGodClass() {
-        return godClass;
-    }
+     public void addIssue(IssueType issueType){
+        issueTypes.add(issueType);
+     }
 
-    public boolean isHighlyCoupled() {
-        return highlyCoupled;
-    }
-
-    public boolean isInCircularDependency() {
-        return inCircularDependency;
-    }
-
-    public Set<String> getWarnings() {
-        return warnings;
-    }
 
     public DependencyNode getDependencyNode() {
         return dependencyNode;
@@ -116,9 +104,6 @@ public class ClassHealthInfo {
         return className;
     }
 
-    public void setWarning(Set<String> warnings) {
-        this.warnings = warnings;
-    }
 
     public String getPackage() {
         return dependencyNode.getPackageName();

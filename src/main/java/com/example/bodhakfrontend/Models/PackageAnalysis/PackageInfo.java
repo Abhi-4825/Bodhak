@@ -1,5 +1,7 @@
-package com.example.bodhakfrontend.Models;
+package com.example.bodhakfrontend.Models.PackageAnalysis;
 
+
+import com.example.bodhakfrontend.Models.PackageWarning;
 
 import java.util.HashSet;
 import java.util.Set;

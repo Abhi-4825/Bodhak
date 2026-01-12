@@ -51,11 +51,11 @@ public class MethodDependenciesViewBuilder {
         Label icon = new Label(external ? "⚠" : "✔");
         Label name = new Label(methodName + "()");
 
-        name.setStyle(
-                external
-                        ? "-fx-text-fill: #a15c00;"
-                        : "-fx-text-fill: #2e7d32;"
-        );
+        if (external) {
+            name.getStyleClass().add("method-dependency-library");
+        } else {
+            name.getStyleClass().add("method-dependency-internal");
+        }
 
         row.getChildren().addAll(icon, name);
         return row;

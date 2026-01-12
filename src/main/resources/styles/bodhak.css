@@ -1,45 +1,135 @@
-.app-root {
-    -fx-background-color: #F5F7FB;
-    -fx-font-family: "Segoe UI", "Inter", sans-serif;
+/* =========================
+   GLOBAL STYLES
+   ========================= */
+.root {
+    -fx-font-family: "Segoe UI", "Inter", "System", sans-serif;
+    -fx-font-size: 13px;
 }
+
 /* =========================
    APP ROOT
    ========================= */
 .app-root {
     -fx-background-color: #F5F7FB;
-    -fx-font-family: "Inter", "Segoe UI", sans-serif;
+    -fx-font-family: "Segoe UI", "Inter", sans-serif;
 }
 
 /* =========================
-   SIDEBAR
+   SIDEBAR / PROJECT EXPLORER
    ========================= */
 .sidebar {
     -fx-background-color: #FFFFFF;
     -fx-border-color: #E5E7EB;
     -fx-border-width: 0 1 0 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 8, 0, 2, 0);
 }
 
 /* Tree rows */
 .tree-cell {
     -fx-padding: 6 10;
     -fx-font-size: 13px;
+    -fx-background-color: transparent;
+}
+
+.tree-cell:hover {
+    -fx-background-color: #F3F4F6;
 }
 
 .tree-cell:selected {
-    -fx-background-color: #c6d2fa;
+    -fx-background-color: #E3F2FD;
+    -fx-text-fill: #1976D2;
+}
+
+.tree-cell:selected:hover {
+    -fx-background-color: #BBDEFB;
 }
 
 /* =========================
-   EDITOR
+   EDITOR AREA
    ========================= */
 .editor-area {
     -fx-background-color: #FFFFFF;
 }
 
-.text-area {
-    -fx-font-family: "JetBrains Mono", "Consolas";
-    -fx-font-size: 13px;
+.tab-pane {
     -fx-background-color: #FFFFFF;
+    -fx-tab-min-width: 120px;
+}
+
+.tab-pane .tab-header-area {
+    -fx-background-color: #F3F4F6;
+    -fx-padding: 0 0 0 8;
+}
+
+.tab-pane .tab-header-background {
+    -fx-background-color: #F3F4F6;
+}
+
+.tab {
+    -fx-background-radius: 8 8 0 0;
+    -fx-padding: 8 16;
+    -fx-background-color: #E5E7EB;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+}
+
+.tab:hover {
+    -fx-background-color: #D1D5DB;
+}
+
+.tab:selected {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E5E7EB #E5E7EB transparent #E5E7EB;
+    -fx-border-width: 1 1 0 1;
+}
+
+.tab:selected .tab-label {
+    -fx-text-fill: #1976D2;
+    -fx-font-weight: bold;
+}
+
+/* =========================
+   CODE AREA
+   ========================= */
+.code-area {
+    -fx-font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    -fx-font-size: 13px;
+    -fx-background-color: #ffffff;
+    -fx-padding: 8;
+}
+
+.code-area:focused {
+    -fx-background-insets: 0;
+}
+
+.code-area .text {
+    -fx-fill: #24292e;
+}
+
+.code-area .caret {
+    -fx-stroke: #0969da;
+    -fx-stroke-width: 1.2;
+}
+
+.code-area .selection {
+    -fx-fill: #cce3ff;
+}
+
+.code-area .paragraph-box.caret {
+    -fx-background-color: #f0f6ff;
+}
+
+.lineno {
+    -fx-background-color: #f6f8fa;
+    -fx-text-fill: #6e7781;
+    -fx-padding: 0 10 0 10;
+    -fx-font-size: 12px;
+    -fx-alignment: center-right;
+}
+
+.lineno.current {
+    -fx-text-fill: #24292e;
+    -fx-font-weight: bold;
 }
 
 /* =========================
@@ -51,134 +141,301 @@
 }
 
 /* =========================
-   CARD
+   CARDS
    ========================= */
 .card {
-    -fx-background-color: #a31e1e;
-    -fx-background-radius: 14;
-    -fx-padding: 14;
-    -fx-effect: dropshadow(
-            gaussian,
-            rgba(0,0,0,0.08),
-            14, 0.25, 0, 4
-    );
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 12;
+    -fx-padding: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 12, 0.3, 0, 3);
+    -fx-border-color: #E5E7EB;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
 }
 
 .card:hover {
-    -fx-effect: dropshadow(
-            gaussian,
-            rgba(0,0,0,0.15),
-            18, 0.3, 0, 6
-    );
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 16, 0.4, 0, 4);
+    -fx-border-color: #D1D5DB;
 }
 
 .card-title {
     -fx-font-size: 14px;
     -fx-font-weight: bold;
-}
-/* =========================
-   CODE EDITOR AREA
-   ========================= */
-
-/* Whole editor region */
-.editor-area {
-    -fx-background-color: #FFFFFF;
-}
-
-/* Tabs */
-.tab-pane {
-    -fx-background-color: #FFFFFF;
-}
-
-.tab-pane .tab-header-area {
-    -fx-background-color: #F3F4F6;
-}
-
-/* Individual tab */
-.tab {
-    -fx-background-radius: 8 8 0 0;
-    -fx-padding: 6 14;
-}
-
-/* Selected tab */
-.tab:selected {
-    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #1F2937;
 }
 
 /* =========================
-   CODE TEXT AREA
+   BUTTONS
    ========================= */
-
-/* =========================
-   RICHTEXTFX CODE AREA
-   ========================= */
-/* ===============================
-   ROOT CODE AREA
-   =============================== */
-
-.code-area {
-    -fx-font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+.button {
+    -fx-background-color: #1976D2;
+    -fx-text-fill: white;
+    -fx-background-radius: 6;
+    -fx-padding: 8 16;
+    -fx-cursor: hand;
     -fx-font-size: 13px;
-    -fx-background-color: #ffffff;
-    -fx-padding: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0, 0, 2);
 }
 
-/* Remove default focus ring */
-.code-area:focused {
-    -fx-background-insets: 0;
+.button:hover {
+    -fx-background-color: #1565C0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 6, 0, 0, 3);
 }
 
-/* ===============================
-   TEXT & CARET
-   =============================== */
-
-.code-area .text {
-    -fx-fill: #24292e; /* GitHub-like text color */
+.button:pressed {
+    -fx-background-color: #0D47A1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 2, 0, 0, 1);
 }
 
-.code-area .caret {
-    -fx-stroke: #0969da;
-    -fx-stroke-width: 1.2;
+.button:disabled {
+    -fx-background-color: #BDBDBD;
+    -fx-text-fill: #757575;
+    -fx-effect: none;
+    -fx-cursor: default;
 }
 
-/* ===============================
-   SELECTION
-   =============================== */
-
-.code-area .selection {
-    -fx-fill: #cce3ff;
+/* =========================
+   LABELS
+   ========================= */
+.label-bold {
+    -fx-font-weight: bold;
+    -fx-text-fill: #1F2937;
 }
 
-/* ===============================
-   LINE NUMBERS
-   =============================== */
+.label-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1F2937;
+}
 
-.lineno {
-    -fx-background-color: #f6f8fa;
-    -fx-text-fill: #6e7781;
-    -fx-padding: 0 10 0 10;
+.label-subtitle {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #374151;
+}
+
+.label-success {
+    -fx-text-fill: #2e7d32;
+}
+
+.label-warning {
+    -fx-text-fill: #c47f00;
+}
+
+.label-error {
+    -fx-text-fill: #c62828;
+}
+
+.label-info {
+    -fx-text-fill: #1565c0;
+}
+
+.label-muted {
+    -fx-text-fill: #6B7280;
+    -fx-font-size: 11px;
+}
+
+/* =========================
+   BADGES / CHIPS
+   ========================= */
+.badge {
+    -fx-padding: 4 10;
+    -fx-border-color: #D1D5DB;
+    -fx-border-radius: 4;
+    -fx-background-color: #F9FAFB;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
     -fx-font-size: 12px;
-    -fx-alignment: center-right;
 }
 
-/* Current line number */
-.lineno.current {
-    -fx-text-fill: #24292e;
+.badge:hover {
+    -fx-background-color: #E5E7EB;
+    -fx-border-color: #9CA3AF;
+}
+
+/* =========================
+   SUMMARY BAR
+   ========================= */
+.summary-bar {
+    -fx-padding: 6;
+    -fx-border-color: #D1D5DB;
+    -fx-border-radius: 6;
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 6;
+}
+
+/* =========================
+   PACKAGE / FILE ROW
+   ========================= */
+.package-row {
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 4;
+    -fx-padding: 6;
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 4;
+}
+
+.file-row {
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 4;
+    -fx-padding: 6;
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+}
+
+.file-row:hover {
+    -fx-background-color: #F3F4F6;
+    -fx-border-color: #D1D5DB;
+}
+
+/* =========================
+   CLASS METRICS GRID
+   ========================= */
+.class-metrics-grid {
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 4;
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 4;
+    -fx-padding: 6;
+    -fx-cursor: hand;
+}
+
+.class-metrics-grid:hover {
+    -fx-background-color: #F9FAFB;
+    -fx-border-color: #D1D5DB;
+}
+
+/* =========================
+   HOTSPOT CARD
+   ========================= */
+.hotspot-card {
+    -fx-border-color: #EF5350;
+    -fx-border-radius: 6;
+    -fx-padding: 8;
+    -fx-background-color: #FFF5F5;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.hotspot-card:hover {
+    -fx-background-color: #FFEBEE;
+    -fx-border-color: #E57373;
+    -fx-effect: dropshadow(gaussian, rgba(239,83,80,0.2), 8, 0, 0, 2);
+}
+
+/* =========================
+   UNUSED CLASS CARD
+   ========================= */
+.unused-class-card {
+    -fx-border-color: #FF7043;
+    -fx-border-radius: 6;
+    -fx-padding: 8;
+    -fx-background-color: #FFF3E0;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.unused-class-card:hover {
+    -fx-background-color: #FFE0B2;
+    -fx-border-color: #FF8A65;
+    -fx-effect: dropshadow(gaussian, rgba(255,112,67,0.2), 8, 0, 0, 2);
+}
+
+/* =========================
+   WARNING CARD
+   ========================= */
+.warning-card {
+    -fx-background-color: #FFF9E6;
+    -fx-border-color: #FFC107;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 10;
+}
+
+.warning-card-high {
+    -fx-background-color: #FFEBEE;
+    -fx-border-color: #F44336;
+}
+
+.warning-card-medium {
+    -fx-background-color: #FFF3E0;
+    -fx-border-color: #FF9800;
+}
+
+.warning-card-low {
+    -fx-background-color: #E8F5E9;
+    -fx-border-color: #4CAF50;
+}
+
+/* =========================
+   HEALTH TREE VIEW
+   ========================= */
+.health-tree-risky {
+    -fx-text-fill: #D32F2F;
     -fx-font-weight: bold;
 }
 
-/* ===============================
-   CURRENT LINE HIGHLIGHT
-   =============================== */
-
-.code-area .paragraph-box.caret {
-    -fx-background-color: #f0f6ff;
+.health-tree-warning {
+    -fx-text-fill: #FF9800;
 }
 
-/* ===============================
-   SCROLLBARS
-   =============================== */
+.health-tree-healthy {
+    -fx-text-fill: #2E7D32;
+}
 
+.health-tree-warning-icon {
+    -fx-text-fill: #C47F00;
+}
+
+/* =========================
+   METHOD DEPENDENCY ROW
+   ========================= */
+.method-dependency-internal {
+    -fx-text-fill: #2e7d32;
+}
+
+.method-dependency-external {
+    -fx-text-fill: #1565c0;
+}
+
+.method-dependency-library {
+    -fx-text-fill: #a15c00;
+}
+
+/* =========================
+   TOGGLE BAR
+   ========================= */
+.toggle-bar {
+    -fx-background-color: #F3F4F6;
+    -fx-border-color: #D1D5DB;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 6;
+}
+
+.toggle-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 4;
+    -fx-padding: 6 12;
+    -fx-cursor: hand;
+}
+
+.toggle-button:hover {
+    -fx-background-color: #E5E7EB;
+}
+
+.toggle-button:selected {
+    -fx-background-color: #1976D2;
+    -fx-text-fill: white;
+}
+
+.toggle-button:selected:hover {
+    -fx-background-color: #1565C0;
+}
+
+/* =========================
+   SCROLLBARS
+   ========================= */
 .scroll-bar:vertical,
 .scroll-bar:horizontal {
     -fx-background-color: transparent;
@@ -193,21 +450,156 @@
     -fx-background-color: rgba(0,0,0,0.4);
 }
 
-/* ===============================
-   CONTEXT MENU (right click)
-   =============================== */
+.scroll-bar .track {
+    -fx-background-color: transparent;
+}
 
+/* =========================
+   CONTEXT MENU
+   ========================= */
 .context-menu {
     -fx-background-color: #ffffff;
     -fx-border-color: #d0d7de;
     -fx-border-radius: 4;
     -fx-background-radius: 4;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 8, 0, 0, 2);
 }
 
 .menu-item:focused {
-    -fx-background-color: #0969da;
+    -fx-background-color: #1976D2;
 }
 
 .menu-item:focused .label {
     -fx-text-fill: white;
 }
+
+/* =========================
+   TITLED PANE
+   ========================= */
+.titled-pane {
+    -fx-text-fill: #1F2937;
+}
+
+.titled-pane > .title {
+    -fx-background-color: #F3F4F6;
+    -fx-background-radius: 4 4 0 0;
+    -fx-padding: 8 12;
+    -fx-font-weight: bold;
+}
+
+.titled-pane:expanded > .title {
+    -fx-background-color: #E3F2FD;
+}
+
+.titled-pane > .content {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 0 0 4 4;
+    -fx-border-color: #E5E7EB;
+    -fx-border-width: 0 1 1 1;
+    -fx-border-radius: 0 0 4 4;
+    -fx-padding: 8;
+}
+
+/* =========================
+   PROGRESS BAR
+   ========================= */
+.progress-bar {
+    -fx-background-color: #E5E7EB;
+    -fx-background-radius: 4;
+    -fx-pref-height: 8;
+}
+
+.progress-bar .bar {
+    -fx-background-color: #1976D2;
+    -fx-background-radius: 4;
+}
+
+/* =========================
+   TOOLBAR
+   ========================= */
+.tool-bar {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E5E7EB;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 8;
+}
+
+/* =========================
+   TEXT AREA
+   ========================= */
+.text-area {
+    -fx-font-family: "JetBrains Mono", "Consolas", monospace;
+    -fx-font-size: 13px;
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 4;
+}
+
+.text-area:focused {
+    -fx-border-color: #1976D2;
+}
+
+/* =========================
+   ANIMATIONS (SUBTLE)
+   ========================= */
+@keyframes fadeIn {
+    from {
+        -fx-opacity: 0;
+    }
+    to {
+        -fx-opacity: 1;
+    }
+}
+
+.fade-in {
+    -fx-opacity: 0;
+}
+
+/* Apply fade-in animation via JavaFX Timeline in code */
+
+/* =========================
+   AI FIX CARD
+   ========================= */
+.ai-fix-card {
+    -fx-background-color: #1E1E1E;
+    -fx-border-color: #64B5F6;
+    -fx-border-radius: 6;
+    -fx-padding: 10;
+    -fx-background-radius: 6;
+}
+
+.ai-fix-title {
+    -fx-font-weight: bold;
+    -fx-text-fill: #FFFFFF;
+}
+
+.ai-fix-example {
+    -fx-text-fill: #90CAF9;
+}
+
+/* =========================
+   THINKING PANE
+   ========================= */
+.thinking-pane {
+    -fx-padding: 10;
+}
+
+.thinking-label {
+    -fx-text-fill: #90CAF9;
+    -fx-font-style: italic;
+}
+.icon-badge {
+    -fx-background-radius: 50%;
+    -fx-alignment: center;
+}
+
+.icon-blue {
+    -fx-background-color: #1a73e8;
+}
+
+.section-title {
+    -fx-font-size: 13.5px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2b2f36;
+}
+

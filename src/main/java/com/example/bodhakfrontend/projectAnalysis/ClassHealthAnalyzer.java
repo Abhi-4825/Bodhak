@@ -1,10 +1,7 @@
 package com.example.bodhakfrontend.projectAnalysis;
 
 
-import com.example.bodhakfrontend.Models.ClassInfo;
-import com.example.bodhakfrontend.Models.ClassHealthInfo;
-import com.example.bodhakfrontend.Models.ClassDependencyInfo;
-import com.example.bodhakfrontend.Models.DependencyNode;
+import com.example.bodhakfrontend.Models.*;
 
 import java.util.*;
 
@@ -34,38 +31,48 @@ public class ClassHealthAnalyzer {
             String name = info.getName();
 
             int out = outgoing.getOrDefault(name, Set.of()).size();
-            int in  = incoming.getOrDefault(name, Set.of()).size();
+            int in = incoming.getOrDefault(name, Set.of()).size();
 
-            boolean godClass = isGodClass(info);
-            boolean highlyCoupled = out + in > 10; // threshold (tunable)
-            boolean inCycle = circularClasses.contains(name);
-
-            Set<String> warnings = new LinkedHashSet<>();
-
-            if (godClass) warnings.add("God Class (too large)");
-            if (highlyCoupled) warnings.add("Highly Coupled");
-            if (inCycle) warnings.add("Part of Circular Dependency");
-
-            ClassHealthInfo health = new ClassHealthInfo(
-                    name);
+            ClassHealthInfo health = new ClassHealthInfo(name);
             health.setDependencyNode(dependencyNodeMap.get(name));
             health.setLoc(info.getLinesOfCode());
             health.setMethodCount(info.getMethodCount());
             health.setFieldCount(info.getFieldCount());
             health.setOutgoingDependencies(out);
             health.setIncomingDependencies(in);
-            health.setGodClass(godClass);
-            health.setHighlyCoupled(highlyCoupled);
-            health.setInCircularDependency(inCycle);
-            health.setWarning(warnings);
-            evaluateSmells(info,out,in,inCycle,warnings);
+            // we will detect issue
+            detectIssues(info,out,in,circularClasses, health);
             result.put(name, health);
-            
+
         }
 
 
         return result;
     }
+
+
+    private void detectIssues(ClassInfo classInfo, int depOut, int depIn,Set<String> circularClasses, ClassHealthInfo classHealthInfo) {
+
+        //god class
+        if (isGodClass(classInfo)) {
+            classHealthInfo.addIssue(IssueType.GOD_CLASS);
+        }
+        //high coupling
+        if (depIn + depOut > 10) {
+            classHealthInfo.addIssue(IssueType.HIGH_COUPLING);
+        }
+        //circular dependency
+        if(circularClasses.contains(classInfo.getName())) {
+            classHealthInfo.addIssue(IssueType.CIRCULAR_DEPENDENCY);
+        }
+        //Anemic Domain
+        if(classInfo.getFieldCount() >=3 && classInfo.getMethodCount() <=2) {
+            classHealthInfo.addIssue(IssueType.ANEMIC_DOMAIN);
+        }
+        //
+
+    }
+
 
     // ---------- Rules (simple for now) ----------
     private boolean isGodClass(ClassInfo info) {
@@ -73,6 +80,7 @@ public class ClassHealthAnalyzer {
                 || info.getMethodCount() > 20
                 || info.getFieldCount() > 15;
     }
+
     private void evaluateSmells(
             ClassInfo info,
             int fanIn,

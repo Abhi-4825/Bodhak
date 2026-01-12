@@ -1,11 +1,10 @@
 package com.example.bodhakfrontend.Parser.javaParser;
 
-import com.example.bodhakfrontend.Models.ClassInfo;
-import com.example.bodhakfrontend.Models.ClassKind;
-import com.example.bodhakfrontend.dependenciesResultmodel.DependencyResult;
-import com.github.javaparser.StaticJavaParser;
+import com.example.bodhakfrontend.Models.*;
+import com.example.bodhakfrontend.util.ParseCache;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.*;
+import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -16,33 +15,11 @@ import java.util.*;
 import java.util.stream.Stream;
 
 public class JavaFileParser {
-    //Ast
-    public CompilationUnit parseJava(File file) throws Exception {
-        return StaticJavaParser.parse(file);
-    }
-    // Extract import or dependencies
-    public DependencyResult extractDependencies(File file,Set<String> sourceClasses) throws Exception {
-      CompilationUnit cu = StaticJavaParser.parse(file);
-      // imports
-      List<String> externalDeps=cu.getImports()
-              .stream()
-              .map(i -> i.getNameAsString())
-              .toList();
-      // class dependencies
-        Set<String> internalDeps=new HashSet<>();
-        Set<String> javaLibrariesDependencies=new HashSet<>();
-        cu.findAll(ClassOrInterfaceType.class).forEach(classOrI -> {
-            {
-                String name=classOrI.getNameAsString();
-                if(sourceClasses.contains(name)){
-                    internalDeps.add(name);
-                }
-                else
-                    javaLibrariesDependencies.add(name);
-            }
-        });
 
-        return  new DependencyResult(externalDeps,new ArrayList<>(internalDeps),new ArrayList<>(javaLibrariesDependencies));
+ private final ParseCache cache;
+
+    public JavaFileParser(ParseCache cache) {
+        this.cache = cache;
     }
 
     public Set<String> getClassesfromSource(List<Path> sourceRoot) {
@@ -58,7 +35,7 @@ public class JavaFileParser {
             paths.filter(p-> p.toString().endsWith(".java"))
                     .forEach(javaFile->{
                         try {
-                            CompilationUnit cu=StaticJavaParser.parse(javaFile);
+                            CompilationUnit cu=cache.get(javaFile);
                             cu.findAll(ClassOrInterfaceDeclaration.class)
                                     .forEach(classOrI -> {
                                         projectclasses.add(classOrI.getNameAsString());
@@ -79,7 +56,7 @@ public class JavaFileParser {
 
     // get dependencies from every class in the java file
     public Map<String,Set<String>> extractClassWiseDependencies(File file, Set<String> sourceClasses) throws FileNotFoundException {
-        CompilationUnit cu=StaticJavaParser.parse(file);
+        CompilationUnit cu=cache.get(file.toPath());
         Map<String,Set<String>> classDeps=new HashMap<>();
         // find all class in the file
        for(ClassOrInterfaceDeclaration classOrI: cu.findAll(ClassOrInterfaceDeclaration.class)) {
@@ -103,115 +80,8 @@ public class JavaFileParser {
         return classDeps;
 
     }
-    public List<ClassInfo> extractClassInfo(Path sourceRoot) {
 
-        List<ClassInfo> classInfos = new ArrayList<>();
-
-        try {
-            Files.walk(sourceRoot)
-                    .filter(p -> p.toString().endsWith(".java"))
-                    .forEach(p -> {
-                        try {
-                            CompilationUnit cu = StaticJavaParser.parse(p);
-
-                            String pkg = cu.getPackageDeclaration()
-                                    .map(pk -> pk.getNameAsString())
-                                    .orElse("default");
-
-                            File sourceFile = p.toFile();
-
-                            // ---- Classes & Interfaces ----
-                            cu.findAll(ClassOrInterfaceDeclaration.class)
-                                    .forEach(c -> {
-
-                                        int start = c.getBegin().map(pos -> pos.line).orElse(0);
-                                        int end   = c.getEnd().map(pos -> pos.line).orElse(start);
-
-                                        ClassKind kind = c.isInterface()
-                                                ? ClassKind.INTERFACE
-                                                : ClassKind.CLASS;
-
-                                        classInfos.add(
-                                                new ClassInfo(
-                                                        c.getNameAsString(),
-                                                        pkg,
-                                                        kind,
-                                                        c.getMethods().size(),
-                                                        c.getFields().size(),
-                                                        c.getConstructors().size(),
-                                                        c.isAbstract(),
-                                                        c.isFinal(),
-                                                        c.isPublic(),
-                                                        end - start + 1,
-                                                        sourceFile,
-                                                        start
-                                                )
-                                        );
-                                    });
-
-                            // ---- Enums ----
-                            cu.findAll(EnumDeclaration.class)
-                                    .forEach(e -> {
-
-                                        int start = e.getBegin().map(pos -> pos.line).orElse(0);
-                                        int end   = e.getEnd().map(pos -> pos.line).orElse(start);
-
-                                        classInfos.add(
-                                                new ClassInfo(
-                                                        e.getNameAsString(),
-                                                        pkg,
-                                                        ClassKind.ENUM,
-                                                        e.getMethods().size(),
-                                                        e.getFields().size(),
-                                                        0,
-                                                        false,
-                                                        false,
-                                                        e.isPublic(),
-                                                        end - start + 1,
-                                                        sourceFile,
-                                                        start
-                                                )
-                                        );
-                                    });
-
-                            // ---- Records ----
-                            cu.findAll(RecordDeclaration.class)
-                                    .forEach(r -> {
-
-                                        int start = r.getBegin().map(pos -> pos.line).orElse(0);
-                                        int end   = r.getEnd().map(pos -> pos.line).orElse(start);
-
-                                        classInfos.add(
-                                                new ClassInfo(
-                                                        r.getNameAsString(),
-                                                        pkg,
-                                                        ClassKind.RECORD,
-                                                        r.getMethods().size(),
-                                                        r.getFields().size(),
-                                                        r.getConstructors().size(),
-                                                        false,
-                                                        r.isFinal(),
-                                                        r.isPublic(),
-                                                        end - start + 1,
-                                                        sourceFile,
-                                                        start
-                                                )
-                                        );
-                                    });
-
-                        } catch (Exception e) {
-                            System.err.println("Failed to parse: " + p);
-                            e.printStackTrace();
-                        }
-                    });
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return classInfos;
-    }
-    public Map<String, Set<String>> buildProjectDependencyGraph(
+    public Map<String, Set<String>> buildClassDependencyGraph(
             Path sourceRoots,
             Set<String> sourceClasses
     ) {
@@ -221,7 +91,7 @@ public class JavaFileParser {
                         .filter(p -> p.toString().endsWith(".java"))
                         .forEach(p -> {
                             try {
-                                CompilationUnit cu = StaticJavaParser.parse(p);
+                                CompilationUnit cu = cache.get(p);
 
                                 for (ClassOrInterfaceDeclaration cls :
                                         cu.findAll(ClassOrInterfaceDeclaration.class)) {
@@ -242,6 +112,15 @@ public class JavaFileParser {
                                                     deps.add(dep);
                                                 }
                                             });
+                                    cls.findAll(MethodCallExpr.class).forEach(m -> {
+                                        m.getScope().ifPresent(scope -> {
+                                            String name=scope.toString();
+                                            if(!name.equals(className) && sourceClasses.contains(name)) {
+                                                deps.add(name);
+                                            }
+                                        });
+                                    });
+
 
                                 }
 
@@ -255,7 +134,7 @@ public class JavaFileParser {
     public List<String > getFileClasses(File file){
         List<String> classes=new ArrayList<>();
         try{
-            CompilationUnit cu = StaticJavaParser.parse(file);
+            CompilationUnit cu = cache.get(file.toPath());
             for(ClassOrInterfaceDeclaration clazz:cu.findAll(ClassOrInterfaceDeclaration.class)){
                 classes.add(clazz.getNameAsString());
             }
@@ -271,6 +150,9 @@ public class JavaFileParser {
         }
         return classes;
     }
+
+
+
 
 
 

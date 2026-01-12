@@ -1,11 +1,10 @@
 package com.example.bodhakfrontend.uiHelper;
 
-import com.example.bodhakfrontend.Models.DependencyNode;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
-
+import java.util.List;
 import java.io.File;
 import java.nio.file.Files;
 
@@ -21,6 +20,7 @@ public class UiFeatures {
     // UNIVERSAL FILE OPEN METHOD
     // ===============================
     public Tab openFile(File file) {
+
 
         for (Tab tab : tabPane.getTabs()) {
             if (file.equals(tab.getUserData())) {
@@ -57,37 +57,28 @@ public class UiFeatures {
     // ===============================
     // OPEN + HIGHLIGHT
     // ===============================
-    public void openAndHighlight(String name,int beginLine,File sourceFile) {
+    public void openAndHighlight(String name,int beginLine,int column,File sourceFile) {
 
         Tab tab = openFile(sourceFile);
-        highlight(tab,beginLine,name);
+        highlight(tab,beginLine,column,name);
     }
 
     // ===============================
     // HIGHLIGHT LOGIC
     // ===============================
-    private void highlight(Tab tab, int beginLine,String name) {
+    private void highlight(Tab tab, int beginLine,int column,String name) {
 
         CodeArea codeArea = (CodeArea) tab.getContent();
 
-        int lineIndex = beginLine - 1;
-        String className = name;
-        int paragraphCount =
-                ((java.util.List<?>) codeArea.getParagraphs()).size();
-        if (lineIndex < 0 || lineIndex >=paragraphCount) {
+        int paragraphIndex = beginLine - 1;
+        int totalLines =
+                ((javafx.collections.ObservableList<?>) codeArea.getParagraphs()).size();
+        if (paragraphIndex < 0 || paragraphIndex >= totalLines) {
             return;
         }
-
-        codeArea.showParagraphAtTop(lineIndex);
-
-        String lineText = codeArea.getParagraph(lineIndex).getText();
-        int colIndex = lineText.indexOf(className);
-        if (colIndex == -1) return;
-
-        int start = codeArea.getAbsolutePosition(lineIndex, colIndex);
-        int end = start + className.length();
-
-        codeArea.moveTo(start);
-        codeArea.selectRange(start, end);
+        int absolutePos=codeArea.getAbsolutePosition(paragraphIndex,column-1);
+        codeArea.showParagraphAtTop(Math.max(0,paragraphIndex-3));
+        codeArea.moveTo(absolutePos);
+        codeArea.selectRange(absolutePos,absolutePos+name.length());
     }
 }

@@ -1,77 +1,76 @@
 package com.example.bodhakfrontend.projectAnalysis.ui;
 
 import com.example.bodhakfrontend.Models.*;
-import com.example.bodhakfrontend.Parser.javaParser.JavaFileParser;
-import com.example.bodhakfrontend.projectAnalysis.ProjectHealthAnalyzer;
+import com.example.bodhakfrontend.Models.PackageAnalysis.PackageAnalysisInfo;
+import com.example.bodhakfrontend.Models.PackageAnalysis.PackageInfo;
+import com.example.bodhakfrontend.Models.PackageAnalysis.ProjectAnalysisResult;
 import com.example.bodhakfrontend.uiHelper.UiFeatures;
-import com.sun.source.tree.Tree;
+import com.example.bodhakfrontend.util.Exporter;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.nio.file.Path;
+import java.util.*;
 
 public class AnalysisViewBuilder {
-    private classHealthAnalyserViewBuilder classHealthAnalyserViewBuilder = new classHealthAnalyserViewBuilder();
+    Exporter exporter=new Exporter();
+    private final classHealthAnalyserViewBuilder classHealthAnalyserViewBuilder=new classHealthAnalyserViewBuilder();
     private final UiFeatures uiFeatures;
-    private final VBox root = new VBox();
 
 
-    public AnalysisViewBuilder(UiFeatures uiFeatures) {
+    public AnalysisViewBuilder( UiFeatures uiFeatures) {
+
         this.uiFeatures = uiFeatures;
-        root.setPadding(new Insets(10));
-        root.getStyleClass().add("card");
-    }
 
-    private void addSection(String title, Node content) {
-        TitledPane titledPane = new TitledPane(title, content);
-        titledPane.setExpanded(true);
-        root.getChildren().add(titledPane);
-    }
-
-    private void addCollapsedSection(String title, Node content) {
-        TitledPane titledPane = new TitledPane(title, content);
-        titledPane.setExpanded(false);
-        root.getChildren().add(titledPane);
     }
 
     public Node build(ProjectAnalysisResult projectAnalysisResult) {
-
-        analyzeView(projectAnalysisResult.getPackageAnalysisInfo(),
+       VBox root=new VBox();
+        root.setPadding(new Insets(10));
+        root.getStyleClass().add("card");
+        VBox container = new VBox(10);
+        container.setPadding(new Insets(10));
+        HBox exportbar=new HBox();
+        exportbar.setAlignment(Pos.CENTER_RIGHT);
+        Button exportBtn = new Button("Export");
+        exportbar.getChildren().add(exportBtn);
+        exportBtn.setOnAction(e -> {
+                 exporter.exportAnalysis(projectAnalysisResult);
+        });
+        container.getChildren().add(exportbar);
+        analyzeView(root,projectAnalysisResult.getPackageAnalysisInfo(),
                 projectAnalysisResult.getPackageInfoMap(),
                 projectAnalysisResult.getClassInfos(),
                 projectAnalysisResult.getProjectHealthSummary(),
                 projectAnalysisResult.getClassHealthInfoMap(),uiFeatures,
                 projectAnalysisResult.getHotspotInfos(),projectAnalysisResult.getUnusedClassInfos()
                 );
-
-      return new ScrollPane(root);
+        container.getChildren().add(root);
+        ScrollPane scrollPane = new ScrollPane(container);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(false);
+        return scrollPane;
     }
 
-    private void analyzeView(PackageAnalysisInfo packageAnalysisInfo, Map<String, PackageInfo> packageInfoMap, List<ClassInfo> classInfos, ProjectHealthSummary projectHealthSummary, Map<String, ClassHealthInfo> classHealthInfoMap, UiFeatures uiFeatures, List<HotspotInfo> hotspots, List<UnusedClassInfo> unusedClasses) {
+    private void analyzeView(VBox root, PackageAnalysisInfo packageAnalysisInfo, Map<String, PackageInfo> packageInfoMap, List<ClassInfo> classInfos, ProjectHealthSummary projectHealthSummary, Map<String, ClassHealthInfo> classHealthInfoMap, UiFeatures uiFeatures, List<HotspotInfo> hotspots, List<UnusedClassInfo> unusedClasses) {
+        createSection(root,"/icons/summary.png","Project Summary",buildProjectSummary(packageAnalysisInfo),"icon-blue",true);
+        createSection(root,"/icons/entryPoint.png","Entry Points",buildEntryPointSection(packageAnalysisInfo),"icon-blue",true);
+        createSection(root,"/icons/packageOverview.png","Package Overview",buildPackageOverView(packageInfoMap),"icon-blue",false);
+        createSection(root,"/icons/dependency.png","Package Dependencies",buildPackageDependencyTreeView(packageInfoMap),"icon-blue",false);
+        createSection(root,"/icons/largestFiles.png","Largest Files",buildLargestFileView(packageAnalysisInfo),"icon-blue",false);
+        createSection(root,"/icons/classMetric.png","Class Metrics |" + classInfos.size() + " classes",buildClassMetricsView(classInfos),"icon-blue",false);
+        createSection(root,"/icons/health.png","Project Health",buildHealthSummary(projectHealthSummary),"icon-blue",false);
+        createSection(root,"/icons/health.png","Class Health Details",  classHealthAnalyserViewBuilder.buildClassHealthTree(classHealthInfoMap, uiFeatures),"icon-blue",false);
 
-        addSection("📦 Project Summary", buildProjectSummary(packageAnalysisInfo));
-        addSection("\uD83D\uDE80 Entry Points", buildEntryPointSection(packageAnalysisInfo));
-        addCollapsedSection("📦 Package Overview", buildPackageOverView(packageInfoMap));
-        addCollapsedSection("\uD83E\uDDED Package Dependency Tree", buildPackageDependencyTreeView(packageInfoMap));
-        addCollapsedSection("📊 Largest Files (by LOC)", buildLargestFileView(packageAnalysisInfo));
-        addCollapsedSection("🏷 Class Metrics", buildClassMetricsView(classInfos));
-        addCollapsedSection("🏥 Project Health", buildHealthSummary(projectHealthSummary));
-        addCollapsedSection(
-                "🏥 Class Health Details",
-                classHealthAnalyserViewBuilder.buildClassHealthTree(classHealthInfoMap, uiFeatures)
-        );
-        addCollapsedSection("🔥 Risk Hotspots", buildHotspotView(hotspots, uiFeatures));
-        addCollapsedSection(
-                "🧹 Unused Classes",
-                buildUnusedClassView(unusedClasses, uiFeatures)
-        );
+        createSection(root,"/icons/hotspot.png","Risk Hotspots", buildHotspotView(hotspots, uiFeatures),"icon-blue",false);
+        createSection(root,"/icons/unused.png","🧹 Unused or Suspicious Classes",
+                buildUnusedClassView(unusedClasses, uiFeatures),"icon-blue",false);
+
 
 
     }
@@ -88,10 +87,10 @@ public class AnalysisViewBuilder {
         grid.addRow(row++, new Label("Project Type:"), new Label(result.getEntryPointInfo().getProjectType().toString()));
         grid.addRow(row++, new Label("Folders:"), new Label(String.valueOf(result.getFolderCount())));
         grid.addRow(row++, new Label("Files:"), new Label(String.valueOf(result.getFileCount())));
-        Map<String, Integer> map = result.getLaguagesCount();
+        Map<String, Set<Path>> map = result.getLaguagesCount();
         if (!map.isEmpty()) {
             for (String key : map.keySet()) {
-                grid.addRow(row++, new Label(key + ":"), new Label(map.get(key).toString()));
+                grid.addRow(row++, new Label(key + ":"), new Label(String.valueOf(map.get(key).size())));
             }
         }
 
@@ -103,19 +102,19 @@ public class AnalysisViewBuilder {
         box.getStyleClass().add("card");
         box.setPadding(new Insets(5));
         Label typeLabel = new Label("Project Type:" + result.getEntryPointInfo().getProjectType().toString());
-        typeLabel.setStyle("-fx-font-weight: bold");
+        typeLabel.getStyleClass().add("label-bold");
         box.getChildren().add(typeLabel);
         // for Primary Entry Point
         if (result.getEntryPointInfo().getPrimaryEntry() != null) {
             Label primaryTitle = new Label("Primary Entry point:");
-            primaryTitle.setStyle("-fx-font-weight: bold");
+            primaryTitle.getStyleClass().add("label-bold");
             Label primary = new Label("• " + result.getEntryPointInfo().getPrimaryEntry().toString());
             box.getChildren().addAll(primaryTitle, primary);
         }
         // for secondary points
         if (!result.getEntryPointInfo().getSecondaryEntries().isEmpty()) {
             Label secondaryTitle = new Label("Other possible Entry Point:");
-            secondaryTitle.setStyle("-fx-font-weight: bold");
+            secondaryTitle.getStyleClass().add("label-bold");
             box.getChildren().add(secondaryTitle);
             for (String ep : result.getEntryPointInfo().getSecondaryEntries()) {
                 box.getChildren().add(new Label("• " + ep));
@@ -135,13 +134,9 @@ public class AnalysisViewBuilder {
         }
         for (String key : result.keySet()) {
             HBox packageHBox = new HBox(2);
-            packageHBox.setStyle(
-                    "-fx-border-color: #ddd;" +
-                            "-fx-border-radius: 4;" +
-                            "-fx-padding: 6;"
-            );
+            packageHBox.getStyleClass().add("package-row");
             Label packageLabel = new Label(key);
-            packageLabel.setStyle("-fx-font-weight: bold");
+            packageLabel.getStyleClass().add("label-bold");
             int size = result.get(key).getClasses().size();
             Label classCount = new Label("• Classes:" + String.valueOf(size));
             packageHBox.getChildren().addAll(packageLabel, classCount);
@@ -158,71 +153,20 @@ public class AnalysisViewBuilder {
             return box;
         }
         int rank = 1;
-        for (String file : result.getLargetFiles().keySet()) {
+        for (PackageAnalysisInfo.LargestFileInfo file : result.getLargetFiles()) {
             HBox fileHBox = new HBox();
-            fileHBox.setStyle("-fx-border-color: #ddd;" +
-                    "-fx-border-radius: 4;" +
-                    "-fx-padding: 6;");
-            Label fileLabel = new Label(rank++ + ". " + file);
-            fileLabel.setStyle("-fx-font-weight: bold");
-            Label loc = new Label("• Lines of Code: " + result.getLargetFiles().get(file));
+            fileHBox.getStyleClass().add("file-row");
+            Label fileLabel = new Label(rank++ + ". " + file.getName());
+            fileLabel.getStyleClass().add("label-bold");
+            fileHBox.setOnMouseClicked(event -> {
+                uiFeatures.openFile(file.getSourceFile());
+
+            });
+            Label loc = new Label("• Lines of Code: " + file.getLoc());
             fileHBox.getChildren().addAll(fileLabel, loc);
             box.getChildren().addAll(fileHBox);
         }
         return box;
-    }
-
-    private Node buildClassMetricsView(List<ClassInfo> classes) {
-        VBox container = new VBox();
-        container.setPadding(new Insets(5));
-        if (classes == null || classes.isEmpty()) {
-            container.getChildren().add(new Label("No Class Found!"));
-            return container;
-        }
-        for (ClassInfo cls : classes) {
-            GridPane grid = new GridPane();
-            grid.setHgap(10);
-            grid.setVgap(6);
-            grid.setPadding(new Insets(6));
-            grid.setStyle(
-                    "-fx-border-color: #ddd;" +
-                            "-fx-border-radius: 4;" +
-                            "-fx-background-radius: 4;"
-            );
-            int r = 0;
-            Label title = new Label(cls.getName());
-            title.setStyle("-fx-font-weight: bold; -fx-font-size: 13");
-            grid.add(title, 0, r++, 2, 1);
-            grid.addRow(r++, new Label("Type:"), new Label(cls.getKind().toString()));
-            grid.addRow(r++, new Label("Package:"), new Label(cls.getPkg()));
-            grid.addRow(r++,
-                    new Label("Members:"),
-                    new Label(
-                            "Methods: " + cls.getMethodCount()
-                                    + " | Fields: " + cls.getFieldCount()
-                                    + " | Constructors: " + cls.getConstructorCount()
-                    ));
-
-            grid.addRow(r++, new Label("Size:"),
-                    new Label(String.valueOf(cls.getLinesOfCode())));
-            String modifier = (cls.isPublic() ? "public" : "")
-                    + (cls.isAbstract() ? "abstract" : "") +
-                    (cls.isFinal() ? "final" : "");
-            grid.addRow(r++, new Label(modifier),
-                    new Label(modifier.isBlank() ? "-" : modifier.trim()));
-            container.getChildren().add(grid);
-
-
-            grid.setOnMouseClicked(event -> {
-                uiFeatures.openAndHighlight(cls.getName(),cls.getBeginLine(),cls.getSourceFile());
-            });
-
-
-        }
-
-        return container;
-
-
     }
 
     private GridPane buildHealthSummary(ProjectHealthSummary summary) {
@@ -344,10 +288,7 @@ public class AnalysisViewBuilder {
                 setText(item);
 
                 if (item.contains("🔁 Part of Circular Dependency")) {
-                    setStyle(
-                            "-fx-text-fill: #d32f2f;" +
-                                    "-fx-font-weight: bold;"
-                    );
+                    getStyleClass().add("health-tree-risky");
                     TreeItem<String> pkgNode =
                             getTreeItem().getParent().getParent();
 
@@ -357,7 +298,7 @@ public class AnalysisViewBuilder {
                     if (pkg != null) {
                         Tooltip tooltip =
                                 new Tooltip(buildCycleTooltipText(pkg));
-                        tooltip.setStyle("-fx-font-size: 12");
+                        tooltip.getStyleClass().add("label-muted");
                         setTooltip(tooltip);
                     }
                 } else {
@@ -367,7 +308,7 @@ public class AnalysisViewBuilder {
         });
 
         treeView.setShowRoot(false);
-        treeView.setPrefHeight(400);
+        treeView.setPrefHeight(Region.USE_COMPUTED_SIZE);
 
         return treeView;
     }
@@ -420,18 +361,14 @@ public class AnalysisViewBuilder {
             VBox card = new VBox(4);
 
             DependencyNode dependencyNode = hs.getDependencyNode();
-            card.setStyle("""
-                        -fx-border-color: #e57373;
-                        -fx-border-radius: 6;
-                        -fx-padding: 8;
-                        -fx-background-color: #fff5f5;
-                    """);
+            card.getStyleClass().add("hotspot-card");
+            card.setPadding(new Insets(8));
 
             Label title = new Label(
                     rank++ + ". " + hs.getClassName()
                             + " (Risk Score: " + hs.getScore() + ")"
             );
-            title.setStyle("-fx-font-weight: bold");
+            title.getStyleClass().add("label-bold");
 
             Label meta = new Label(
                     "LOC: " + hs.getLoc()
@@ -446,7 +383,7 @@ public class AnalysisViewBuilder {
 
             // 🔗 click navigation
             card.setOnMouseClicked(e -> {
-                        uiFeatures.openAndHighlight(dependencyNode.getClassName(),dependencyNode.getBeginLine(),dependencyNode.getSourceFile());
+                        uiFeatures.openAndHighlight(dependencyNode.getClassName(),dependencyNode.getBeginLine(),dependencyNode.getBeginColumn(),dependencyNode.getSourceFile());
                     }
             );
 
@@ -464,41 +401,156 @@ public class AnalysisViewBuilder {
         box.setPadding(new Insets(5));
 
         if (unused.isEmpty()) {
-            box.getChildren().add(
-                    new Label("✅ No unused classes detected")
-            );
+            box.getChildren().add(new Label("✅ No Unused Class Found"));
             return box;
         }
 
-        for (UnusedClassInfo uc : unused) {
 
-            HBox row = new HBox(10);
-            row.setStyle("""
-                        -fx-border-color: #ddd;
-                        -fx-border-radius: 4;
-                        -fx-padding: 6;
-                    """);
+        for (UnusedClassInfo unusedClass : unused) {
 
-            Label name = new Label("⚠ " + uc.getClassName());
-            name.setStyle("-fx-font-weight: bold");
+            VBox card = new VBox(4);
+            card.getStyleClass().add("unused-class-card");
+            card.setPadding(new Insets(8));
 
-            Label meta = new Label(
-                    "Package: "
-                            + " | LOC: " + uc.getLoc()
+            Label title = new Label(unusedClass.getClassName() +" | "+ unusedClass.getLoc());
+            title.getStyleClass().add("label-bold");
+
+            Label meta = new Label("Package Name: " + unusedClass.getPackageName()
             );
 
-            row.getChildren().addAll(name, meta);
+            Label reasons = new Label("⚠ " + unusedClass.getReason());
+            reasons.setWrapText(true);
 
-            // 🔗 navigation
-            row.setOnMouseClicked(e ->{
-                     DependencyNode dependencyNode = uc.getDependencyNode();
-                    uiFeatures.openAndHighlight(dependencyNode.getClassName(),dependencyNode.getBeginLine(),dependencyNode.getSourceFile());}
+            card.getChildren().addAll(title, meta, reasons);
+            DependencyNode dependencyNode = unusedClass.getDependencyNode();
+
+            // 🔗 click navigation
+            card.setOnMouseClicked(e -> {
+                        uiFeatures.openAndHighlight(dependencyNode.getClassName(),dependencyNode.getBeginLine(),dependencyNode.getBeginColumn(),dependencyNode.getSourceFile());
+                    }
             );
 
-            box.getChildren().add(row);
+            box.getChildren().add(card);
         }
 
         return box;
     }
+    private Node buildClassMetricsView(List<ClassInfo> classes) {
+
+        if (classes == null || classes.isEmpty()) {
+            return new Label("No Class Found!");
+        }
+
+        List<ClassInfo> sorted =
+                classes.stream()
+                        .sorted(Comparator.comparing(
+                                ClassInfo::getName,
+                                String.CASE_INSENSITIVE_ORDER
+                        ))
+                        .toList();
+
+        ListView<ClassInfo> listView = new ListView<>();
+        listView.getItems().setAll(sorted);
+        listView.setCellFactory(lv -> new ClassMetricsCell());
+
+        return listView;
+    }
+    private class ClassMetricsCell extends ListCell<ClassInfo> {
+
+        private final GridPane grid = new GridPane();
+        private final Label title = new Label();
+        private final Label type = new Label();
+        private final Label pkg = new Label();
+        private final Label members = new Label();
+        private final Label size = new Label();
+        private final Label modifier = new Label();
+
+        public ClassMetricsCell() {
+            grid.setHgap(10);
+            grid.setVgap(6);
+            grid.setPadding(new Insets(6));
+            grid.getStyleClass().add("class-metrics-grid");
+
+            title.getStyleClass().add("label-subtitle");
+
+            int r = 0;
+            grid.add(title, 0, r++, 2, 1);
+            grid.addRow(r++, new Label("Type:"), type);
+            grid.addRow(r++, new Label("Package:"), pkg);
+            grid.addRow(r++, new Label("Members:"), members);
+            grid.addRow(r++, new Label("Size:"), size);
+            grid.addRow(r++, new Label("Modifier:"), modifier);
+        }
+
+        @Override
+        protected void updateItem(ClassInfo cls, boolean empty) {
+            super.updateItem(cls, empty);
+
+            if (empty || cls == null) {
+                setGraphic(null);
+                return;
+            }
+
+            title.setText(cls.getName());
+            type.setText(cls.getKind().toString());
+            pkg.setText(cls.getPkg());
+
+            members.setText(
+                    "Methods: " + cls.getMethodCount()
+                            + " | Fields: " + cls.getFieldCount()
+                            + " | Constructors: " + cls.getConstructorCount()
+            );
+
+            size.setText(String.valueOf(cls.getLinesOfCode()));
+
+            String mod =
+                    (cls.isPublic() ? "public " : "") +
+                            (cls.isAbstract() ? "abstract " : "") +
+                            (cls.isFinal() ? "final" : "");
+
+            modifier.setText(mod.isBlank() ? "-" : mod.trim());
+
+            setGraphic(grid);
+
+            setOnMouseClicked(e -> {
+                uiFeatures.openAndHighlight(
+                        cls.getName(),
+                        cls.getBeginLine(),
+                        cls.getBeginColumn(),
+                        cls.getSourceFile()
+                );
+            });
+        }
+    }
+
+
+    private Node iconBadge(String iconPath,String bgClass){
+        ImageView icon = new ImageView(new Image(getClass().getResourceAsStream(iconPath)));
+        icon.setFitHeight(16);
+        icon.setFitWidth(16);
+        icon.setPreserveRatio(true);
+        StackPane pane = new StackPane(icon);
+        pane.getStyleClass().addAll("icon-badge",bgClass);
+        pane.setMinSize(28,28);
+        pane.setMaxSize(28,28);
+        return pane;
+    }
+
+    private void createSection(VBox root,String iconPath,String title,Node content,String bgClass,boolean expanded){
+        Node badge=iconBadge(iconPath,bgClass);
+        Label titleLabel = new Label(title);
+        titleLabel.getStyleClass().add("section-title");
+        HBox header = new HBox(10,badge,titleLabel);
+        header.setAlignment(Pos.CENTER_LEFT);
+        TitledPane titledPane = new TitledPane();
+        titledPane.setGraphic(header);
+        titledPane.setContent(content);
+        titledPane.setExpanded(expanded);
+        root.getChildren().add(titledPane);
+        root.getChildren().add(new Separator());
+
+    }
+
 
 }
+

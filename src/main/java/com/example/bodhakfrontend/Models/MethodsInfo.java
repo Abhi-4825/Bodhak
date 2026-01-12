@@ -12,10 +12,12 @@ public class MethodsInfo {
     private List<ModifierKind> modifier;
     private int startLine;
     private int endLine;
+    private int startColumn;
     private File sourceFile;
     private final boolean isBodyEmpty;
+    private final int statementCount;
 
-    public MethodsInfo(String className, String methodName, String returnType, List<MethodParameterInfo> parameters, List<MethodCallInfo> calledMethods, List<ModifierKind> modifier, int startLine, int endLine, File sourceFile, boolean isBodyEmpty) {
+    public MethodsInfo(String className, String methodName, String returnType, List<MethodParameterInfo> parameters, List<MethodCallInfo> calledMethods, List<ModifierKind> modifier, int startLine, int endLine,int startColumn, File sourceFile, boolean isBodyEmpty,int statementCount) {
         this.className = className;
         this.methodName = methodName;
         this.returnType = returnType;
@@ -26,8 +28,12 @@ public class MethodsInfo {
         this.endLine = endLine;
         this.sourceFile = sourceFile;
         this.isBodyEmpty = isBodyEmpty;
+        this.startColumn = startColumn;
+        this.statementCount = statementCount;
     }
-
+    public int getStartColumn() {
+        return startColumn;
+    }
     public String getClassName() {
         return className;
     }
@@ -62,6 +68,10 @@ public class MethodsInfo {
 
     public File getSourceFile() {
         return sourceFile;
+    }
+    public boolean isEmpty() {
+        if(!isBodyEmpty) return true;
+        return statementCount == 0;
     }
 
 }

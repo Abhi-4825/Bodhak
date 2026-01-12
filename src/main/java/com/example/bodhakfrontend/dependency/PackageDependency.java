@@ -1,32 +1,45 @@
 package com.example.bodhakfrontend.dependency;
 
-import com.example.bodhakfrontend.Models.PackageInfo;
+import com.example.bodhakfrontend.Models.PackageAnalysis.PackageInfo;
 import com.example.bodhakfrontend.Models.ClassDependencyInfo;
 import com.example.bodhakfrontend.Models.PackageWarning;
 import com.example.bodhakfrontend.Models.DependencyNode;
 
 import java.util.*;
 public class PackageDependency {
-    CircularDependency  circularDependency=new CircularDependency();
+   private final  CircularDependency  circularDependency;
+   // final result exposed to ui
+   private final Map<String, PackageInfo> result = new HashMap<>();
 
+   // package to classes
+    private final Map<String,Set<String>> packageClasses = new HashMap<>();
+    //package  depends on
+    private final Map<String,Set<String>> pkgDependsOn = new HashMap<>();
+    // package used by
+    private final Map<String,Set<String>> pkgUsedBy = new HashMap<>();
+
+   //constructor
+    public PackageDependency(CircularDependency circularDependency) {
+        this.circularDependency = circularDependency;
+    }
+ // to get package info path wise
     public Map<String, PackageInfo> buildPackageInfo(
             ClassDependencyInfo classDependencyInfo
     ) {
+       packageClasses.clear();
+       pkgDependsOn.clear();
+       pkgUsedBy.clear();
+       result.clear();
 
-        Map<String, PackageInfo> result = new HashMap<>();
 
-        // 1️⃣ Package → Classes
-        Map<String, Set<String>> packageClasses = new HashMap<>();
 
+      // package to classes
         for (DependencyNode node : classDependencyInfo.getClassInfo().values()) {
             packageClasses
                     .computeIfAbsent(node.getPackageName(), k -> new HashSet<>())
                     .add(node.getClassName());
         }
 
-        // 2️⃣ Package dependencies (forward + reverse)
-        Map<String, Set<String>> pkgDependsOn = new HashMap<>();
-        Map<String, Set<String>> pkgUsedBy = new HashMap<>();
 
         classDependencyInfo.getClassDependencies().forEach((fromClass, deps) -> {
             String fromPkg = classDependencyInfo.getClassInfo()
@@ -82,6 +95,11 @@ public class PackageDependency {
 
         return result;
     }
+
+
+
+
+
     private void detectPackageWarnings(
             Map<String, PackageInfo> packages
     ) {
@@ -113,6 +131,10 @@ public class PackageDependency {
             }
         }
     }
+
+
+
+
 
 
 }

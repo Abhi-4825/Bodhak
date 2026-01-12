@@ -3,6 +3,7 @@ package com.example.bodhakfrontend.ui.overviewButton;
 import com.example.bodhakfrontend.ui.OverviewContentFactory;
 import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
@@ -34,6 +35,7 @@ public class ClassOverviewContainer {
         overviewHolder.getChildren().add(
                 factory.build(classSelector.getValue())
         );
+        VBox.setVgrow(overviewHolder, Priority.ALWAYS);
 
         root.getChildren().addAll(classSelector, overviewHolder);
     }

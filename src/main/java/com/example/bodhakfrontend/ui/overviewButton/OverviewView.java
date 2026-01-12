@@ -1,11 +1,13 @@
 package com.example.bodhakfrontend.ui.overviewButton;
 
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
@@ -34,13 +36,13 @@ public class OverviewView {
         methodBtn.setToggleGroup(group);
         healthBtn.setToggleGroup(group);
         depsBtn.setSelected(true);
-        HBox hb=new HBox(6,depsBtn,methodBtn,healthBtn);
+        HBox hb=new HBox(10,depsBtn,methodBtn,healthBtn);
         hb.setPadding(new Insets(6));
-        hb.setStyle("""
-            -fx-background-color: #f4f4f4;
-            -fx-border-color: #ddd;
-            -fx-border-width: 0 0 1 0;
-        """);
+        hb.setAlignment(Pos.CENTER);
+        hb.getStyleClass().add("toggle-bar");
+        depsBtn.getStyleClass().add("toggle-button");
+        methodBtn.getStyleClass().add("toggle-button");
+        healthBtn.getStyleClass().add("toggle-button");
         root.getChildren().add(hb);
     }
     private void buildContent(
@@ -58,6 +60,7 @@ public class OverviewView {
         ScrollPane pane=new ScrollPane(contentArea);
         pane.setFitToWidth(true);
         pane.setFitToHeight(true);
+        VBox.setVgrow(pane, Priority.ALWAYS);
 
         root.getChildren().add(pane);
     }

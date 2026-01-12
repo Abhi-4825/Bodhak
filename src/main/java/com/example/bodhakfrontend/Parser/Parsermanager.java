@@ -9,14 +9,20 @@ import java.util.Map;
 import java.util.Set;
 
 public class Parsermanager {
- private LanguageDetector languageDetector=new LanguageDetector();
- private JavaFileParser javaFileParser=new JavaFileParser();
+ private final LanguageDetector languageDetector;
+ private final JavaFileParser javaFileParser;
  private JavaAstLabelProvider javaLabelProvider=new JavaAstLabelProvider();
- public Object parseFile(File file) throws Exception {
+
+    public Parsermanager(LanguageDetector languageDetector, JavaFileParser javaFileParser) {
+        this.languageDetector = languageDetector;
+        this.javaFileParser = javaFileParser;
+    }
+
+    public Object parseFile(File file) throws Exception {
      String fileType=languageDetector.detectFileType(file);
      switch (fileType) {
          case "Java":
-             return javaFileParser.parseJava(file);
+//             return javaFileParser.parseJava(file);
 
          default:
              throw new Exception(fileType +" not supported yet");

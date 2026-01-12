@@ -1,19 +1,15 @@
 package com.example.bodhakfrontend.ui.overviewButton;
 
-import com.example.bodhakfrontend.Models.ClassDependencyInfo;
-import com.example.bodhakfrontend.Models.ConstructorInfo;
-import com.example.bodhakfrontend.Models.MethodCallInfo;
-import com.example.bodhakfrontend.Models.MethodsInfo;
+import com.example.bodhakfrontend.Models.*;
 import com.example.bodhakfrontend.uiHelper.UiFeatures;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.control.Separator;
-import javafx.scene.control.TitledPane;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,9 +23,8 @@ public class MethodsViewBuilder {
         this.classDependencyInfo = classDependencyInfo;
     }
 
+    public Node build(String className) {
 
-    public Node build(String className
-                   ){
         List<MethodsInfo> methods =
                 classDependencyInfo.getMethods()
                         .getOrDefault(className, List.of());
@@ -37,26 +32,41 @@ public class MethodsViewBuilder {
         List<ConstructorInfo> constructorInfos =
                 classDependencyInfo.getConstructorInfos()
                         .getOrDefault(className, List.of());
-     VBox root = new VBox();
-     root.setPadding(new Insets(8));
-     root.getChildren().add(buildSummaryBar(methods,constructorInfos));
-        root.getChildren().add(buildConstructorList(constructorInfos));
-     root.getChildren().add(buildMethodList(methods));
 
+        VBox root = new VBox(8);
+        root.setPadding(new Insets(8));
 
-             return root;
+        VBox contentHolder = new VBox(6);
 
+        renderFiltered(
+                contentHolder,
+                applyFilter(MethodFilter.ALL, methods, constructorInfos)
+        );
 
- }
+        Node summaryBar = buildSummaryBar(
+                methods,
+                constructorInfos,
+                contentHolder
+        );
+
+        root.getChildren().addAll(
+                summaryBar,
+                contentHolder
+        );
+
+        return root;
+    }
+
     private Node buildSummaryBar(
             List<MethodsInfo> methods,
-            List<ConstructorInfo> constructors
+            List<ConstructorInfo> constructors,
+            VBox contentHolder
     ) {
         int totalMethods = methods.size();
         int totalConstructors = constructors.size();
 
         long empty = methods.stream()
-                .filter(m -> m.getEndLine() <= m.getStartLine())
+                .filter(MethodsInfo::isEmpty)
                 .count();
 
         long pub = methods.stream()
@@ -69,60 +79,49 @@ public class MethodsViewBuilder {
 
         HBox bar = new HBox(12);
         bar.setPadding(new Insets(6));
-        bar.setStyle(
-                "-fx-border-color: #ddd;" +
-                        "-fx-border-radius: 6;" +
-                        "-fx-background-radius: 6;"
-        );
+        bar.getStyleClass().add("summary-bar");
 
         bar.getChildren().addAll(
-                badge("🧩 Methods", totalMethods),
-                badge("🏗 Constructors", totalConstructors),
-                badge("🌐 Public", pub),
-                badge("🔒 Private", priv),
-                badge("⚠ Empty", empty)
+                badge("All",totalMethods+totalConstructors,MethodFilter.ALL,methods,constructors,contentHolder),
+                badge("🧩 Methods", totalMethods,MethodFilter.METHODS_ONLY,methods,constructors,contentHolder),
+                badge("🏗 Constructors", totalConstructors,MethodFilter.CONSTRUCTORS_ONLY,methods,constructors,contentHolder),
+                badge("🌐 Public", pub,MethodFilter.PUBLIC,methods,constructors,contentHolder),
+                badge("🔒 Private", priv,MethodFilter.PRIVATE,methods,constructors,contentHolder),
+                badge("⚠ Empty", empty,MethodFilter.EMPTY,methods,constructors,contentHolder)
         );
 
         return bar;
     }
 
-    private Label badge(String text, long value) {
+    private Label badge(
+            String text,
+            long value,
+            MethodFilter filter,
+            List<MethodsInfo> methods,
+            List<ConstructorInfo> constructors,
+            VBox contentHolder
+    ) {
         Label l = new Label(text + ": " + value);
-        l.setStyle(
-                "-fx-padding: 4 8 4 8;" +
-                        "-fx-border-color: #ccc;" +
-                        "-fx-border-radius: 4;"
-        );
+        l.getStyleClass().add("badge");
+
+        l.setOnMouseClicked(event -> {
+            contentHolder.getChildren().clear();
+            renderFiltered(
+                    contentHolder,
+                    applyFilter(filter, methods, constructors)
+            );
+        });
+
         return l;
     }
-    //Constructor list
-    private Node buildConstructorList(List<ConstructorInfo> constructors) {
-        VBox list = new VBox();
-        list.setPadding(new Insets(4));
 
-        if (constructors.isEmpty()) {
-            list.getChildren().add(new Label("No constructors found."));
-            return new TitledPane("Constructors", list);
-        }
 
-        for (ConstructorInfo c : constructors) {
-            list.getChildren().add(buildConstructorRow(c));
-            list.getChildren().add(new Separator());
-        }
-
-        TitledPane pane = new TitledPane("Constructors", list);
-        pane.setExpanded(true);
-        return pane;
-    }
     private Node buildConstructorRow(ConstructorInfo constructor) {
         HBox row = new HBox(8);
         row.setPadding(new Insets(6));
-        row.setStyle(
-                "-fx-border-color: #e0e0e0;" +
-                        "-fx-border-radius: 4;"
-        );
+        row.getStyleClass().add("file-row");
 
-        Label signature = new Label(buildConstructorSignature(constructor));
+        Label signature = new Label("Constructor : "+buildConstructorSignature(constructor));
         signature.setWrapText(true);
         HBox.setHgrow(signature, Priority.ALWAYS);
 
@@ -132,6 +131,7 @@ public class MethodsViewBuilder {
             uiFeatures.openAndHighlight(
                     constructor.getConstructorName(),
                     constructor.getStartLine(),
+constructor.getStartColumn(),
                     constructor.getSourceFile()
             );
         });
@@ -161,23 +161,7 @@ public class MethodsViewBuilder {
 
 
 
-    // methods list
-    private Node buildMethodList(List<MethodsInfo> methods){
-        VBox list = new VBox();
-        list.setPadding(new Insets(4));
-        if (methods.isEmpty()) {
-            list.getChildren().add(new Label("No methods found."));
-            return list;
-        }
-        for (MethodsInfo method : methods) {
-            list.getChildren().add(buildMethodRow(method));
-            list.getChildren().add(new Separator());
-        }
 
-        TitledPane pane = new TitledPane("Methods", list);
-        pane.setExpanded(true);
-        return pane;
-    }
     private Node buildMethodRow(MethodsInfo method){
       VBox details = new VBox();
         details.setPadding(new Insets(6,0,0,16));
@@ -192,7 +176,7 @@ public class MethodsViewBuilder {
       pane.setExpanded(false);
       pane.setAnimated(true);
       pane.setOnMouseClicked(event -> {
-          uiFeatures.openAndHighlight(method.getMethodName(), method.getStartLine(), method.getSourceFile());
+          uiFeatures.openAndHighlight(method.getMethodName(), method.getStartLine(),method.getStartColumn(), method.getSourceFile());
       });
 
       return  pane;
@@ -220,10 +204,7 @@ public class MethodsViewBuilder {
         VBox box = new VBox(4);
 
         Label header = new Label(title);
-        header.setStyle(
-                "-fx-font-weight: bold;" +
-                        "-fx-text-fill: #555;"
-        );
+        header.getStyleClass().add("label-subtitle");
 
         box.getChildren().add(header);
 
@@ -234,7 +215,7 @@ public class MethodsViewBuilder {
 
         for (String item : items) {
             Label l = new Label("• " + item);
-            l.setStyle("-fx-padding: 0 0 0 6;");
+            l.getStyleClass().add("label-muted");
             box.getChildren().add(l);
         }
 
@@ -243,9 +224,7 @@ public class MethodsViewBuilder {
     private Node dependencySection(String title,List<MethodCallInfo> items){
         VBox root = new VBox(4);
         Label header = new Label(title);
-        header.setStyle(
-                "-fx-font-weight: bold;" +
-                        "-fx-text-fill: #555;");
+        header.getStyleClass().add("label-subtitle");
         root.getChildren().add(header);
         if (items == null || items.isEmpty()) {
             root.getChildren().add(new Label("_"));
@@ -264,22 +243,19 @@ public class MethodsViewBuilder {
         VBox group = new VBox(4);
         group.setPadding(new  Insets(0,0,0,12));
         Label titleLabel=new Label(title);
-        titleLabel.setStyle(
-                "-fx-font-weight: bold;" +
-                        "-fx-text-fill: #666;"
-        );
+        titleLabel.getStyleClass().add("label-subtitle");
         group.getChildren().add(titleLabel);
         for (MethodCallInfo call : calls) {
             HBox row = new HBox(4);
             Label method = new Label(call.getMethodName() + "()");
-            Label clazz=new Label("- "+call.getClassName());
+            Label clazz=new Label("- "+call.getFromClass());
             switch (call.getType()) {
-                case INTERNAL -> method.setStyle("-fx-text-fill: #2e7d32;");
-                case EXTERNAL -> method.setStyle("-fx-text-fill: #1565c0;");
-                case LIBRARY  -> method.setStyle("-fx-text-fill: #a15c00;");
+                case INTERNAL -> method.getStyleClass().add("method-dependency-internal");
+                case EXTERNAL -> method.getStyleClass().add("method-dependency-external");
+                case LIBRARY  -> method.getStyleClass().add("method-dependency-library");
             }
 
-            clazz.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
+            clazz.getStyleClass().add("label-muted");
             row.getChildren().addAll(
                     new Label("•"),
                     method,
@@ -293,6 +269,67 @@ public class MethodsViewBuilder {
         parent.getChildren().add(group);
 
     }
+    private List<Object> applyFilter(
+            MethodFilter filter,
+            List<MethodsInfo> methods,
+            List<ConstructorInfo> constructors
+    ) {
+        return switch (filter) {
+
+            case METHODS_ONLY ->
+                    new ArrayList<>(methods);
+
+            case CONSTRUCTORS_ONLY ->
+                    new ArrayList<>(constructors);
+
+            case PUBLIC ->
+                    methods.stream()
+                            .filter(m -> m.getModifier().contains(ModifierKind.PUBLIC))
+                            .map(m -> (Object) m)
+                            .toList();
+
+            case PRIVATE ->
+                    methods.stream()
+                            .filter(m -> m.getModifier().contains(ModifierKind.PRIVATE))
+                            .map(m -> (Object) m)
+                            .toList();
+
+            case PROTECTED ->
+                    methods.stream()
+                            .filter(m -> m.getModifier().contains(ModifierKind.PROTECTED))
+                            .map(m -> (Object) m)
+                            .toList();
+
+            case EMPTY ->
+                    methods.stream()
+                            .filter(MethodsInfo::isEmpty)
+                            .map(m -> (Object) m)
+                            .toList();
+
+            case ALL -> {
+                List<Object> all = new ArrayList<>();
+                all.addAll(methods);
+                all.addAll(constructors);
+                yield all;
+            }
+        };
+    }
+    private void renderFiltered(
+            VBox container,
+            List<Object> items
+    ) {
+        for (Object o : items) {
+            if (o instanceof MethodsInfo m) {
+                container.getChildren().add(buildMethodRow(m));
+                container.getChildren().add(new Separator());
+            } else if (o instanceof ConstructorInfo c) {
+                container.getChildren().add(buildConstructorRow(c));
+                container.getChildren().add(new Separator());
+            }
+        }
+    }
+
+
 
 
 

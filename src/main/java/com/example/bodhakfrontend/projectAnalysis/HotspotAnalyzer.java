@@ -52,12 +52,6 @@ public class HotspotAnalyzer {
 
             ClassHealthInfo health = healthInfo.get(cls.getName());
 
-
-            if (health != null && health.isGodClass()) {
-                score += 3;
-                reasons.add("God class");
-            }
-
             if (score >= 5) { // threshold
 
                 HotspotInfo hotspotInfo=new HotspotInfo(cls.getName());

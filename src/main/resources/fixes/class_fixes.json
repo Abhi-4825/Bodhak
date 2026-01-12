@@ -1,0 +1,216 @@
+[
+
+  {
+    "requiredIssues": ["GOD_CLASS"],
+    "severity": "MEDIUM",
+    "title": "Split responsibilities",
+    "description": "The class is doing too many things. Divide responsibilities into cohesive units.",
+    "example": "Extract OrderService and PaymentService from {{className}}"
+  },
+  {
+    "requiredIssues": ["GOD_CLASS"],
+    "severity": "MEDIUM",
+    "title": "Apply Single Responsibility Principle",
+    "description": "Ensure the class has only one reason to change.",
+    "example": "Move reporting logic out of {{className}}"
+  },
+  {
+    "requiredIssues": ["GOD_CLASS"],
+    "severity": "MEDIUM",
+    "title": "Group related methods",
+    "description": "Identify clusters of related methods and extract them into new classes.",
+    "example": "Create InvoiceCalculator from {{className}}"
+  },
+  {
+    "requiredIssues": ["GOD_CLASS"],
+    "severity": "MEDIUM",
+    "title": "Extract domain services",
+    "description": "Move domain-specific logic into dedicated services.",
+    "example": "Extract PricingService from {{className}}"
+  },
+  {
+    "requiredIssues": ["GOD_CLASS"],
+    "severity": "MEDIUM",
+    "title": "Introduce helper classes",
+    "description": "Offload utility-style methods into helper classes.",
+    "example": "Create {{className}}Utils"
+  },
+  {
+    "requiredIssues": ["GOD_CLASS"],
+    "severity": "MEDIUM",
+    "title": "Split by lifecycle",
+    "description": "Separate creation, processing, and persistence responsibilities.",
+    "example": "Split {{className}} into Builder, Processor, Repository"
+  },
+  {
+    "requiredIssues": ["GOD_CLASS"],
+    "severity": "MEDIUM",
+    "title": "Use composition",
+    "description": "Replace internal logic with composed collaborators.",
+    "example": "{{className}} delegates to smaller components"
+  },
+  {
+    "requiredIssues": ["GOD_CLASS"],
+    "severity": "MEDIUM",
+    "title": "Refactor incrementally",
+    "description": "Break the class gradually instead of a big rewrite.",
+    "example": "Extract one responsibility per iteration from {{className}}"
+  },
+  {
+    "requiredIssues": ["GOD_CLASS"],
+    "severity": "MEDIUM",
+    "title": "Introduce strategy pattern",
+    "description": "Replace large conditional logic with strategy implementations.",
+    "example": "Create Strategy implementations used by {{className}}"
+  },
+  {
+    "requiredIssues": ["GOD_CLASS"],
+    "severity": "MEDIUM",
+    "title": "Modularize internal logic",
+    "description": "Group logic into internal modules or packages.",
+    "example": "Move validation logic to validation package"
+  },
+
+
+  {
+    "requiredIssues": ["GOD_CLASS", "HIGH_COUPLING"],
+    "severity": "HIGH",
+    "title": "Refactor dependency graph first",
+    "description": "Reduce dependencies before splitting responsibilities.",
+    "example": "Introduce interfaces for external collaborators"
+  },
+  {
+    "requiredIssues": ["GOD_CLASS", "HIGH_COUPLING"],
+    "severity": "HIGH",
+    "title": "Apply Dependency Inversion",
+    "description": "Depend on abstractions instead of concrete classes.",
+    "example": "{{className}} depends on interfaces, not implementations"
+  },
+  {
+    "requiredIssues": ["GOD_CLASS", "HIGH_COUPLING"],
+    "severity": "HIGH",
+    "title": "Introduce Facade",
+    "description": "Expose a simplified interface while refactoring internals.",
+    "example": "{{className}}Facade shields consumers"
+  },
+  {
+    "requiredIssues": ["GOD_CLASS", "HIGH_COUPLING"],
+    "severity": "HIGH",
+    "title": "Break outgoing dependencies",
+    "description": "Identify and remove unnecessary external dependencies.",
+    "example": "Remove unused service calls from {{className}}"
+  },
+  {
+    "requiredIssues": ["GOD_CLASS", "HIGH_COUPLING"],
+    "severity": "HIGH",
+    "title": "Split by dependency groups",
+    "description": "Create new classes based on dependency clusters.",
+    "example": "Create ExternalIntegrationService"
+  },
+  {
+    "requiredIssues": ["GOD_CLASS", "HIGH_COUPLING"],
+    "severity": "HIGH",
+    "title": "Use events instead of direct calls",
+    "description": "Reduce coupling by using event-based communication.",
+    "example": "{{className}} publishes domain events"
+  },
+  {
+    "requiredIssues": ["GOD_CLASS", "HIGH_COUPLING"],
+    "severity": "HIGH",
+    "title": "Introduce adapter layer",
+    "description": "Isolate third-party dependencies behind adapters.",
+    "example": "Create PaymentGatewayAdapter"
+  },
+  {
+    "requiredIssues": ["GOD_CLASS", "HIGH_COUPLING"],
+    "severity": "HIGH",
+    "title": "Decouple infrastructure code",
+    "description": "Move infrastructure logic out of the core class.",
+    "example": "Extract persistence logic into repository"
+  },
+  {
+    "requiredIssues": ["GOD_CLASS", "HIGH_COUPLING"],
+    "severity": "HIGH",
+    "title": "Reduce fan-out first",
+    "description": "Lower outgoing dependencies before structural refactoring.",
+    "example": "Merge redundant service calls"
+  },
+  {
+    "requiredIssues": ["GOD_CLASS", "HIGH_COUPLING"],
+    "severity": "HIGH",
+    "title": "Refactor under tests",
+    "description": "Add characterization tests before refactoring.",
+    "example": "Lock behavior of {{className}} with tests"
+  },
+
+  {
+    "requiredIssues": ["ANEMIC_DOMAIN"],
+    "severity": "LOW",
+    "title": "Move behavior into domain model",
+    "description": "Shift business logic into the entity itself.",
+    "example": "Move calculateTotal() into Order entity"
+  },
+  {
+    "requiredIssues": ["ANEMIC_DOMAIN"],
+    "severity": "LOW",
+    "title": "Encapsulate invariants",
+    "description": "Ensure domain rules are enforced inside the model.",
+    "example": "Validate state inside entity methods"
+  },
+  {
+    "requiredIssues": ["ANEMIC_DOMAIN"],
+    "severity": "LOW",
+    "title": "Introduce rich domain methods",
+    "description": "Replace setters with meaningful behavior.",
+    "example": "replace setStatus() with approve()"
+  },
+  {
+    "requiredIssues": ["ANEMIC_DOMAIN"],
+    "severity": "LOW",
+    "title": "Reduce service-layer logic",
+    "description": "Move decision-making logic closer to data.",
+    "example": "Service delegates to entity methods"
+  },
+  {
+    "requiredIssues": ["ANEMIC_DOMAIN"],
+    "severity": "LOW",
+    "title": "Protect internal state",
+    "description": "Avoid exposing raw fields via getters/setters.",
+    "example": "Remove public setters"
+  },
+  {
+    "requiredIssues": ["ANEMIC_DOMAIN"],
+    "severity": "LOW",
+    "title": "Model behavior, not data",
+    "description": "Think in terms of domain actions.",
+    "example": "Order.place(), Order.cancel()"
+  },
+  {
+    "requiredIssues": ["ANEMIC_DOMAIN"],
+    "severity": "LOW",
+    "title": "Add domain validation",
+    "description": "Ensure rules are enforced at entity level.",
+    "example": "validateState() inside entity"
+  },
+  {
+    "requiredIssues": ["ANEMIC_DOMAIN"],
+    "severity": "LOW",
+    "title": "Refactor DTO usage",
+    "description": "Avoid using entities as pure DTOs.",
+    "example": "Separate DTO and domain model"
+  },
+  {
+    "requiredIssues": ["ANEMIC_DOMAIN"],
+    "severity": "LOW",
+    "title": "Introduce value objects",
+    "description": "Encapsulate concepts as value objects.",
+    "example": "Money, Address, Email"
+  },
+  {
+    "requiredIssues": ["ANEMIC_DOMAIN"],
+    "severity": "LOW",
+    "title": "Adopt DDD principles",
+    "description": "Model domain logic explicitly.",
+    "example": "Use aggregates and invariants"
+  }
+]

@@ -8,6 +8,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class RightPanelTabManager {
     private final TabPane rightTabPane;
@@ -17,7 +18,7 @@ public class RightPanelTabManager {
         this.rightTabPane = rightTabPane;
     }
 
-    public void openAnalyzeTab(Node analyzeContent) {
+    public void openAnalyzeTab(Supplier<Node> analyzeContent) {
         Tab tab = singletonTabs.get("ANALYZE");
 
         if (tab == null) {
@@ -26,12 +27,13 @@ public class RightPanelTabManager {
             singletonTabs.put("ANALYZE", tab);
             rightTabPane.getTabs().add(tab);
         }
-        tab.setOnClosed(event -> {
-            singletonTabs.clear();
-        });
 
-        tab.setContent(analyzeContent);
+        tab.setContent(null);
+        tab.setContent(analyzeContent.get());
         rightTabPane.getSelectionModel().select(tab);
+        tab.setOnClosed(event -> {
+            singletonTabs.remove("ANALYZE");
+        });
     }
 
     public void openOverviewTab(File file, Node overviewContent) {
@@ -65,6 +67,8 @@ public class RightPanelTabManager {
     }
 
 
-
-
+    public void clear() {
+        singletonTabs.clear();
+        overviewTabs.clear();
+    }
 }

@@ -1,7 +1,6 @@
-package com.example.bodhakfrontend.Models;
+package com.example.bodhakfrontend.Models.PackageAnalysis;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class EntryPointInfo {
     public enum ProjectType {
@@ -12,9 +11,8 @@ public class EntryPointInfo {
 
     private ProjectType projectType;
     private String primaryEntry;
-    private List<String> secondaryEntries = new ArrayList<>();
-
-    // getters + constructor
+    private  List<String> secondaryEntries;
+    private final Set<String> frameworkRoots=new HashSet<>();
 
     public EntryPointInfo(ProjectType projectType, String primaryEntry, List<String> secondaryEntries) {
         this.projectType = projectType;
@@ -33,5 +31,28 @@ public class EntryPointInfo {
     public String getPrimaryEntry() {
         return primaryEntry;
     }
+
+    public void addFrameworkRoot(String classsName) {
+        frameworkRoots.add(classsName);
+    }
+    public Set<String> getFrameworkRoots() {
+        return Collections.unmodifiableSet(frameworkRoots);
+    }
+    public Set<String> getAllRoots() {
+        Set<String> roots = new HashSet<>();
+        if(primaryEntry != null) {
+            roots.add(primaryEntry);
+        }
+        roots.addAll(secondaryEntries);
+        roots.addAll(frameworkRoots);
+        return roots;
+
+    }
+
+
+
+
 }
+
+
 
