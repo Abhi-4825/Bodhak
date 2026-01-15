@@ -1,9 +1,9 @@
 package com.example.bodhakfrontend.projectAnalysis.ui;
 
-import com.example.bodhakfrontend.Models.ClassHealthInfo;
-import com.example.bodhakfrontend.Models.DependencyNode;
+import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassContribution;
+import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
+import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
 import com.example.bodhakfrontend.Models.Severity;
-import com.example.bodhakfrontend.Models.WarningRule;
 import com.example.bodhakfrontend.projectAnalysis.warning.WarningBuilder;
 import com.example.bodhakfrontend.uiHelper.UiFeatures;
 import javafx.scene.Node;
@@ -12,33 +12,39 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.layout.Region;
 
-import java.util.Map;
+import java.util.List;
 
 public class classHealthAnalyserViewBuilder {
 
+    // get a new ClassInfo with null values
+   private ClassInfo getClassInfo(String name){
+       return new ClassInfo(name,null,null,null,null,null,null,
+               null,null,null,null,false,false,
+               false,-1,-1,-1,new ClassContribution(false,false,false,false,false,false));
+   }
 
 
 
-
-    protected Node buildClassHealthTree(Map<String, ClassHealthInfo> classHealthInfos,UiFeatures uiFeatures) {
+    protected Node buildClassHealthTree(ProjectInfo projectInfo, UiFeatures uiFeatures) {
+        List<ClassInfo> classInfos = projectInfo.getClassInfos();
         WarningBuilder warningBuilder = new WarningBuilder();
-        TreeItem<ClassHealthInfo> root = new TreeItem<>(new ClassHealthInfo("🏥 Class Health"));
+        TreeItem<ClassInfo> root = new TreeItem<>(getClassInfo("🏥 Class Health"));
         root.setExpanded(true);
-        TreeItem<ClassHealthInfo> risky = new TreeItem<>(new ClassHealthInfo("🔴 Risky Classes"));
-        TreeItem<ClassHealthInfo> warning= new TreeItem<>(new ClassHealthInfo("🟡 Warning Classes"));
-        TreeItem<ClassHealthInfo> healthy= new TreeItem<>(new ClassHealthInfo("🟢 Healthy Classes"));
+        TreeItem<ClassInfo> risky = new TreeItem<>(getClassInfo("🔴 Risky Classes"));
+        TreeItem<ClassInfo> warning= new TreeItem<>(getClassInfo("🟡 Warning Classes"));
+        TreeItem<ClassInfo> healthy= new TreeItem<>(getClassInfo("🟢 Healthy Classes"));
 
         risky.setExpanded(true);
         warning.setExpanded(false);
         healthy.setExpanded(false);
-        for(ClassHealthInfo ci : classHealthInfos.values()){
+        for(ClassInfo ci : classInfos){
 
-            TreeItem<ClassHealthInfo> classNode=new TreeItem<>(ci);
+            TreeItem<ClassInfo> classNode=new TreeItem<>(ci);
             classNode.getChildren().add(
-                    new TreeItem<>(new ClassHealthInfo("LOC :"+ci.getLoc()))
+                    new TreeItem<>(getClassInfo("LOC :"+ci.getLinesOfCode()))
             );
-            classNode.getChildren().add(new TreeItem<>(new ClassHealthInfo("Depends On: "+ci.getOutgoingDependencies() + " Classes")));
-            classNode.getChildren().add(new TreeItem<>(new ClassHealthInfo("Used By: "+ci.getIncomingDependencies() + " Classes")));
+            classNode.getChildren().add(new TreeItem<>(getClassInfo("Depends On: "+ci.getDependsOn().size() + " Classes")));
+            classNode.getChildren().add(new TreeItem<>(getClassInfo("Used By: "+ci.getUsedBy().size() + " Classes")));
             var warnings=warningBuilder.buildWarnings(ci);
             boolean hasHigh=warnings.stream().anyMatch(w->
                     w.getSeverity()== Severity.HIGH);
@@ -55,9 +61,9 @@ public class classHealthAnalyserViewBuilder {
 
         }
         root.getChildren().addAll(risky,warning,healthy);
-        TreeView<ClassHealthInfo> treeView = new TreeView<>(root);
-        treeView.setCellFactory(tv -> new TreeCell<ClassHealthInfo>() {
-            protected void updateItem(ClassHealthInfo item, boolean empty) {
+        TreeView<ClassInfo> treeView = new TreeView<>(root);
+        treeView.setCellFactory(tv -> new TreeCell<ClassInfo>() {
+            protected void updateItem(ClassInfo item, boolean empty) {
                 super.updateItem(item, empty);
 
                 if (empty || item == null) {
@@ -90,25 +96,21 @@ public class classHealthAnalyserViewBuilder {
 
     private void setTreeViewClicker(
             UiFeatures uiFeatures,
-            TreeView<ClassHealthInfo> treeView
+            TreeView<ClassInfo> treeView
     ) {
         treeView.setOnMouseClicked(event -> {
 
             // Only react on double click
             if (event.getClickCount() != 2) return;
 
-            TreeItem<ClassHealthInfo> selectedItem =
+            TreeItem<ClassInfo> selectedItem =
                     treeView.getSelectionModel().getSelectedItem();
 
             if (selectedItem == null) return;
 
-            ClassHealthInfo info = selectedItem.getValue();
+            ClassInfo info = selectedItem.getValue();
 
-            // 🔒 Guard: only real class nodes have DependencyNode
-            DependencyNode dependencyNode = info.getDependencyNode();
-            if (dependencyNode == null) return;
-
-            uiFeatures.openAndHighlight(dependencyNode.getClassName(),dependencyNode.getBeginLine(),dependencyNode.getBeginColumn(),dependencyNode.getSourceFile());
+            uiFeatures.openAndHighlight(info.getClassName(),info.getBeginLine(),info.getBeginColumn(),info.getSourceFile());
         });
     }
 

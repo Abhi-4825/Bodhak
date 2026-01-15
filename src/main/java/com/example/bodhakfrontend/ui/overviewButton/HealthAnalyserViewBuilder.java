@@ -1,6 +1,6 @@
 package com.example.bodhakfrontend.ui.overviewButton;
 
-import com.example.bodhakfrontend.Models.ClassHealthInfo;
+import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
 import com.example.bodhakfrontend.Models.FixSuggestion;
 import com.example.bodhakfrontend.Models.WarningRule;
 import com.example.bodhakfrontend.projectAnalysis.fixes.FixSuggestionEngine;
@@ -27,7 +27,7 @@ import java.util.Optional;
 
 public class HealthAnalyserViewBuilder {
 
-    public Node build(ClassHealthInfo info) {
+    public Node build(ClassInfo info) {
 
         VBox root = new VBox(10);
         root.setPadding(new Insets(10));
@@ -44,19 +44,19 @@ public class HealthAnalyserViewBuilder {
         l.getStyleClass().add("label-title");
         return l;
     }
-    private Node classHeader(ClassHealthInfo info) {
+    private Node classHeader(ClassInfo info) {
         VBox box = new VBox(4);
         box.getChildren().add(new Label("Class: " + info.getClassName()));
-        box.getChildren().add(new Label("Package: " + info.getPackage()));
+        box.getChildren().add(new Label("Package: " + info.getPackageName()));
         return box;
     }
-    private Node metrics(ClassHealthInfo info) {
+    private Node metrics(ClassInfo info) {
         VBox box = new VBox(6);
 
-        box.getChildren().add(metric("LOC", info.getLoc(), info.getLoc() > 300));
-        box.getChildren().add(metric("Methods", info.getMethodCount(), info.getMethodCount() > 15));
-        box.getChildren().add(metric("Fan-In", info.getIncomingDependencies(), info.getIncomingDependencies() > 8));
-        box.getChildren().add(metric("Fan-Out", info.getOutgoingDependencies(), info.getOutgoingDependencies() > 10));
+        box.getChildren().add(metric("LOC", info.getLinesOfCode(), info.getLinesOfCode() > 300));
+        box.getChildren().add(metric("Methods", info.getMethods().size(), info.getMethods().size() > 15));
+        box.getChildren().add(metric("Fan-In", info.getUsedBy().size(), info.getUsedBy().size() > 8));
+        box.getChildren().add(metric("Fan-Out", info.getDependsOn().size(), info.getDependsOn().size() > 10));
 //        box.getChildren().add(metric("Cycles", info.getCycleCount(), info.getCycleCount() > 0));
 //        box.getChildren().add(metric("Hotspot", info.get, info.getHotspotScore() > 70));
 
@@ -76,7 +76,7 @@ public class HealthAnalyserViewBuilder {
         return row;
     }
 
-    private Node warnings(ClassHealthInfo info) {
+    private Node warnings(ClassInfo info) {
 
         VBox box = new VBox(8);
 
@@ -162,7 +162,7 @@ private Node thinkingPane(String text){
 
         return box;
     }
-    private Node aiFixSection(ClassHealthInfo info) {
+    private Node aiFixSection(ClassInfo info) {
 
         VBox container = new VBox(10);
         container.setPadding(new Insets(8));

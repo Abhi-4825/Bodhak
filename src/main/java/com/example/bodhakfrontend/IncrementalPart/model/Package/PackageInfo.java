@@ -1,18 +1,17 @@
-package com.example.bodhakfrontend.Models.PackageAnalysis;
+package com.example.bodhakfrontend.IncrementalPart.model.Package;
+
+import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
 
 
-import com.example.bodhakfrontend.IncrementalPart.model.Package.PackageWarning;
-
-import java.util.HashSet;
 import java.util.Set;
 
 
 public class PackageInfo {
 
     private final String packageName;
-    private  Set<PackageWarning> warnings=new HashSet<>();
+    private  final Set<PackageWarning> warnings;
     // Classes inside this package
-    private final Set<String> classes;
+    private final Set<ClassInfo> classes;
 
     // Packages this package depends on
     private final Set<String> dependsOn;
@@ -20,24 +19,30 @@ public class PackageInfo {
     // Packages that depend on this package
     private final Set<String> usedBy;
     // cycles for Circular dependencies
-    private Set<Set<String>> circularDependencies=new HashSet<>();
-    // (Later) circular, warnings, metrics
+    private final Set<Set<String>> circularDependencies;
+    // circular, warnings, metrics
     private boolean partOfCycle;
 
     public PackageInfo(
             String packageName,
-            Set<String> classes,
+            Set<ClassInfo> classes,
             Set<String> dependsOn,
-            Set<String> usedBy
+            Set<String> usedBy,
+            Set<Set<String>> circularDependencies,
+            boolean partOfCycle,
+            Set<PackageWarning> warnings
     ) {
         this.packageName = packageName;
         this.classes = classes;
         this.dependsOn = dependsOn;
         this.usedBy = usedBy;
+        this.circularDependencies=circularDependencies;
+        this.partOfCycle=partOfCycle;
+        this.warnings=warnings;
     }
 
     public String getPackageName() { return packageName; }
-    public Set<String> getClasses() { return classes; }
+    public Set<ClassInfo> getClasses() { return classes; }
     public Set<String> getDependsOn() { return dependsOn; }
     public Set<String> getUsedBy() { return usedBy; }
 

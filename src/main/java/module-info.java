@@ -12,6 +12,8 @@ module com.example.bodhakfrontend {
     requires org.javassist;
     requires com.fasterxml.jackson.databind;
     requires org.apache.commons.io;
+    requires com.example.bodhakfrontend;
+
     opens com.example.bodhakfrontend to javafx.fxml;
     exports com.example.bodhakfrontend;
     exports com.example.bodhakfrontend.Parser;
@@ -27,4 +29,5 @@ module com.example.bodhakfrontend {
     opens com.example.bodhakfrontend.Builder to javafx.fxml;
     opens com.example.bodhakfrontend.Models.PackageAnalysis to com.fasterxml.jackson.databind;
     opens com.example.bodhakfrontend.Models.Incremental to com.fasterxml.jackson.databind;
+    opens com.example.bodhakfrontend.IncrementalPart.model.Package to com.fasterxml.jackson.databind;
 }

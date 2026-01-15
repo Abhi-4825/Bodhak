@@ -1,7 +1,10 @@
 package com.example.bodhakfrontend.util;
 
+import com.example.bodhakfrontend.IncrementalPart.model.Project.EntryPointInfo;
+import com.example.bodhakfrontend.IncrementalPart.model.Project.Hotspots;
+import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
+import com.example.bodhakfrontend.IncrementalPart.model.Project.UnusedClassInfo;
 import com.example.bodhakfrontend.Models.*;
-import com.example.bodhakfrontend.Models.PackageAnalysis.EntryPointInfo;
 import com.example.bodhakfrontend.Models.PackageAnalysis.ProjectAnalysisResult;
 import javafx.stage.FileChooser;
 
@@ -9,7 +12,7 @@ import java.io.File;
 import java.io.PrintWriter;
 
 public class Exporter {
-    public void exportAnalysis(ProjectAnalysisResult result) {
+    public void exportAnalysis(ProjectInfo result) {
 
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Export Analysis");
@@ -24,38 +27,38 @@ public class Exporter {
 
             // Project Summary
             out.println("=== PROJECT SUMMARY ===");
-            out.println("Type: " + result.getPackageAnalysisInfo()
-                    .getEntryPointInfo().getProjectType());
-            out.println("Folders: " + result.getPackageAnalysisInfo().getFolderCount());
-            out.println("Files: " + result.getPackageAnalysisInfo().getFileCount());
+            out.println("Type: " + result
+                    .getEntryPointInfo().getProjectFlavors().toString());
+            out.println("Folders: " + result.getKnownFolders().size());
+            out.println("Files: " + result.getKnownFiles().size());
             out.println();
 
             // Entry Points
             out.println("=== ENTRY POINTS ===");
-            EntryPointInfo ep = result.getPackageAnalysisInfo().getEntryPointInfo();
-            out.println("Primary: " + ep.getPrimaryEntry());
-            for (String s : ep.getSecondaryEntries()) {
-                out.println("Secondary: " + s);
+            EntryPointInfo ep = result.getEntryPointInfo();
+            out.println("Primary: " + ep.getPrimaryEntry().className());
+            for (EntryPointInfo.Entry s : ep.getSecondaryEntries()) {
+                out.println("Secondary: " + s.className());
             }
             out.println();
 
             // Health Summary
             out.println("=== PROJECT HEALTH ===");
-            ProjectHealthSummary hs = result.getProjectHealthSummary();
-            out.println("Total Classes: " + hs.getTotalClasses());
-            out.println("Healthy: " + hs.getHealthyClasses());
-            out.println("Warnings: " + hs.getClassesWithWarnings());
-            out.println("God Classes: " + hs.getGodClasses());
-            out.println("Circular: " + hs.getCircularClasses());
+
+            out.println("Total Classes: " + result.getTotalClasses());
+            out.println("Healthy: " + result.getHealthyClasses());
+            out.println("Warnings: " + result.getClassesWithWarnings());
+            out.println("God Classes: " + result.getGodClasses());
+            out.println("Circular: " + result.getCircularClasses());
             out.println();
 
             // Hotspots
             out.println("=== HOTSPOTS ===");
-            for (HotspotInfo h : result.getHotspotInfos()) {
+            for (Hotspots h : result.getHotspotClasses()) {
                 out.println(
-                        h.getClassName()
+                        h.getClassInfo().getClassName()
                                 + " | Score=" + h.getScore()
-                                + " | LOC=" + h.getLoc()
+                                + " | LOC=" + h.getClassInfo().getLinesOfCode()
                 );
             }
             out.println();
@@ -63,7 +66,7 @@ public class Exporter {
             // Unused Classes
             out.println("=== UNUSED CLASSES ===");
             for (UnusedClassInfo uc : result.getUnusedClassInfos()) {
-                out.println(uc.getClassName() + " | LOC=" + uc.getLoc());
+                out.println(uc.getClassInfo().getClassName() + " | LOC=" + uc.getClassInfo().getLinesOfCode());
             }
 
         } catch (Exception ex) {

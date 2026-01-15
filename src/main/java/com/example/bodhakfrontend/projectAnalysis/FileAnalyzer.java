@@ -168,7 +168,6 @@ public FileEntryContribution analyzeEntryContribution(Path javaFile){
                                     .map(String::trim)
                                     .filter(this::isCodeLine)
                                     .count();
-                            CompilationUnit cu = cache.get(p);
                            largestFiles.add(new PackageAnalysisInfo.LargestFileInfo(p.getFileName().toString(),p.toFile(),loc));
                         } catch (Exception ignored) {}
                     });

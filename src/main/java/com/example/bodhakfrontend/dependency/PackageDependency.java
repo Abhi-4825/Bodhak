@@ -2,7 +2,7 @@ package com.example.bodhakfrontend.dependency;
 
 import com.example.bodhakfrontend.Models.PackageAnalysis.PackageInfo;
 import com.example.bodhakfrontend.Models.ClassDependencyInfo;
-import com.example.bodhakfrontend.Models.PackageWarning;
+import com.example.bodhakfrontend.IncrementalPart.model.Package.PackageWarning;
 import com.example.bodhakfrontend.Models.DependencyNode;
 
 import java.util.*;

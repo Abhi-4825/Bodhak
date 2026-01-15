@@ -1,9 +1,12 @@
 package com.example.bodhakfrontend.projectAnalysis.ui;
 
-import com.example.bodhakfrontend.Models.*;
-import com.example.bodhakfrontend.Models.PackageAnalysis.PackageAnalysisInfo;
-import com.example.bodhakfrontend.Models.PackageAnalysis.PackageInfo;
-import com.example.bodhakfrontend.Models.PackageAnalysis.ProjectAnalysisResult;
+import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
+import com.example.bodhakfrontend.IncrementalPart.model.Package.PackageInfo;
+import com.example.bodhakfrontend.IncrementalPart.model.Project.EntryPointInfo;
+import com.example.bodhakfrontend.IncrementalPart.model.Project.Hotspots;
+import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
+import com.example.bodhakfrontend.IncrementalPart.model.Project.UnusedClassInfo;
+import com.example.bodhakfrontend.IncrementalPart.model.Package.PackageWarning;
 import com.example.bodhakfrontend.uiHelper.UiFeatures;
 import com.example.bodhakfrontend.util.Exporter;
 import javafx.geometry.Insets;
@@ -29,7 +32,7 @@ public class AnalysisViewBuilder {
 
     }
 
-    public Node build(ProjectAnalysisResult projectAnalysisResult) {
+    public Node build(ProjectInfo projectInfo) {
        VBox root=new VBox();
         root.setPadding(new Insets(10));
         root.getStyleClass().add("card");
@@ -40,15 +43,11 @@ public class AnalysisViewBuilder {
         Button exportBtn = new Button("Export");
         exportbar.getChildren().add(exportBtn);
         exportBtn.setOnAction(e -> {
-                 exporter.exportAnalysis(projectAnalysisResult);
+                 exporter.exportAnalysis(projectInfo);
         });
         container.getChildren().add(exportbar);
-        analyzeView(root,projectAnalysisResult.getPackageAnalysisInfo(),
-                projectAnalysisResult.getPackageInfoMap(),
-                projectAnalysisResult.getClassInfos(),
-                projectAnalysisResult.getProjectHealthSummary(),
-                projectAnalysisResult.getClassHealthInfoMap(),uiFeatures,
-                projectAnalysisResult.getHotspotInfos(),projectAnalysisResult.getUnusedClassInfos()
+        analyzeView(projectInfo,root,
+               uiFeatures
                 );
         container.getChildren().add(root);
         ScrollPane scrollPane = new ScrollPane(container);
@@ -57,19 +56,19 @@ public class AnalysisViewBuilder {
         return scrollPane;
     }
 
-    private void analyzeView(VBox root, PackageAnalysisInfo packageAnalysisInfo, Map<String, PackageInfo> packageInfoMap, List<ClassInfo> classInfos, ProjectHealthSummary projectHealthSummary, Map<String, ClassHealthInfo> classHealthInfoMap, UiFeatures uiFeatures, List<HotspotInfo> hotspots, List<UnusedClassInfo> unusedClasses) {
-        createSection(root,"/icons/summary.png","Project Summary",buildProjectSummary(packageAnalysisInfo),"icon-blue",true);
-        createSection(root,"/icons/entryPoint.png","Entry Points",buildEntryPointSection(packageAnalysisInfo),"icon-blue",true);
-        createSection(root,"/icons/packageOverview.png","Package Overview",buildPackageOverView(packageInfoMap),"icon-blue",false);
-        createSection(root,"/icons/dependency.png","Package Dependencies",buildPackageDependencyTreeView(packageInfoMap),"icon-blue",false);
-        createSection(root,"/icons/largestFiles.png","Largest Files",buildLargestFileView(packageAnalysisInfo),"icon-blue",false);
-        createSection(root,"/icons/classMetric.png","Class Metrics |" + classInfos.size() + " classes",buildClassMetricsView(classInfos),"icon-blue",false);
-        createSection(root,"/icons/health.png","Project Health",buildHealthSummary(projectHealthSummary),"icon-blue",false);
-        createSection(root,"/icons/health.png","Class Health Details",  classHealthAnalyserViewBuilder.buildClassHealthTree(classHealthInfoMap, uiFeatures),"icon-blue",false);
+    private void analyzeView(ProjectInfo projectInfo,VBox root, UiFeatures uiFeatures) {
+        createSection(root,"/icons/summary.png","Project Summary",buildProjectSummary(projectInfo),"icon-blue",true);
+        createSection(root,"/icons/entryPoint.png","Entry Points",buildEntryPointSection(projectInfo),"icon-blue",true);
+        createSection(root,"/icons/packageOverview.png","Package Overview",buildPackageOverView(projectInfo),"icon-blue",false);
+        createSection(root,"/icons/dependency.png","Package Dependencies",buildPackageDependencyTreeView(projectInfo),"icon-blue",false);
+        createSection(root,"/icons/largestFiles.png","Largest Files",buildLargestFileView(projectInfo),"icon-blue",false);
+        createSection(root,"/icons/classMetric.png","Class Metrics |" + projectInfo.getClassInfos().size() + " classes",buildClassMetricsView(projectInfo),"icon-blue",false);
+        createSection(root,"/icons/health.png","Project Health",buildHealthSummary(projectInfo),"icon-blue",false);
+        createSection(root,"/icons/health.png","Class Health Details",  classHealthAnalyserViewBuilder.buildClassHealthTree(projectInfo, uiFeatures),"icon-blue",false);
 
-        createSection(root,"/icons/hotspot.png","Risk Hotspots", buildHotspotView(hotspots, uiFeatures),"icon-blue",false);
+        createSection(root,"/icons/hotspot.png","Risk Hotspots", buildHotspotView(projectInfo, uiFeatures),"icon-blue",false);
         createSection(root,"/icons/unused.png","🧹 Unused or Suspicious Classes",
-                buildUnusedClassView(unusedClasses, uiFeatures),"icon-blue",false);
+                buildUnusedClassView(projectInfo, uiFeatures),"icon-blue",false);
 
 
 
@@ -77,17 +76,17 @@ public class AnalysisViewBuilder {
 
 
     private GridPane buildProjectSummary(
-            PackageAnalysisInfo result
+            ProjectInfo projectInfo
     ) {
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(8);
 
         int row = 0;
-        grid.addRow(row++, new Label("Project Type:"), new Label(result.getEntryPointInfo().getProjectType().toString()));
-        grid.addRow(row++, new Label("Folders:"), new Label(String.valueOf(result.getFolderCount())));
-        grid.addRow(row++, new Label("Files:"), new Label(String.valueOf(result.getFileCount())));
-        Map<String, Set<Path>> map = result.getLaguagesCount();
+        grid.addRow(row++, new Label("Project Type:"), new Label(projectInfo.getEntryPointInfo().getProjectFlavors().toString()));
+        grid.addRow(row++, new Label("Folders:"), new Label(String.valueOf(projectInfo.getKnownFolders().size())));
+        grid.addRow(row++, new Label("Files:"), new Label(String.valueOf(projectInfo.getKnownFiles().size())));
+        Map<String, Set<Path>> map = projectInfo.getLaguageCountMap();
         if (!map.isEmpty()) {
             for (String key : map.keySet()) {
                 grid.addRow(row++, new Label(key + ":"), new Label(String.valueOf(map.get(key).size())));
@@ -97,27 +96,27 @@ public class AnalysisViewBuilder {
         return grid;
     }
 
-    private Node buildEntryPointSection(PackageAnalysisInfo result) {
+    private Node buildEntryPointSection(ProjectInfo projectInfo) {
         VBox box = new VBox();
         box.getStyleClass().add("card");
         box.setPadding(new Insets(5));
-        Label typeLabel = new Label("Project Type:" + result.getEntryPointInfo().getProjectType().toString());
+        Label typeLabel = new Label("Project Type:" + projectInfo.getEntryPointInfo().getProjectFlavors().toString());
         typeLabel.getStyleClass().add("label-bold");
         box.getChildren().add(typeLabel);
         // for Primary Entry Point
-        if (result.getEntryPointInfo().getPrimaryEntry() != null) {
+        if (projectInfo.getEntryPointInfo().getPrimaryEntry() != null) {
             Label primaryTitle = new Label("Primary Entry point:");
             primaryTitle.getStyleClass().add("label-bold");
-            Label primary = new Label("• " + result.getEntryPointInfo().getPrimaryEntry().toString());
+            Label primary = new Label("• " + projectInfo.getEntryPointInfo().getPrimaryEntry().toString());
             box.getChildren().addAll(primaryTitle, primary);
         }
         // for secondary points
-        if (!result.getEntryPointInfo().getSecondaryEntries().isEmpty()) {
+        if (!projectInfo.getEntryPointInfo().getSecondaryEntries().isEmpty()) {
             Label secondaryTitle = new Label("Other possible Entry Point:");
             secondaryTitle.getStyleClass().add("label-bold");
             box.getChildren().add(secondaryTitle);
-            for (String ep : result.getEntryPointInfo().getSecondaryEntries()) {
-                box.getChildren().add(new Label("• " + ep));
+            for (EntryPointInfo.Entry ep : projectInfo.getEntryPointInfo().getSecondaryEntries()) {
+                box.getChildren().add(new Label("• " + ep.className()));
             }
         }
 
@@ -125,19 +124,20 @@ public class AnalysisViewBuilder {
     }
 
 
-    private Node buildPackageOverView(Map<String, PackageInfo> result) {
+    private Node buildPackageOverView(ProjectInfo projectInfo) {
+        List<PackageInfo> packageInfos = projectInfo.getPackageInfos();
         VBox box = new VBox();
         box.setPadding(new Insets(5));
-        if (result.isEmpty()) {
+        if (packageInfos.isEmpty()) {
             box.getChildren().add(new Label("No package found!"));
             return box;
         }
-        for (String key : result.keySet()) {
+        for (PackageInfo key : packageInfos) {
             HBox packageHBox = new HBox(2);
             packageHBox.getStyleClass().add("package-row");
-            Label packageLabel = new Label(key);
+            Label packageLabel = new Label(key.getPackageName());
             packageLabel.getStyleClass().add("label-bold");
-            int size = result.get(key).getClasses().size();
+            int size = key.getClasses().size();
             Label classCount = new Label("• Classes:" + String.valueOf(size));
             packageHBox.getChildren().addAll(packageLabel, classCount);
             box.getChildren().addAll(packageHBox);
@@ -145,7 +145,7 @@ public class AnalysisViewBuilder {
         return box;
     }
 
-    private Node buildLargestFileView(PackageAnalysisInfo result) {
+    private Node buildLargestFileView(ProjectInfo result) {
         VBox box = new VBox(8);
         box.setPadding(new Insets(5));
         if (result == null) {
@@ -153,43 +153,44 @@ public class AnalysisViewBuilder {
             return box;
         }
         int rank = 1;
-        for (PackageAnalysisInfo.LargestFileInfo file : result.getLargetFiles()) {
+        for (ProjectInfo.LargestFileInfo lf : result.getLargetFiles()) {
             HBox fileHBox = new HBox();
             fileHBox.getStyleClass().add("file-row");
-            Label fileLabel = new Label(rank++ + ". " + file.getName());
+            Label fileLabel = new Label(rank++ + ". " + lf.getName());
             fileLabel.getStyleClass().add("label-bold");
             fileHBox.setOnMouseClicked(event -> {
-                uiFeatures.openFile(file.getSourceFile());
+                uiFeatures.openFile(lf.getSourceFile());
 
             });
-            Label loc = new Label("• Lines of Code: " + file.getLoc());
+            Label loc = new Label("• Lines of Code: " + lf.getLoc());
             fileHBox.getChildren().addAll(fileLabel, loc);
             box.getChildren().addAll(fileHBox);
         }
         return box;
     }
 
-    private GridPane buildHealthSummary(ProjectHealthSummary summary) {
+    private GridPane buildHealthSummary(ProjectInfo projectInfo) {
 
         GridPane grid = new GridPane();
         grid.setHgap(12);
         grid.setVgap(8);
 
         int row = 0;
-        grid.addRow(row++, new Label("Total Classes:"), new Label(String.valueOf(summary.getTotalClasses())));
-        grid.addRow(row++, new Label("✔ Healthy Classes:"), new Label(String.valueOf(summary.getHealthyClasses())));
-        grid.addRow(row++, new Label("⚠ Classes with Warnings:"), new Label(String.valueOf(summary.getClassesWithWarnings())));
-        grid.addRow(row++, new Label("🔥 God Classes:"), new Label(String.valueOf(summary.getGodClasses())));
-        grid.addRow(row++, new Label("🔁 Classes in Cycles:"), new Label(String.valueOf(summary.getCircularClasses())));
-        grid.addRow(row++, new Label("🔗 Highly Coupled:"), new Label(String.valueOf(summary.getHighlyCoupledClasses())));
+        grid.addRow(row++, new Label("Total Classes:"), new Label(String.valueOf(projectInfo.getTotalClasses())));
+        grid.addRow(row++, new Label("✔ Healthy Classes:"), new Label(String.valueOf(projectInfo.getHealthyClasses())));
+        grid.addRow(row++, new Label("⚠ Classes with Warnings:"), new Label(String.valueOf(projectInfo.getClassesWithWarnings())));
+        grid.addRow(row++, new Label("🔥 God Classes:"), new Label(String.valueOf(projectInfo.getGodClasses())));
+        grid.addRow(row++, new Label("🔁 Classes in Cycles:"), new Label(String.valueOf(projectInfo.getCircularClasses())));
+        grid.addRow(row++, new Label("🔗 Highly Coupled:"), new Label(String.valueOf(projectInfo.getHighlyCoupledClasses())));
 
         return grid;
     }
 
-    private TreeItem<String> buildPackageTree(Map<String, PackageInfo> packageInfos) {
+    private TreeItem<String> buildPackageTree(ProjectInfo projectInfo) {
+        List<PackageInfo> packageInfos = projectInfo.getPackageInfos();
         TreeItem<String> root = new TreeItem<>("📦 Packages");
         root.setExpanded(true);
-        for (PackageInfo packageInfo : packageInfos.values()) {
+        for (PackageInfo packageInfo : packageInfos) {
             root.getChildren().add(buildPackageNode(packageInfo));
         }
         return root;
@@ -269,9 +270,10 @@ public class AnalysisViewBuilder {
     }
 
     private Node buildPackageDependencyTreeView(
-            Map<String, PackageInfo> packageInfos
+            ProjectInfo projectInfo
     ) {
-        TreeItem<String> rootItem = buildPackageTree(packageInfos);
+        Map<String,PackageInfo> packageInfos=projectInfo.getPackageInfoMap();
+        TreeItem<String> rootItem = buildPackageTree(projectInfo);
 
         TreeView<String> treeView = new TreeView<>(rootItem);
         treeView.setCellFactory(tv -> new TreeCell<>() {
@@ -345,8 +347,8 @@ public class AnalysisViewBuilder {
 
 
     // Risk hotspot zone
-    private Node buildHotspotView(List<HotspotInfo> hotspots, UiFeatures uiFeatures) {
-
+    private Node buildHotspotView(ProjectInfo projectInfo, UiFeatures uiFeatures) {
+        List<Hotspots> hotspots = projectInfo.getHotspotClasses();
         VBox box = new VBox(8);
         box.setPadding(new Insets(5));
 
@@ -356,24 +358,24 @@ public class AnalysisViewBuilder {
         }
 
         int rank = 1;
-        for (HotspotInfo hs : hotspots) {
+        for (Hotspots hs : hotspots) {
 
+              ClassInfo ci = hs.getClassInfo();
             VBox card = new VBox(4);
 
-            DependencyNode dependencyNode = hs.getDependencyNode();
             card.getStyleClass().add("hotspot-card");
             card.setPadding(new Insets(8));
 
             Label title = new Label(
-                    rank++ + ". " + hs.getClassName()
+                    rank++ + ". " + ci.getClassName()
                             + " (Risk Score: " + hs.getScore() + ")"
             );
             title.getStyleClass().add("label-bold");
 
             Label meta = new Label(
-                    "LOC: " + hs.getLoc()
-                            + " | Fan-in: " + hs.getFanIn()
-                            + " | Fan-out: " + hs.getFanOut()
+                    "LOC: " + ci.getLinesOfCode()
+                            + " | Fan-in: " + ci.getUsedBy().size()
+                            + " | Fan-out: " + ci.getDependsOn().size()
             );
 
             Label reasons = new Label("⚠ " + String.join(", ", hs.getReasons()));
@@ -383,7 +385,7 @@ public class AnalysisViewBuilder {
 
             // 🔗 click navigation
             card.setOnMouseClicked(e -> {
-                        uiFeatures.openAndHighlight(dependencyNode.getClassName(),dependencyNode.getBeginLine(),dependencyNode.getBeginColumn(),dependencyNode.getSourceFile());
+                        uiFeatures.openAndHighlight(ci.getClassName(),ci.getBeginLine(),ci.getBeginColumn(),ci.getSourceFile());
                     }
             );
 
@@ -395,11 +397,11 @@ public class AnalysisViewBuilder {
 
     // for unused Classes
     private Node buildUnusedClassView(
-            List<UnusedClassInfo> unused, UiFeatures uiFeatures
+           ProjectInfo projectInfo, UiFeatures uiFeatures
     ) {
         VBox box = new VBox(8);
         box.setPadding(new Insets(5));
-
+         Set<UnusedClassInfo> unused = projectInfo.getUnusedClassInfos();
         if (unused.isEmpty()) {
             box.getChildren().add(new Label("✅ No Unused Class Found"));
             return box;
@@ -407,26 +409,26 @@ public class AnalysisViewBuilder {
 
 
         for (UnusedClassInfo unusedClass : unused) {
-
+             ClassInfo ci = unusedClass.getClassInfo();
             VBox card = new VBox(4);
             card.getStyleClass().add("unused-class-card");
             card.setPadding(new Insets(8));
 
-            Label title = new Label(unusedClass.getClassName() +" | "+ unusedClass.getLoc());
+            Label title = new Label(ci.getClassName() +" | "+ ci.getLinesOfCode());
             title.getStyleClass().add("label-bold");
 
-            Label meta = new Label("Package Name: " + unusedClass.getPackageName()
+            Label meta = new Label("Package Name: " + ci.getPackageName()
             );
 
             Label reasons = new Label("⚠ " + unusedClass.getReason());
             reasons.setWrapText(true);
 
             card.getChildren().addAll(title, meta, reasons);
-            DependencyNode dependencyNode = unusedClass.getDependencyNode();
+
 
             // 🔗 click navigation
             card.setOnMouseClicked(e -> {
-                        uiFeatures.openAndHighlight(dependencyNode.getClassName(),dependencyNode.getBeginLine(),dependencyNode.getBeginColumn(),dependencyNode.getSourceFile());
+                        uiFeatures.openAndHighlight(ci.getClassName(),ci.getBeginLine(),ci.getBeginColumn(),ci.getSourceFile());
                     }
             );
 
@@ -435,8 +437,8 @@ public class AnalysisViewBuilder {
 
         return box;
     }
-    private Node buildClassMetricsView(List<ClassInfo> classes) {
-
+    private Node buildClassMetricsView(ProjectInfo projectInfo) {
+        List<ClassInfo> classes=projectInfo.getClassInfos();
         if (classes == null || classes.isEmpty()) {
             return new Label("No Class Found!");
         }
@@ -444,7 +446,7 @@ public class AnalysisViewBuilder {
         List<ClassInfo> sorted =
                 classes.stream()
                         .sorted(Comparator.comparing(
-                                ClassInfo::getName,
+                                ClassInfo::getClassName,
                                 String.CASE_INSENSITIVE_ORDER
                         ))
                         .toList();
@@ -491,14 +493,14 @@ public class AnalysisViewBuilder {
                 return;
             }
 
-            title.setText(cls.getName());
+            title.setText(cls.getClassName());
             type.setText(cls.getKind().toString());
-            pkg.setText(cls.getPkg());
+            pkg.setText(cls.getPackageName());
 
             members.setText(
-                    "Methods: " + cls.getMethodCount()
-                            + " | Fields: " + cls.getFieldCount()
-                            + " | Constructors: " + cls.getConstructorCount()
+                    "Methods: " + cls.getMethods().size()
+                            + " | Fields: " + cls.getFields().size()
+                            + " | Constructors: " + cls.getConstructors().size()
             );
 
             size.setText(String.valueOf(cls.getLinesOfCode()));
@@ -514,7 +516,7 @@ public class AnalysisViewBuilder {
 
             setOnMouseClicked(e -> {
                 uiFeatures.openAndHighlight(
-                        cls.getName(),
+                        cls.getClassName(),
                         cls.getBeginLine(),
                         cls.getBeginColumn(),
                         cls.getSourceFile()

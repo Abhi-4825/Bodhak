@@ -1,10 +1,13 @@
 package com.example.bodhakfrontend;
 
-import com.example.bodhakfrontend.Builder.ClassInfoBuilder;
+
 import com.example.bodhakfrontend.Builder.ClassDependencyInfoBuilder;
 import com.example.bodhakfrontend.Builder.ProjectAnalysisResultBuilder;
-import com.example.bodhakfrontend.Models.ClassDependencyInfo;
-import com.example.bodhakfrontend.Models.DependencyNode;
+
+import com.example.bodhakfrontend.IncrementalPart.Builder.ClassDependecygraphBuilder;
+import com.example.bodhakfrontend.IncrementalPart.Builder.ClassInfoBuilder;
+import com.example.bodhakfrontend.IncrementalPart.Builder.PackageInfoBuilder;
+import com.example.bodhakfrontend.IncrementalPart.Builder.ProjectInfoBuilder;
 import com.example.bodhakfrontend.Models.PackageAnalysis.ProjectAnalysisResult;
 import com.example.bodhakfrontend.Overview.ConstructorInfoBuilder;
 import com.example.bodhakfrontend.Overview.MethodInfoBuilder;
@@ -15,6 +18,7 @@ import com.example.bodhakfrontend.dependency.CircularDependency;
 import com.example.bodhakfrontend.dependency.PackageDependency;
 import com.example.bodhakfrontend.projectAnalysis.*;
 import com.example.bodhakfrontend.util.BuildClassIndex;
+import com.example.bodhakfrontend.util.ClassNameResolver;
 import com.example.bodhakfrontend.util.MultiModuleSourceRootDetector;
 import com.example.bodhakfrontend.util.ParseCache;
 
@@ -34,10 +38,12 @@ public class ProjectContext {
     public final Parsermanager parsermanager;
     public final MethodInfoBuilder methodInfoBuilder;
     public final ConstructorInfoBuilder constructorInfoBuilder;
-    public final ClassInfoBuilder classInfoBuilder;
-
     public final ProjectAnalysisResultBuilder analysisResultBuilder;
-
+    public final ClassNameResolver  classNameResolver;
+    public final ClassInfoBuilder classInfoBuilder;
+    public final ClassDependecygraphBuilder classDependecygraphBuilder;
+    public final PackageInfoBuilder  packageInfoBuilder;
+    public final ProjectInfoBuilder  projectInfoBuilder;
     public final List<Path> sourceRoots;
     public final Set<String> sourceClasses;
     public final Map<String, DependencyNode> classIndex;
@@ -54,8 +60,13 @@ public class ProjectContext {
                           ClassHealthAnalyzer classHealthAnalyzer) {
 
         this.cache = new ParseCache(projectFolder.toPath());
-        this.classInfoBuilder = new ClassInfoBuilder(cache);
         this.javaFileParser = new JavaFileParser(cache);
+        this.classNameResolver = new ClassNameResolver();
+        this.classDependecygraphBuilder=new ClassDependecygraphBuilder(cache,classNameResolver);
+        this.classInfoBuilder=new ClassInfoBuilder(cache,classDependecygraphBuilder);
+        this.packageInfoBuilder=new PackageInfoBuilder(classInfoBuilder);
+        this.projectInfoBuilder=new ProjectInfoBuilder(classInfoBuilder,packageInfoBuilder);
+
 
         constructorInfoBuilder =
                 new ConstructorInfoBuilder(javaFileParser, cache);

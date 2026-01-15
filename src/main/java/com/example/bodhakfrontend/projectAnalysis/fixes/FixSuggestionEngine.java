@@ -1,6 +1,6 @@
 package com.example.bodhakfrontend.projectAnalysis.fixes;
 
-import com.example.bodhakfrontend.Models.ClassHealthInfo;
+import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
 import com.example.bodhakfrontend.Models.FixSuggestion;
 
 import java.util.List;
@@ -12,12 +12,12 @@ public class FixSuggestionEngine {
     private final FixSuggestionStore store = new FixSuggestionStore();
     private final Random random = new Random();
 
-    public Optional<FixSuggestion> suggest(ClassHealthInfo health) {
+    public Optional<FixSuggestion> suggest(ClassInfo health) {
 
         List<FixSuggestion> candidates =
                 store.getAll()
                         .stream()
-                        .filter(f -> FixMatcher.matches(f, health.getIssueTypes()))
+                        .filter(f -> FixMatcher.matches(f, health.getIssueType()))
                         .toList();
 
         if (candidates.isEmpty()) return Optional.empty();
@@ -26,10 +26,10 @@ public class FixSuggestionEngine {
                 candidates.get(random.nextInt(candidates.size()))
         );
     }
-    public List<FixSuggestion> suggestAll(ClassHealthInfo info) {
+    public List<FixSuggestion> suggestAll(ClassInfo info) {
         return store.getAll().stream()
                 .filter(rule ->
-                        info.getIssueTypes().containsAll(rule.getRequiredIssues())
+                        info.getIssueType().containsAll(rule.getRequiredIssues())
                 )
                 .toList();
     }

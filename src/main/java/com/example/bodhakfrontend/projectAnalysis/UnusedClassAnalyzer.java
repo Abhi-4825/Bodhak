@@ -1,5 +1,6 @@
 package com.example.bodhakfrontend.projectAnalysis;
 
+import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
 import com.example.bodhakfrontend.Models.*;
 import com.example.bodhakfrontend.Models.PackageAnalysis.EntryPointInfo;
 

@@ -1,5 +1,7 @@
 package com.example.bodhakfrontend.ui.overviewButton;
 
+import com.example.bodhakfrontend.IncrementalPart.model.Class.*;
+import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
 import com.example.bodhakfrontend.Models.*;
 import com.example.bodhakfrontend.uiHelper.UiFeatures;
 import javafx.geometry.Insets;
@@ -15,89 +17,79 @@ import java.util.stream.Collectors;
 
 
 public class MethodsViewBuilder {
+
     private final UiFeatures uiFeatures;
-    private final ClassDependencyInfo  classDependencyInfo;
-    private final MethodDependenciesViewBuilder methodDependenciesViewBuilder=new MethodDependenciesViewBuilder();
-    public MethodsViewBuilder(UiFeatures uiFeatures, ClassDependencyInfo classDependencyInfo) {
+    private final ProjectInfo projectInfo;
+
+    public MethodsViewBuilder(UiFeatures uiFeatures, ProjectInfo projectInfo) {
         this.uiFeatures = uiFeatures;
-        this.classDependencyInfo = classDependencyInfo;
+        this.projectInfo = projectInfo;
     }
 
     public Node build(String className) {
-
-        List<MethodsInfo> methods =
-                classDependencyInfo.getMethods()
-                        .getOrDefault(className, List.of());
-
-        List<ConstructorInfo> constructorInfos =
-                classDependencyInfo.getConstructorInfos()
-                        .getOrDefault(className, List.of());
-
+        ClassInfo classInfo = projectInfo.getClassInfoMap().get(className);
+        if (classInfo == null) {
+            return new Label("Class not found: " + className);
+        }
+        List<MethodInfo> methods = classInfo.getMethods();
+        List<ConstructorInfo> constructors = classInfo.getConstructors();
         VBox root = new VBox(8);
         root.setPadding(new Insets(8));
-
         VBox contentHolder = new VBox(6);
-
         renderFiltered(
                 contentHolder,
-                applyFilter(MethodFilter.ALL, methods, constructorInfos)
+                applyFilter(MethodFilter.ALL, methods, constructors)
         );
-
         Node summaryBar = buildSummaryBar(
                 methods,
-                constructorInfos,
+                constructors,
                 contentHolder
         );
-
         root.getChildren().addAll(
                 summaryBar,
                 contentHolder
         );
-
         return root;
     }
 
     private Node buildSummaryBar(
-            List<MethodsInfo> methods,
+            List<MethodInfo> methods,
             List<ConstructorInfo> constructors,
             VBox contentHolder
     ) {
         int totalMethods = methods.size();
         int totalConstructors = constructors.size();
-
         long empty = methods.stream()
-                .filter(MethodsInfo::isEmpty)
+                .filter(MethodInfo::isBodyEmpty)
                 .count();
-
         long pub = methods.stream()
-                .filter(m -> m.getModifier().toString().contains("PUBLIC"))
+                .filter(m -> m.getModifier().contains(ModifierKind.PUBLIC))
                 .count();
-
         long priv = methods.stream()
-                .filter(m -> m.getModifier().toString().contains("PRIVATE"))
+                .filter(m -> m.getModifier().contains(ModifierKind.PRIVATE))
                 .count();
-
         HBox bar = new HBox(12);
         bar.setPadding(new Insets(6));
         bar.getStyleClass().add("summary-bar");
 
         bar.getChildren().addAll(
-                badge("All",totalMethods+totalConstructors,MethodFilter.ALL,methods,constructors,contentHolder),
-                badge("🧩 Methods", totalMethods,MethodFilter.METHODS_ONLY,methods,constructors,contentHolder),
-                badge("🏗 Constructors", totalConstructors,MethodFilter.CONSTRUCTORS_ONLY,methods,constructors,contentHolder),
-                badge("🌐 Public", pub,MethodFilter.PUBLIC,methods,constructors,contentHolder),
-                badge("🔒 Private", priv,MethodFilter.PRIVATE,methods,constructors,contentHolder),
-                badge("⚠ Empty", empty,MethodFilter.EMPTY,methods,constructors,contentHolder)
+                badge("All", totalMethods + totalConstructors, MethodFilter.ALL, methods, constructors, contentHolder),
+                badge("🧩 Methods", totalMethods, MethodFilter.METHODS_ONLY, methods, constructors, contentHolder),
+                badge("🏗 Constructors", totalConstructors, MethodFilter.CONSTRUCTORS_ONLY, methods, constructors, contentHolder),
+                badge("🌐 Public", pub, MethodFilter.PUBLIC, methods, constructors, contentHolder),
+                badge("🔒 Private", priv, MethodFilter.PRIVATE, methods, constructors, contentHolder),
+                badge("⚠ Empty", empty, MethodFilter.EMPTY, methods, constructors, contentHolder)
         );
 
         return bar;
     }
 
+
     private Label badge(
             String text,
             long value,
             MethodFilter filter,
-            List<MethodsInfo> methods,
+            List<MethodInfo> methods,
             List<ConstructorInfo> constructors,
             VBox contentHolder
     ) {
@@ -117,27 +109,30 @@ public class MethodsViewBuilder {
 
 
     private Node buildConstructorRow(ConstructorInfo constructor) {
+
         HBox row = new HBox(8);
         row.setPadding(new Insets(6));
         row.getStyleClass().add("file-row");
 
-        Label signature = new Label("Constructor : "+buildConstructorSignature(constructor));
+        Label signature =
+                new Label("Constructor : " + buildConstructorSignature(constructor));
         signature.setWrapText(true);
         HBox.setHgrow(signature, Priority.ALWAYS);
 
         row.getChildren().add(signature);
 
-        row.setOnMouseClicked(event -> {
-            uiFeatures.openAndHighlight(
-                    constructor.getConstructorName(),
-                    constructor.getStartLine(),
-constructor.getStartColumn(),
-                    constructor.getSourceFile()
-            );
-        });
+        row.setOnMouseClicked(e ->
+                uiFeatures.openAndHighlight(
+                        constructor.getConstructorName(),
+                        constructor.getStartLine(),
+                        constructor.getStartColumn(),
+                        constructor.getSourceFile()
+                )
+        );
 
         return row;
     }
+
     private String buildConstructorSignature(ConstructorInfo info) {
 
         String modifiers = info.getModifiers()
@@ -161,27 +156,45 @@ constructor.getStartColumn(),
 
 
 
+    private Node buildMethodRow(MethodInfo method) {
 
-    private Node buildMethodRow(MethodsInfo method){
-      VBox details = new VBox();
+        VBox details = new VBox();
         details.setPadding(new Insets(6,0,0,16));
-        // returnType
-        details.getChildren().add(stringSection("Returns:",List.of(method.getReturnType())));
-        //Paramters
-        details.getChildren().add(stringSection("Parameters",method.getParameters().stream().map(p->p.getParameterName() + " "+p.getParameterType()).collect(Collectors.toList())));
-        // depends On
-        details.getChildren().add(dependencySection("Depends On",method.getCalledMethods()));
-       TitledPane pane = new TitledPane(buildSignature(method), details);
 
-      pane.setExpanded(false);
-      pane.setAnimated(true);
-      pane.setOnMouseClicked(event -> {
-          uiFeatures.openAndHighlight(method.getMethodName(), method.getStartLine(),method.getStartColumn(), method.getSourceFile());
-      });
+        details.getChildren().add(
+                stringSection("Returns:", List.of(method.getReturnType()))
+        );
 
-      return  pane;
+        details.getChildren().add(
+                stringSection(
+                        "Parameters",
+                        method.getParameters().stream()
+                                .map(p -> p.getParameterType() + " " + p.getParameterName())
+                                .toList()
+                )
+        );
+
+        details.getChildren().add(
+                dependencySection("Depends On", method.getCalledMethods())
+        );
+
+        TitledPane pane = new TitledPane(buildSignature(method), details);
+        pane.setExpanded(false);
+        pane.setAnimated(true);
+
+        pane.setOnMouseClicked(e ->
+                uiFeatures.openAndHighlight(
+                        method.getMethodName(),
+                        method.getStartLine(),
+                        method.getStartColumn(),
+                        method.getSourceFile()
+                )
+        );
+
+        return pane;
     }
-    private String buildSignature(MethodsInfo info) {
+
+    private String buildSignature(MethodInfo info) {
         String modifiers = info.getModifier()
                 .stream()
                 .map(Enum::name)
@@ -271,16 +284,14 @@ constructor.getStartColumn(),
     }
     private List<Object> applyFilter(
             MethodFilter filter,
-            List<MethodsInfo> methods,
+            List<MethodInfo> methods,
             List<ConstructorInfo> constructors
     ) {
         return switch (filter) {
 
-            case METHODS_ONLY ->
-                    new ArrayList<>(methods);
+            case METHODS_ONLY -> new ArrayList<>(methods);
 
-            case CONSTRUCTORS_ONLY ->
-                    new ArrayList<>(constructors);
+            case CONSTRUCTORS_ONLY -> new ArrayList<>(constructors);
 
             case PUBLIC ->
                     methods.stream()
@@ -294,15 +305,10 @@ constructor.getStartColumn(),
                             .map(m -> (Object) m)
                             .toList();
 
-            case PROTECTED ->
-                    methods.stream()
-                            .filter(m -> m.getModifier().contains(ModifierKind.PROTECTED))
-                            .map(m -> (Object) m)
-                            .toList();
-
+            case PROTECTED -> null;
             case EMPTY ->
                     methods.stream()
-                            .filter(MethodsInfo::isEmpty)
+                            .filter(MethodInfo::isBodyEmpty)
                             .map(m -> (Object) m)
                             .toList();
 
@@ -319,7 +325,7 @@ constructor.getStartColumn(),
             List<Object> items
     ) {
         for (Object o : items) {
-            if (o instanceof MethodsInfo m) {
+            if (o instanceof MethodInfo m) {
                 container.getChildren().add(buildMethodRow(m));
                 container.getChildren().add(new Separator());
             } else if (o instanceof ConstructorInfo c) {
@@ -328,10 +334,4 @@ constructor.getStartColumn(),
             }
         }
     }
-
-
-
-
-
-
 }

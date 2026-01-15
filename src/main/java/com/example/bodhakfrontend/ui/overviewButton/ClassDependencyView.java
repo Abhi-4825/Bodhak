@@ -1,227 +1,185 @@
 package com.example.bodhakfrontend.ui.overviewButton;
 
-import com.example.bodhakfrontend.Models.ClassDependencyInfo;
-import com.example.bodhakfrontend.Models.DependencyNode;
+import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
+import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
 import com.example.bodhakfrontend.uiHelper.UiFeatures;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.util.Duration;
+
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
 public class ClassDependencyView {
-    private final ClassDependencyInfo classDependencyInfo;
-   private final UiFeatures uiFeatures;
-    public ClassDependencyView(UiFeatures uiFeatures, ClassDependencyInfo classDependencyInfo) {
-       this.uiFeatures=uiFeatures;
-       this.classDependencyInfo=classDependencyInfo;
+
+    private final ProjectInfo projectInfo;
+    private final UiFeatures uiFeatures;
+
+    public ClassDependencyView(UiFeatures uiFeatures, ProjectInfo projectInfo) {
+        this.uiFeatures = uiFeatures;
+        this.projectInfo = projectInfo;
     }
 
+    public TreeView<Object> build(String className) {
 
-
-    // showing Dependencies in TreeView
-    public TreeView<DependencyNode> build(
-            String className
-
-    ) {
-        TreeView<DependencyNode> treeView = new TreeView<>();
-        TreeItem<DependencyNode> root =
-                new TreeItem<>(new DependencyNode("ROOT", null, null,-1,-1));
+        TreeItem<Object> root = new TreeItem<>("ROOT");
         root.setExpanded(true);
 
-        DependencyNode dependencyNode=classDependencyInfo.getClassInfo().get(className);
-        Set<String> dependencies=classDependencyInfo.getClassDependencies().getOrDefault(className,Set.of());
-        if(dependencyNode==null){
-            TreeItem<DependencyNode> error =
-                    new TreeItem<>(new DependencyNode(
-                            "Class not found: " + className,
-                            null, null, -1,-1
-                    ));
-            treeView.setRoot(error);
-            return treeView;
-
-
-        }
-                    TreeItem<DependencyNode> classItem =
-                            new TreeItem<>(dependencyNode);
-                    classItem.setExpanded(true);
-
-                    // ---------- Depends On ----------
-                    TreeItem<DependencyNode> dependsOn =
-                            new TreeItem<>(new DependencyNode("Depends On", null, null,-1,-1));
-
- Set<String> visited=new HashSet<>();
-
-                    for (String dep : dependencies) {
-                        DependencyNode depNode = classDependencyInfo.getClassInfo().get(dep);
-                        if (depNode != null) {
-                            TreeItem<DependencyNode> child =
-                                    new TreeItem<>(depNode);
-                            dependsOn.getChildren().add(child);
-
-                            buildTransitiveTree(
-                                    child,
-                                    depNode,
-                                    classDependencyInfo,
-                                    visited
-                            );
-                        }
-                    }
-
-                    // ---------- Used By ----------
-                    TreeItem<DependencyNode> usedBy =
-                            new TreeItem<>(new DependencyNode("Affects / Used By", null, null,-1,-1));
-
-                    showAffectedDependencies(
-                            usedBy,
-                            dependencyNode,
-                            classDependencyInfo
-                    );
-
-                    classItem.getChildren().addAll(dependsOn,usedBy);
-                    root.getChildren().add(classItem);
-
-
-        treeView.setRoot(root);
-        treeView.setShowRoot(false);
-        setOnCell(treeView);
-        onClick(treeView);
-        return treeView;
-    }
-
-    private void buildTransitiveTree(
-            TreeItem<DependencyNode> root,
-            DependencyNode rootNode,
-            ClassDependencyInfo classDependencyInfo,
-            Set<String> visited
-    ) {
-        String className = rootNode.getClassName();
-
-        //  Stop cycles
-        if (!visited.add(className)) {
-            return;
+        ClassInfo cls = projectInfo.getClassInfoMap().get(className);
+        if (cls == null) {
+            root.getChildren().add(
+                    new TreeItem<>("Class not found: " + className)
+            );
+            return new TreeView<>(root);
         }
 
-        Set<String> deps =
-                classDependencyInfo.getClassDependencies()
-                        .get(className);
+        TreeItem<Object> classNode = new TreeItem<>(cls);
+        classNode.setExpanded(true);
 
-        if (deps == null) return;
+        // ---------- Depends On ----------
+        TreeItem<Object> dependsOnNode =
+                new TreeItem<>("Depends On");
 
-        for (String dep : deps) {
-            DependencyNode childNode =
-                    classDependencyInfo.getClassInfo().get(dep);
+        Set<String> visited = new HashSet<>();
+        for (String dep : cls.getDependsOn()) {
+            ClassInfo depCls = projectInfo.getClassInfoMap().get(dep);
+            if (depCls != null) {
+                TreeItem<Object> depItem = new TreeItem<>(depCls);
+                dependsOnNode.getChildren().add(depItem);
+                buildTransitive(depItem, depCls, visited);
+            }
+        }
 
-            if (childNode != null) {
-                TreeItem<DependencyNode> childItem =
-                        new TreeItem<>(childNode);
+        if (dependsOnNode.getChildren().isEmpty()) {
+            dependsOnNode.getChildren().add(
+                    new TreeItem<>("— None")
+            );
+        }
 
-                root.getChildren().add(childItem);
+        // ---------- Used By ----------
+        TreeItem<Object> usedByNode =
+                new TreeItem<>("Used By");
 
-                buildTransitiveTree(
-                        childItem,
-                        childNode,
-                        classDependencyInfo,
-                        visited
+        for (String user : cls.getUsedBy()) {
+            ClassInfo userCls = projectInfo.getClassInfoMap().get(user);
+            if (userCls != null) {
+                usedByNode.getChildren().add(
+                        new TreeItem<>(userCls)
                 );
             }
         }
-    }
 
-    private void showAffectedDependencies(
-            TreeItem<DependencyNode> root,
-            DependencyNode rootNode,
-            ClassDependencyInfo classDependencyInfo
-    ) {
-        Set<String> affected =
-                classDependencyInfo.getReverseClassDependencies()
-                        .get(rootNode.getClassName());
-
-        if (affected == null || affected.isEmpty()) {
-            root.getChildren().add(
-                    new TreeItem<>(
-                            new DependencyNode(
-                                    "No classes are affected",
-                                    null,
-                                    null,
-                                    -1,-1
-                            )
-                    )
+        if (usedByNode.getChildren().isEmpty()) {
+            usedByNode.getChildren().add(
+                    new TreeItem<>("— None")
             );
-            return;
         }
 
-        for (String cls : affected) {
-            DependencyNode node =
-                    classDependencyInfo.getClassInfo().get(cls);
+        classNode.getChildren().addAll(dependsOnNode, usedByNode);
+        root.getChildren().add(classNode);
 
-            if (node != null) {
-                root.getChildren().add(new TreeItem<>(node));
+        TreeView<Object> treeView = new TreeView<>(root);
+        treeView.setShowRoot(false);
+
+        configureCells(treeView);
+        configureClicks(treeView);
+
+        return treeView;
+    }
+
+    // ---------------- helpers ----------------
+
+    private void buildTransitive(
+            TreeItem<Object> parent,
+            ClassInfo cls,
+            Set<String> visited
+    ) {
+        if (!visited.add(cls.getClassName())) return;
+
+        for (String dep : cls.getDependsOn()) {
+            ClassInfo depCls = projectInfo.getClassInfoMap().get(dep);
+            if (depCls != null) {
+                TreeItem<Object> child = new TreeItem<>(depCls);
+                parent.getChildren().add(child);
+                buildTransitive(child, depCls, visited);
             }
         }
     }
 
+    private void configureClicks(TreeView<Object> treeView) {
+        treeView.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                Object value =
+                        treeView.getSelectionModel()
+                                .getSelectedItem()
+                                .getValue();
 
-    private void onClick(TreeView<DependencyNode> dependencyTreeView){
-        dependencyTreeView.setOnMouseClicked(e -> {
-
-            if(e.getClickCount()==2 ){
-                TreeItem<DependencyNode> treeItem=dependencyTreeView.getSelectionModel().getSelectedItem();
-                if(treeItem==null){return;}
-                DependencyNode selectedNode=(DependencyNode)treeItem.getValue();
-                uiFeatures.openAndHighlight(selectedNode.getClassName(),selectedNode.getBeginLine(),selectedNode.getBeginColumn(),selectedNode.getSourceFile());
+                if (value instanceof ClassInfo ci) {
+                    uiFeatures.openAndHighlight(
+                            ci.getClassName(),
+                            ci.getBeginLine(),
+                            ci.getBeginColumn(),
+                            ci.getSourceFile()
+                    );
+                }
             }
         });
     }
-    private void setOnCell(TreeView<DependencyNode> dependencyTreeView){
-        dependencyTreeView.setCellFactory(tv -> new TreeCell<>() {
+
+    private void configureCells(TreeView<Object> treeView) {
+
+        treeView.setCellFactory(tv -> new TreeCell<>() {
+
             @Override
-            protected void updateItem(DependencyNode item, boolean empty) {
+            protected void updateItem(Object item, boolean empty) {
                 super.updateItem(item, empty);
+
+                getStyleClass().remove("health-tree-risky");
+                setTooltip(null);
 
                 if (empty || item == null) {
                     setText(null);
-                    setTooltip(null);
-
                     return;
                 }
-                String classn=item.getClassName();
-                String label=classn;
-                Set<String> c= classDependencyInfo.getClassesInCycles();
-                if(classDependencyInfo !=null && c.contains(label)){
-                    label = "🔁 " + label + " [CIRCULAR]";
+
+                if (item instanceof String s) {
+                    setText(s);
+                    return;
                 }
-                setText(label);
-                classDependencyInfo.getCycleForClass(classn).ifPresent(cycle->{
-                    Tooltip tooltip=new Tooltip();
-                    tooltip.setText(buildCycleText(cycle));
-                    tooltip.setShowDelay(Duration.millis(500));
-                    setTooltip(tooltip);
-                });
+
+                if (item instanceof ClassInfo ci) {
+                    String label = ci.getClassName();
+
+                    if (!ci.getCircularDependencyGroups().isEmpty()) {
+                        label = "🔁 " + label;
+                        getStyleClass().add("health-tree-risky");
+
+                        Tooltip tooltip =
+                                new Tooltip(buildCycleTooltip(ci));
+                        tooltip.setShowDelay(Duration.millis(400));
+                        setTooltip(tooltip);
+                    }
+
+                    setText(label);
+                }
             }
         });
     }
 
+    private String buildCycleTooltip(ClassInfo ci) {
+        StringBuilder sb = new StringBuilder("🔁 Circular Dependency\n\n");
 
-
-    private String buildCycleText(Set<String> cycle) {
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("⚠ Circular Dependency Detected\n\n");
-
-        Iterator<String> it = cycle.iterator();
-        while (it.hasNext()) {
-            sb.append(it.next());
-            if (it.hasNext()) sb.append(" → ");
+        for (Set<String> cycle : ci.getCircularDependencyGroups()) {
+            Iterator<String> it = cycle.iterator();
+            while (it.hasNext()) {
+                sb.append(it.next());
+                if (it.hasNext()) sb.append(" → ");
+            }
+            sb.append("\n\n");
         }
-
-        // close the loop
-        sb.append(" → ").append(cycle.iterator().next());
-
         return sb.toString();
     }
-
 }

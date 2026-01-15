@@ -1,4 +1,4 @@
-package com.example.bodhakfrontend.Models;
+package com.example.bodhakfrontend.IncrementalPart.model.Package;
 
 public enum PackageWarning {
     DEFAULT_PACKAGE,

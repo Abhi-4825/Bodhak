@@ -1,6 +1,7 @@
 package com.example.bodhakfrontend.Parser.javaParser;
 
 import com.example.bodhakfrontend.Models.*;
+import com.example.bodhakfrontend.util.ClassNameResolver;
 import com.example.bodhakfrontend.util.ParseCache;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.*;
@@ -38,13 +39,16 @@ public class JavaFileParser {
                             CompilationUnit cu=cache.get(javaFile);
                             cu.findAll(ClassOrInterfaceDeclaration.class)
                                     .forEach(classOrI -> {
-                                        projectclasses.add(classOrI.getNameAsString());
+                                        String className = ClassNameResolver.resolveFqn(cu,classOrI);
+                                        projectclasses.add(className);
                                     });
                             cu.findAll(EnumDeclaration.class).forEach(enumDeclaration -> {
-                                projectclasses.add(enumDeclaration.getNameAsString());
+                                String  enumName = ClassNameResolver.resolveFqn(cu,enumDeclaration);
+                                projectclasses.add(enumName);
                             });
                             cu.findAll(RecordDeclaration.class).forEach(recordDeclaration -> {
-                                projectclasses.add(recordDeclaration.getNameAsString());
+                                String  recordName = ClassNameResolver.resolveFqn(cu,recordDeclaration);
+                                projectclasses.add(recordName);
                             });
                         }catch (Exception ignored){}
 

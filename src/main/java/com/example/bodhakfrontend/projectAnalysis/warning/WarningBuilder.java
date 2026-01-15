@@ -1,7 +1,7 @@
 package com.example.bodhakfrontend.projectAnalysis.warning;
 
 
-import com.example.bodhakfrontend.Models.ClassHealthInfo;
+import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
 import com.example.bodhakfrontend.Models.IssueType;
 import com.example.bodhakfrontend.Models.WarningRule;
 
@@ -12,9 +12,9 @@ public class WarningBuilder {
 
     private final WarningRuleStore store = new WarningRuleStore();
 
-    public List<WarningRule> buildWarnings(ClassHealthInfo health) {
+    public List<WarningRule> buildWarnings(ClassInfo health) {
 
-        Set<IssueType> issues = health.getIssueTypes();
+        Set<IssueType> issues = health.getIssueType();
 
         return store.getRules()
                 .stream()

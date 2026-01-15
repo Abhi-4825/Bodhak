@@ -1,10 +1,7 @@
 package com.example.bodhakfrontend.Models.PackageAnalysis;
 
+import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
 import com.example.bodhakfrontend.Models.*;
-import com.example.bodhakfrontend.Models.Incremental.FileChangeEvent;
-import com.example.bodhakfrontend.projectAnalysis.FileAnalyzer;
-
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
