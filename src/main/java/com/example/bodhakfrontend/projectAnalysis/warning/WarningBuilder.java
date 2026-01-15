@@ -2,7 +2,7 @@ package com.example.bodhakfrontend.projectAnalysis.warning;
 
 
 import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
-import com.example.bodhakfrontend.Models.IssueType;
+import com.example.bodhakfrontend.IncrementalPart.model.Class.IssueType;
 import com.example.bodhakfrontend.Models.WarningRule;
 
 import java.util.List;

@@ -48,7 +48,6 @@ public class ClassInfoBuilder {
 
     public ClassInfoBuilder(ParseCache cache, ClassDependecygraphBuilder classDependecygraphBuilder) {
         this.cache = cache;
-
         this.classDependecygraphBuilder = classDependecygraphBuilder;
 
     }
@@ -80,7 +79,7 @@ public class ClassInfoBuilder {
     }
 
 
-    private List<ClassInfo> scanFile(Path path) {
+    public List<ClassInfo> scanFile(Path path) {
         Path normalizedPath = normalize(path);
         List<ClassInfo> classInfoList = new ArrayList<>();
         Set<Set<String>> AllCircularGroups = classDependecygraphBuilder.getClassDependenciesGroups();
@@ -515,6 +514,10 @@ public class ClassInfoBuilder {
         }
         return result;
     }
+
+
+
+
 
 
 

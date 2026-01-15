@@ -1,27 +1,29 @@
 package com.example.bodhakfrontend.Models;
 
 
+import com.example.bodhakfrontend.IncrementalPart.model.Class.IssueType;
+
 import java.util.Set;
 public class WarningRule {
 
 
 
-    private Set<IssueType> requiredIssues;
-    private Set<IssueType> forbiddenIssues;
+    private Set<com.example.bodhakfrontend.IncrementalPart.model.Class.IssueType> requiredIssues;
+    private Set<com.example.bodhakfrontend.IncrementalPart.model.Class.IssueType> forbiddenIssues;
     private Severity severity;
     private String message;
 
     public WarningRule() {}
 
-    public Set<IssueType> getRequiredIssues() {
+    public Set<com.example.bodhakfrontend.IncrementalPart.model.Class.IssueType> getRequiredIssues() {
         return requiredIssues;
     }
 
-    public void setRequiredIssues(Set<IssueType> requiredIssues) {
+    public void setRequiredIssues(Set<com.example.bodhakfrontend.IncrementalPart.model.Class.IssueType> requiredIssues) {
         this.requiredIssues = requiredIssues;
     }
 
-    public Set<IssueType> getForbiddenIssues() {
+    public Set<com.example.bodhakfrontend.IncrementalPart.model.Class.IssueType> getForbiddenIssues() {
         return forbiddenIssues;
     }
 

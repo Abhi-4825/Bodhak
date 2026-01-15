@@ -1,20 +1,22 @@
 package com.example.bodhakfrontend;
 
-import com.example.bodhakfrontend.IncrementalPart.Builder.*;
-import com.example.bodhakfrontend.IncrementalPart.UpdateManager;
+import com.example.bodhakfrontend.IncrementalPart.Builder.ClassDependecygraphBuilder;
+import com.example.bodhakfrontend.IncrementalPart.Builder.ClassInfoBuilder;
+import com.example.bodhakfrontend.IncrementalPart.Builder.PackageInfoBuilder;
+import com.example.bodhakfrontend.IncrementalPart.Builder.ProjectInfoBuilder;
+import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
 import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
 import com.example.bodhakfrontend.Parser.AstLabelProvider;
-import com.example.bodhakfrontend.Parser.Parsermanager;
 import com.example.bodhakfrontend.Parser.javaParser.JavaFileParser;
-import com.example.bodhakfrontend.dependency.CircularDependency;
+import com.example.bodhakfrontend.Parser.Parsermanager;
 import com.example.bodhakfrontend.incremental.*;
+
 import com.example.bodhakfrontend.projectAnalysis.ui.AnalysisViewBuilder;
 import com.example.bodhakfrontend.ui.Front.FileTreeNodeFactory;
 import com.example.bodhakfrontend.ui.OverviewContentFactory;
 import com.example.bodhakfrontend.ui.overviewButton.*;
 import com.example.bodhakfrontend.ui.rightPanel.RightPanelTabManager;
 import com.example.bodhakfrontend.uiHelper.UiFeatures;
-import com.example.bodhakfrontend.util.ClassNameResolver;
 import com.example.bodhakfrontend.util.MultiModuleSourceRootDetector;
 import com.example.bodhakfrontend.util.ParseCache;
 import com.github.javaparser.ast.CompilationUnit;
@@ -25,312 +27,451 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.stage.DirectoryChooser;
+import javafx.scene.layout.Region;
 import javafx.stage.Stage;
-
+import javafx.stage.DirectoryChooser;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
 public class App extends Application {
-
-    /* ---------------- Core Infra ---------------- */
-
-    private final LanguageDetector detector = new LanguageDetector();
-    private final MultiModuleSourceRootDetector rootDetector =
-            new MultiModuleSourceRootDetector();
-    private final CircularDependency circularDependency =
-            new CircularDependency();
-    private final HotspotAnalyzer hotspotAnalyzer =
-            new HotspotAnalyzer();
-    private final ProjectHealthAnalyzer projectHealthAnalyzer =
-            new ProjectHealthAnalyzer();
-
-    /* ---------------- Runtime State ---------------- */
-
+    LanguageDetector detector = new LanguageDetector();
+    ParseCache cache ;
+    JavaFileParser javaFileParser ;
+    Parsermanager  parsermanager ;
+    MultiModuleSourceRootDetector rootDetector = new MultiModuleSourceRootDetector();
+    private TextArea outputPanel;
+    private TreeView<File> FileTreeView;
     private File projectFolder;
-    private UpdateManager updateManager;
-    private ProjectInfo projectInfo;
-
-    /* ---------------- Parsers / Cache ---------------- */
-
-    private ParseCache cache;
-    private JavaFileParser javaFileParser;
-    private Parsermanager parsermanager;
-
-    /* ---------------- UI ---------------- */
-
-    private TreeView<File> fileTreeView;
+    private List<Path> srcRoot;
+    private Set<String> srcClasses;
     private TabPane codeTabPane;
+    private TabPane rightTabPane;
+    private UiFeatures  uiFeatures;
     private RightPanelTabManager rightPanelTabManager;
-    private UiFeatures uiFeatures;
+    private TreeView<ClassInfo> dependencyTreeView;
+    private BorderPane rightPanel;
+    private TreeItem<File> selected;
     private AnalysisViewBuilder analysisViewBuilder;
     private ProgressBar globalProgressBar;
+    private ClassDependecygraphBuilder classDependecygraphBuilder;
+    private ClassInfoBuilder classInfoBuilder;
+    private PackageInfoBuilder packageInfoBuilder;
+    private ProjectInfoBuilder projectInfoBuilder;
+    private ProjectInfo projectInfo;
+
 
     private FileTreeNodeFactory fileTreeNodeFactory;
 
     @Override
-    public void start(Stage stage) {
+    public void start(Stage stage) throws Exception {
 
-        BorderPane root = new BorderPane();
-        Scene scene = new Scene(root);
-        scene.getStylesheets()
-                .add(getClass().getResource("/styles/bodhak.css").toExternalForm());
 
+
+        BorderPane root=new BorderPane();
+        Scene scene=new Scene(root);
+        scene.getStylesheets().add(getClass().getResource("/styles/bodhak.css").toExternalForm());
         stage.setScene(scene);
         stage.setTitle("Bodhak");
         stage.setMaximized(true);
         stage.show();
-
-        /* ---------------- Top Toolbar ---------------- */
-
-        Button selectBtn = new Button("Select Folder");
-        ToolBar toolBar = new ToolBar(selectBtn);
-        root.setTop(toolBar);
-
-        /* ---------------- Bottom Bar ---------------- */
-
-        globalProgressBar = new ProgressBar();
+        globalProgressBar=new ProgressBar();
+        globalProgressBar.setPrefWidth(Region.USE_COMPUTED_SIZE);
         globalProgressBar.setVisible(false);
 
-        Button analyzeBtn = new Button("Analyze");
+
+        // for upper buttons
+        ToolBar toolBar=new ToolBar();
+        Button SelectBtn=new Button("Select Folder");
+        toolBar.getItems().addAll(SelectBtn);
+        root.setTop(toolBar);
+
+        // for bottom
+
+        Button AnalyzeBtn=new Button("Analyze");
+
 
         BorderPane bottomBar = new BorderPane();
         bottomBar.setPadding(new Insets(8));
         bottomBar.setLeft(globalProgressBar);
-        bottomBar.setRight(analyzeBtn);
+        bottomBar.setRight(AnalyzeBtn);
         root.setBottom(bottomBar);
-
-        /* ---------------- Center Layout ---------------- */
-
-        fileTreeView = new TreeView<>();
-        fileTreeView.getStyleClass().add("sidebar");
-
-        codeTabPane = new TabPane();
+        // for code view
+        codeTabPane=new TabPane();
+        uiFeatures=new UiFeatures(codeTabPane);
+        analysisViewBuilder=new AnalysisViewBuilder(uiFeatures);
         codeTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
+        // for output
+        rightTabPane=new TabPane();
+        rightPanelTabManager=new RightPanelTabManager(rightTabPane);
+        outputPanel=new TextArea();
+        outputPanel.setPrefWidth(Region.USE_COMPUTED_SIZE);
+        outputPanel.setEditable(false);
+        dependencyTreeView=new TreeView<>();
+        dependencyTreeView.setShowRoot(false);
+        dependencyTreeView.setPrefWidth(Region.USE_COMPUTED_SIZE);
+        // default rightpanel
+        rightPanel=new BorderPane();
+        rightPanel.setCenter(outputPanel);
+        // for files
+        FileTreeView =new TreeView<>();
+        //EditorPane buttons
+        Button Ast=new Button("AST");
+        Button overviewBtn=new Button("Overview");
+        HBox editorBottom=new HBox(8);
+        editorBottom.getChildren().addAll(Ast,overviewBtn);
+        editorBottom.setPadding(new Insets(6));
+        editorBottom.setAlignment(Pos.CENTER_RIGHT);
+        BorderPane codeEditorPane=new BorderPane();
+        codeEditorPane.setCenter(codeTabPane);
+        codeEditorPane.setBottom(editorBottom);
 
-        uiFeatures = new UiFeatures(codeTabPane);
-        analysisViewBuilder = new AnalysisViewBuilder(uiFeatures);
 
-        TabPane rightTabPane = new TabPane();
-        rightPanelTabManager = new RightPanelTabManager(rightTabPane);
-
-        Button astBtn = new Button("AST");
-        Button overviewBtn = new Button("Overview");
-
+        // we will make Split Pane for resizable part of centre
+        SplitPane splitPane=new SplitPane();
+        splitPane.getItems().addAll(FileTreeView,codeEditorPane,rightTabPane);
+        splitPane.setDividerPositions(0.18,0.58);
+        root.setCenter(splitPane);
+        root.getStyleClass().add("app-root");
+        FileTreeView.getStyleClass().add("sidebar");
+        codeTabPane.getStyleClass().add("editor-area");
+        rightPanel.getStyleClass().add("right-panel");
+        //for showing and disabling overview,ast btn
         BooleanBinding hasTab =
                 codeTabPane.getSelectionModel()
                         .selectedItemProperty()
                         .isNotNull();
 
-        astBtn.disableProperty().bind(hasTab.not());
         overviewBtn.disableProperty().bind(hasTab.not());
+        Ast.disableProperty().bind(hasTab.not());
 
-        HBox editorBottom = new HBox(8, astBtn, overviewBtn);
-        editorBottom.setPadding(new Insets(6));
-        editorBottom.setAlignment(Pos.CENTER_RIGHT);
+        overviewBtn.visibleProperty().bind(hasTab);
+        Ast.visibleProperty().bind(hasTab);
 
-        BorderPane editorPane = new BorderPane();
-        editorPane.setCenter(codeTabPane);
-        editorPane.setBottom(editorBottom);
 
-        SplitPane splitPane = new SplitPane(
-                fileTreeView,
-                editorPane,
-                rightTabPane
-        );
-        splitPane.setDividerPositions(0.18, 0.6);
 
-        root.setCenter(splitPane);
-
-        /* ---------------- File Tree ---------------- */
-
-        fileTreeView.setCellFactory(tv -> new TreeCell<>() {
+        // for only showing names of folder not path
+        FileTreeView.setCellFactory(tv->new TreeCell<File>(){
             @Override
-            protected void updateItem(File file, boolean empty) {
+            public void updateItem(File file, boolean empty) {
                 super.updateItem(file, empty);
-                if (empty || file == null) {
+                if(empty || file==null){
                     setText(null);
-                } else {
-                    setText(file.getName().isEmpty()
-                            ? file.getAbsolutePath()
-                            : file.getName());
+                    setGraphic(null);
+                }
+                else{
+                    setText(file.getName().isEmpty()?file.getAbsolutePath():file.getName());
+                    TreeItem<File> treeItem=getTreeItem();
+                    if(treeItem!=null){
+                        setGraphic(treeItem.getGraphic());
+                    }
                 }
             }
         });
 
-        fileTreeView.setOnMouseClicked(e -> {
-            TreeItem<File> selected =
-                    fileTreeView.getSelectionModel().getSelectedItem();
+
+
+//        root.setLeft(treeView);
+
+        SelectBtn.setOnAction(e -> {
+
+            DirectoryChooser directoryChooser=new DirectoryChooser();
+            directoryChooser.setTitle("Select Project Folder");
+            projectFolder=directoryChooser.showDialog(stage);
+            if(projectFolder==null)return;
+            codeTabPane.getTabs().clear();
+            rightTabPane.getTabs().clear();
+            rightPanelTabManager.clear();
+            fileTreeNodeFactory=new FileTreeNodeFactory();
+            TreeItem<File> rootNode=fileTreeNodeFactory.createNode(projectFolder);
+            FileTreeView.setRoot(rootNode);
+            FileTreeView.setShowRoot(true);
+
+            startBackgroundProjectLoad(projectFolder,globalProgressBar);
+
+
+
+        });
+        // for dependencies tree view working
+        dependencyTreeView.setOnMouseClicked(e -> {
+
+            if(e.getClickCount()==2 ){
+                TreeItem<ClassInfo> treeItem=dependencyTreeView.getSelectionModel().getSelectedItem();
+                if(treeItem==null){return;}
+                ClassInfo selectedNode=(ClassInfo)treeItem.getValue();
+                uiFeatures.openAndHighlight(selectedNode.getClassName(),selectedNode.getBeginLine(),selectedNode.getBeginColumn(),selectedNode.getSourceFile());
+            }
+        });
+
+
+        // for getting content of files when a file is clicked in Tree view
+        FileTreeView.setOnMouseClicked(event -> {
+            selected = FileTreeView.getSelectionModel().getSelectedItem();
             if (selected == null) return;
+            File file = selected.getValue();
+            if (file.isFile()) {
 
-            File f = selected.getValue();
-            if (f.isFile() && e.getClickCount() == 2) {
-                uiFeatures.openFile(f);
+//               openFileInViewer(file);
+                if(event.getClickCount()==2){
+                    uiFeatures.openFile(file);}
+                String type = detector.detectFileType(file);
+
             }
         });
 
-        /* ---------------- Actions ---------------- */
 
-        selectBtn.setOnAction(e -> chooseProject(stage));
-        analyzeBtn.setOnAction(e -> openAnalysis());
-        astBtn.setOnAction(e -> showASTWindow());
-        overviewBtn.setOnAction(e -> openOverview());
-    }
 
-    /* ========================================================= */
+        // Analyze Button
+        AnalyzeBtn.setOnAction(e -> {
+            if (projectFolder == null ){ rightPanelTabManager.openAnalyzeTab(()->new Label("No project folder or class file found"));
+                return;}
 
-    private void chooseProject(Stage stage) {
-        DirectoryChooser chooser = new DirectoryChooser();
-        chooser.setTitle("Select Project Folder");
-
-        projectFolder = chooser.showDialog(stage);
-        if (projectFolder == null) return;
-
-        fileTreeNodeFactory = new FileTreeNodeFactory();
-        fileTreeView.setRoot(
-                fileTreeNodeFactory.createNode(projectFolder)
-        );
-
-        startBackgroundLoad(projectFolder);
-    }
-
-    private void startBackgroundLoad(File folder) {
-
-        Task<ProjectInfo> task = new Task<>() {
-            @Override
-            protected ProjectInfo call() {
-
-                cache = new ParseCache(projectFolder.toPath());
-                javaFileParser = new JavaFileParser(cache);
-                parsermanager = new Parsermanager(new LanguageDetector(),javaFileParser);
-
-                ClassDependecygraphBuilder depBuilder =
-                        new ClassDependecygraphBuilder(cache, new ClassNameResolver());
-
-                ClassInfoBuilder classInfoBuilder =
-                        new ClassInfoBuilder(cache, depBuilder);
-
-                PackageInfoBuilder packageInfoBuilder =
-                        new PackageInfoBuilder(classInfoBuilder);
-
-                ProjectInfoBuilder projectInfoBuilder =
-                        new ProjectInfoBuilder(classInfoBuilder, packageInfoBuilder);
-
-                updateManager =
-                        new UpdateManager(
-                                classInfoBuilder,
-                                packageInfoBuilder,
-                                projectInfoBuilder,
-                                depBuilder,
-                                folder.toPath()
-                        );
-
-                updateManager.onLoad();
-                return updateManager.getProjectInfo();
-            }
-        };
-
-        globalProgressBar.progressProperty().bind(task.progressProperty());
-        globalProgressBar.setVisible(true);
-
-        task.setOnSucceeded(e -> {
-            globalProgressBar.setVisible(false);
-            projectInfo = task.getValue();
+            rightPanelTabManager.openAnalyzeTab(()->analysisViewBuilder.build(projectInfo));
         });
+        // Ast button functioning
+        Ast.setOnAction(e -> showASTWindow(codeTabPane));
+        // overview button
+        overviewBtn.setOnAction(e ->{
+            MethodsViewBuilder methodsViewBuilder=new MethodsViewBuilder(uiFeatures,projectInfo);
+            ClassDependencyView classDependencyView=new ClassDependencyView(uiFeatures,projectInfo);
+            HealthAnalyserViewBuilder healthAnalyserViewBuilder=new HealthAnalyserViewBuilder();
 
-        new Thread(task, "Project-Loader").start();
-    }
+            Tab selectedTab = codeTabPane.getSelectionModel().getSelectedItem();
+            if(selectedTab==null){return;}
+            File file=(File)selectedTab.getUserData();
+            List<ClassInfo> classes=classInfoBuilder.scanFile(file.toPath());
+            OverviewContentFactory factory = classInfo -> {
 
-    /* ========================================================= */
+                if (classInfo == null) {
+                    return new Label("Class info not available");
+                }
 
-    private void openAnalysis() {
-        if (projectInfo == null) return;
-        rightPanelTabManager.openAnalyzeTab(
-                () -> analysisViewBuilder.build(projectInfo)
-        );
-    }
-
-    private void openOverview() {
-
-        Tab tab = codeTabPane.getSelectionModel().getSelectedItem();
-        if (tab == null || projectInfo == null) return;
-
-        File file = (File) tab.getUserData();
-        List<String> classes = javaFileParser.getFileClasses(file);
-
-        MethodsViewBuilder methodsView =
-                new MethodsViewBuilder(uiFeatures, projectInfo);
-
-        ClassDependencyView dependencyView =
-                new ClassDependencyView(uiFeatures, projectInfo);
-
-        HealthAnalyserViewBuilder healthView =
-                new HealthAnalyserViewBuilder();
-
-        OverviewContentFactory factory = className ->
-                new OverviewView(
-                        dependencyView.build(className),
-                        methodsView.build(className),
-                        healthView.build(
-                                projectInfo.getClassInfoMap().get(className)
-                        )
+                return new OverviewView(
+                        classDependencyView.build(classInfo.getClassName()),
+                        methodsViewBuilder.build(classInfo.getClassName()),
+                        healthAnalyserViewBuilder.build(classInfo)
                 ).getRoot();
+            };
 
-        ClassOverviewContainer container =
-                new ClassOverviewContainer(file, classes, factory);
 
-        rightPanelTabManager.openOverviewTab(file, container.getRoot());
+            ClassOverviewContainer container=new ClassOverviewContainer(file,classes,factory);
+
+            rightPanelTabManager.openOverviewTab(file,container.getRoot());
+        });
+
+
+
+
     }
 
-    /* ========================================================= */
 
-    private void showASTWindow() {
 
-        Tab tab = codeTabPane.getSelectionModel().getSelectedItem();
-        if (tab == null) return;
+    // AST window
+    private void showASTWindow(TabPane codeTabPane) {
 
-        File file = (File) tab.getUserData();
+        Tab selectedTab = codeTabPane.getSelectionModel().getSelectedItem();
+
+        if (selectedTab == null) {
+            return;
+        }
+
+        File file = (File)selectedTab.getUserData();
 
         try {
-            CompilationUnit cu = cache.get(file.toPath());
+            // Parse AST
+            CompilationUnit cu =cache.get(file.toPath());
 
-            AstLabelProvider<com.github.javaparser.ast.Node> provider =
-                    parsermanager.parseFile(file);
+            // Get correct label provider
+            @SuppressWarnings("unchecked")
+            AstLabelProvider<com.github.javaparser.ast.Node> labelProvider =
+                    (AstLabelProvider<com.github.javaparser.ast.Node>)
+                            parsermanager.getLabelProvider(file);
 
-            TreeItem<String> root = buildASTTree(cu, provider);
-            TreeView<String> tree = new TreeView<>(root);
+            // 3️⃣ Build AST tree USING provider
+            TreeItem<String> astRoot = buildASTTree(cu, labelProvider);
 
-            TextArea code = new TextArea(Files.readString(file.toPath()));
-            code.setEditable(false);
+            // 4️⃣ Show window
+            showASTStage(file, astRoot);
 
-            SplitPane split = new SplitPane(tree, code);
-            split.setDividerPositions(0.4);
-
-            Stage stage = new Stage();
-            stage.setScene(new Scene(split, 900, 600));
-            stage.setTitle("AST Viewer - " + file.getName());
-            stage.show();
-
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            outputPanel.setText("AST Error: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
+
+    private void showASTStage(File file, TreeItem<String> astRoot) {
+
+        TreeView<String> astTree = new TreeView<>(astRoot);
+        astTree.setPrefWidth(Region.USE_COMPUTED_SIZE);
+
+        TextArea codeArea = new TextArea();
+        codeArea.setEditable(false);
+
+        try {
+            codeArea.setText(Files.readString(file.toPath()));
+        } catch (Exception ignored) {}
+
+        SplitPane split = new SplitPane(astTree, codeArea);
+        split.setDividerPositions(0.4);
+
+        Stage astStage = new Stage();
+        Scene astScene = new Scene(split);
+        astStage.setScene(astScene);
+        astStage.setTitle("AST Viewer - " + file.getName());
+        astStage.setWidth(900);
+        astStage.setHeight(600);
+        astStage.show();
+    }
+
 
     private TreeItem<String> buildASTTree(
             com.github.javaparser.ast.Node node,
-            AstLabelProvider<com.github.javaparser.ast.Node> provider
-    ) {
-        TreeItem<String> item = new TreeItem<>(provider.getLabel(node));
-        for (var child : node.getChildNodes()) {
-            TreeItem<String> c = buildASTTree(child, provider);
-            if (c != null) item.getChildren().add(c);
+            AstLabelProvider<com.github.javaparser.ast.Node> labelProvider) {
+
+        // Hide low-level technical nodes
+        if (node instanceof com.github.javaparser.ast.expr.Name ||
+                node instanceof com.github.javaparser.ast.expr.SimpleName ||
+                node instanceof com.github.javaparser.ast.Modifier) {
+            return null;
         }
+
+        // CompilationUnit → group imports
+        if (node instanceof com.github.javaparser.ast.CompilationUnit) {
+
+            com.github.javaparser.ast.CompilationUnit cu =
+                    (com.github.javaparser.ast.CompilationUnit) node;
+
+            TreeItem<String> root = new TreeItem<>("CompilationUnit");
+
+            // ---- Imports Group ----
+            if (!cu.getImports().isEmpty()) {
+                TreeItem<String> importsNode = new TreeItem<>("Imports");
+
+                for (com.github.javaparser.ast.ImportDeclaration imp : cu.getImports()) {
+                    importsNode.getChildren().add(
+                            new TreeItem<>("Import : " + imp.getNameAsString())
+                    );
+                }
+
+                root.getChildren().add(importsNode);
+            }
+
+            // ---- Other nodes (classes, etc.) ----
+            for (com.github.javaparser.ast.Node child : cu.getChildNodes()) {
+
+                // Skip imports (already handled)
+                if (child instanceof com.github.javaparser.ast.ImportDeclaration) {
+                    continue;
+                }
+
+                TreeItem<String> childItem = buildASTTree(child, labelProvider);
+                if (childItem != null) {
+                    root.getChildren().add(childItem);
+                }
+            }
+
+            return root;
+        }
+
+        // ---- Default behavior ----
+        TreeItem<String> item = new TreeItem<>(labelProvider.getLabel(node));
+
+        for (com.github.javaparser.ast.Node child : node.getChildNodes()) {
+            TreeItem<String> childItem = buildASTTree(child, labelProvider);
+            if (childItem != null) {
+                item.getChildren().add(childItem);
+            }
+        }
+
         return item;
+
+
+
+
+
+
+
     }
 
     public static void main(String[] args) {
+
         launch(args);
     }
+    private void startBackgroundProjectLoad(File projectFolder, ProgressBar progressBar) {
+
+        Task<ProjectContext> loadTask = new Task<>() {
+            @Override
+            protected ProjectContext call() {
+                return new ProjectContext(
+                        projectFolder,
+                        detector,
+                        rootDetector
+
+                );
+            }
+        };
+
+        progressBar.progressProperty().bind(loadTask.progressProperty());
+        progressBar.setVisible(true);
+
+        loadTask.setOnSucceeded(e -> {
+            progressBar.setVisible(false);
+
+            ProjectContext ctx = loadTask.getValue();
+
+
+            System.out.println("Project loaded successfully");
+            initAfterLoad(projectFolder,ctx);
+        });
+
+        loadTask.setOnFailed(e -> {
+            progressBar.setVisible(false);
+            loadTask.getException().printStackTrace();
+        });
+
+        new Thread(loadTask, "Project-Loader-Thread").start();
+    }
+
+
+    private void initAfterLoad(File projectFolder,ProjectContext ctx) {
+        this.srcRoot=ctx.sourceRoots;
+        this.srcClasses=ctx.sourceClasses;
+        this.cache = ctx.cache;
+        this.javaFileParser = ctx.javaFileParser;
+        this.parsermanager=ctx.parsermanager;
+        this.classDependecygraphBuilder=ctx.classDependecygraphBuilder;
+        this.classInfoBuilder=ctx.classInfoBuilder;
+        this.packageInfoBuilder=ctx.packageInfoBuilder;
+        this.projectInfoBuilder=ctx.projectInfoBuilder;
+        classDependecygraphBuilder.buildDependsOnGraph(projectFolder.toPath(),srcClasses);
+        classInfoBuilder.buildAll(projectFolder.toPath());
+
+        packageInfoBuilder.build(classInfoBuilder.getListOfClassInfo());
+        projectInfo=projectInfoBuilder.getPackageInfo(projectFolder.toPath());
+
+
+
+
+//        EventBus eventBus=new EventBus();
+//        new IncrementalAnalyzer(eventBus,classDependencyInfo,classDependencyInfoBuilder,
+//                cache,srcClasses,projectAnalysisResultBuilder,fileAnalyzer);
+//
+//        ProjectFileListener listener=new ProjectFileListener(eventBus);
+//        ProjectFileWatcher watcher=new ProjectFileWatcher();
+//        try {
+//            watcher.start(projectFolder,listener);
+//        }catch (Exception e){
+//            e.printStackTrace();
+//        }
+//
+//        UiRerfeshController uiRerfeshController=new UiRerfeshController(FileTreeView,fileTreeNodeFactory,codeTabPane,projectAnalysisResult,rightPanelTabManager,analysisViewBuilder);
+//        eventBus.subscribe(UiRefreshEvent.class, uiRerfeshController::onUiRefresh);
+
+    }
+
 }

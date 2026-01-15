@@ -5,7 +5,7 @@ import com.example.bodhakfrontend.IncrementalPart.model.Project.Hotspots;
 import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
 import com.example.bodhakfrontend.IncrementalPart.model.Project.UnusedClassInfo;
 import com.example.bodhakfrontend.Models.*;
-import com.example.bodhakfrontend.Models.PackageAnalysis.ProjectAnalysisResult;
+
 import javafx.stage.FileChooser;
 
 import java.io.File;

@@ -1,5 +1,6 @@
 package com.example.bodhakfrontend.ui.overviewButton;
 
+import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
 import com.example.bodhakfrontend.ui.OverviewContentFactory;
 import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
@@ -17,15 +18,15 @@ public class ClassOverviewContainer {
 
     public ClassOverviewContainer(
             File sourceFile,
-            List<String> classNames,
+            List<ClassInfo> classNames,
             OverviewContentFactory factory
     ) {
-        ComboBox<String> classSelector = new ComboBox<>();
+        ComboBox<ClassInfo> classSelector = new ComboBox<>();
         classSelector.getItems().addAll(classNames);
         classSelector.getSelectionModel().selectFirst();
 
         classSelector.setOnAction(e -> {
-            String cls = classSelector.getValue();
+            ClassInfo cls = classSelector.getValue();
             overviewHolder.getChildren().setAll(
                     factory.build(cls)
             );

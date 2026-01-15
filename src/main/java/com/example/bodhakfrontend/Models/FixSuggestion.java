@@ -1,6 +1,8 @@
 package com.example.bodhakfrontend.Models;
 
 
+import com.example.bodhakfrontend.IncrementalPart.model.Class.IssueType;
+
 import java.util.Set;
 
 public class FixSuggestion {
