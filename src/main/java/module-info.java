@@ -23,7 +23,10 @@ module com.example.bodhakfrontend {
     opens com.example.bodhakfrontend.Models to com.fasterxml.jackson.databind;
     exports com.example.bodhakfrontend.Builder;
     opens com.example.bodhakfrontend.Builder to javafx.fxml;
-
-    opens com.example.bodhakfrontend.Models.Incremental to com.fasterxml.jackson.databind;
+    opens com.example.bodhakfrontend.IncrementalPart.model.Class to com.fasterxml.jackson.databind;
     opens com.example.bodhakfrontend.IncrementalPart.model.Package to com.fasterxml.jackson.databind;
+    opens com.example.bodhakfrontend.IncrementalPart.model.Project to com.fasterxml.jackson.databind;
+    opens com.example.bodhakfrontend.IncrementalPart.Update to com.fasterxml.jackson.databind;
+
+
 }

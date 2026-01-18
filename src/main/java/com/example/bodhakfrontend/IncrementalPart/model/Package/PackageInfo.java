@@ -3,58 +3,58 @@ package com.example.bodhakfrontend.IncrementalPart.model.Package;
 import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
 
 
+import java.util.HashSet;
+
 import java.util.Set;
 
 
 public class PackageInfo {
 
     private final String packageName;
-    private  final Set<PackageWarning> warnings;
+    private  final Set<PackageWarning> warnings=new HashSet<>();
     // Classes inside this package
-    private final Set<ClassInfo> classes;
+    private final Set<ClassInfo> classes=new HashSet<>();
 
     // Packages this package depends on
-    private final Set<String> dependsOn;
+    private final Set<String> dependsOn=new HashSet<>();
 
     // Packages that depend on this package
-    private final Set<String> usedBy;
+    private final Set<String> usedBy=new HashSet<>();
     // cycles for Circular dependencies
-    private final Set<Set<String>> circularDependencies;
+    private final Set<Set<String>> circularDependencies=new HashSet<>();
     // circular, warnings, metrics
     private boolean partOfCycle;
 
     public PackageInfo(
-            String packageName,
-            Set<ClassInfo> classes,
-            Set<String> dependsOn,
-            Set<String> usedBy,
-            Set<Set<String>> circularDependencies,
-            boolean partOfCycle,
-            Set<PackageWarning> warnings
+            String packageName
+
     ) {
         this.packageName = packageName;
-        this.classes = classes;
-        this.dependsOn = dependsOn;
-        this.usedBy = usedBy;
-        this.circularDependencies=circularDependencies;
-        this.partOfCycle=partOfCycle;
-        this.warnings=warnings;
+
     }
 
+    // getters
     public String getPackageName() { return packageName; }
     public Set<ClassInfo> getClasses() { return classes; }
     public Set<String> getDependsOn() { return dependsOn; }
     public Set<String> getUsedBy() { return usedBy; }
-
-    public Set<PackageWarning> getWarnings() {
-        return warnings;
-    }
-
-    public Set<Set<String>> getCircularDependencies() {
-        return circularDependencies;
-    }
+    public Set<Set<String>> getCircularDependencies() { return circularDependencies; }
+    public Set<PackageWarning> getWarnings() { return warnings; }
 
     public boolean isPartOfCycle() { return partOfCycle; }
     public void setPartOfCycle(boolean value) { this.partOfCycle = value; }
+
+    // 🔥 controlled update helpers
+    public void setWarnings(Set<PackageWarning> newWarnings) {
+        warnings.clear();
+        warnings.addAll(newWarnings);
+    }
+
+    public void setCircularDependencies(Set<Set<String>> cycles) {
+        circularDependencies.clear();
+        circularDependencies.addAll(cycles);
+        partOfCycle = !cycles.isEmpty();
+    }
+
 }
 

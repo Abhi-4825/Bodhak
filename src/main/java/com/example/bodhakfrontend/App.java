@@ -4,16 +4,21 @@ import com.example.bodhakfrontend.IncrementalPart.Builder.ClassDependecygraphBui
 import com.example.bodhakfrontend.IncrementalPart.Builder.ClassInfoBuilder;
 import com.example.bodhakfrontend.IncrementalPart.Builder.PackageInfoBuilder;
 import com.example.bodhakfrontend.IncrementalPart.Builder.ProjectInfoBuilder;
+import com.example.bodhakfrontend.IncrementalPart.Update.EventBus;
+import com.example.bodhakfrontend.IncrementalPart.Update.IncrementalAnalyzer;
+import com.example.bodhakfrontend.IncrementalPart.Update.ProjectFileListener;
+import com.example.bodhakfrontend.IncrementalPart.Update.ProjectFileWatcher;
+import com.example.bodhakfrontend.IncrementalPart.UpdateManager;
 import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
 import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
+import com.example.bodhakfrontend.IncrementalPart.Update.UiRefreshEvent;
 import com.example.bodhakfrontend.Parser.AstLabelProvider;
 import com.example.bodhakfrontend.Parser.javaParser.JavaFileParser;
 import com.example.bodhakfrontend.Parser.Parsermanager;
-import com.example.bodhakfrontend.incremental.*;
-
-import com.example.bodhakfrontend.projectAnalysis.ui.AnalysisViewBuilder;
 import com.example.bodhakfrontend.ui.Front.FileTreeNodeFactory;
 import com.example.bodhakfrontend.ui.OverviewContentFactory;
+import com.example.bodhakfrontend.ui.ProjectAnalysis.ProjectAnalysisUi;
+import com.example.bodhakfrontend.ui.UiRerfeshController;
 import com.example.bodhakfrontend.ui.overviewButton.*;
 import com.example.bodhakfrontend.ui.rightPanel.RightPanelTabManager;
 import com.example.bodhakfrontend.uiHelper.UiFeatures;
@@ -21,6 +26,7 @@ import com.example.bodhakfrontend.util.MultiModuleSourceRootDetector;
 import com.example.bodhakfrontend.util.ParseCache;
 import com.github.javaparser.ast.CompilationUnit;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.beans.binding.BooleanBinding;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -57,13 +63,16 @@ public class App extends Application {
     private TreeView<ClassInfo> dependencyTreeView;
     private BorderPane rightPanel;
     private TreeItem<File> selected;
-    private AnalysisViewBuilder analysisViewBuilder;
+
     private ProgressBar globalProgressBar;
     private ClassDependecygraphBuilder classDependecygraphBuilder;
     private ClassInfoBuilder classInfoBuilder;
     private PackageInfoBuilder packageInfoBuilder;
     private ProjectInfoBuilder projectInfoBuilder;
     private ProjectInfo projectInfo;
+    private Button analyzeBtn;
+    private ProjectAnalysisUi projectAnalysisUi;
+    private UpdateManager updateManager;
 
 
     private FileTreeNodeFactory fileTreeNodeFactory;
@@ -93,18 +102,21 @@ public class App extends Application {
 
         // for bottom
 
-        Button AnalyzeBtn=new Button("Analyze");
+        analyzeBtn=new Button("Analyze");
+        analyzeBtn.setVisible(false);
+
 
 
         BorderPane bottomBar = new BorderPane();
         bottomBar.setPadding(new Insets(8));
         bottomBar.setLeft(globalProgressBar);
-        bottomBar.setRight(AnalyzeBtn);
+        bottomBar.setRight(analyzeBtn);
         root.setBottom(bottomBar);
         // for code view
         codeTabPane=new TabPane();
         uiFeatures=new UiFeatures(codeTabPane);
-        analysisViewBuilder=new AnalysisViewBuilder(uiFeatures);
+        projectAnalysisUi=new ProjectAnalysisUi(uiFeatures);
+//        analysisViewBuilder=new AnalysisViewBuilder(uiFeatures);
         codeTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
         // for output
         rightTabPane=new TabPane();
@@ -227,11 +239,11 @@ public class App extends Application {
 
 
         // Analyze Button
-        AnalyzeBtn.setOnAction(e -> {
+        analyzeBtn.setOnAction(e -> {
             if (projectFolder == null ){ rightPanelTabManager.openAnalyzeTab(()->new Label("No project folder or class file found"));
                 return;}
 
-            rightPanelTabManager.openAnalyzeTab(()->analysisViewBuilder.build(projectInfo));
+            rightPanelTabManager.openAnalyzeTab(()->projectAnalysisUi.build(projectInfo));
         });
         // Ast button functioning
         Ast.setOnAction(e -> showASTWindow(codeTabPane));
@@ -448,29 +460,24 @@ public class App extends Application {
         this.classInfoBuilder=ctx.classInfoBuilder;
         this.packageInfoBuilder=ctx.packageInfoBuilder;
         this.projectInfoBuilder=ctx.projectInfoBuilder;
-        classDependecygraphBuilder.buildDependsOnGraph(projectFolder.toPath(),srcClasses);
-        classInfoBuilder.buildAll(projectFolder.toPath());
+        this.updateManager=ctx.updateManager;
+       projectInfoBuilder.buildAll(projectFolder.toPath());
+        projectInfo=projectInfoBuilder.getProjectInfo();
+        Platform.runLater(()-> analyzeBtn.setVisible(true));
 
-        packageInfoBuilder.build(classInfoBuilder.getListOfClassInfo());
-        projectInfo=projectInfoBuilder.getPackageInfo(projectFolder.toPath());
+        EventBus eventBus=new EventBus();
+        new IncrementalAnalyzer(eventBus,updateManager);
 
+        ProjectFileListener listener=new ProjectFileListener(eventBus);
+        ProjectFileWatcher watcher=new ProjectFileWatcher();
+        try {
+            watcher.start(projectFolder,listener);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
 
-
-
-//        EventBus eventBus=new EventBus();
-//        new IncrementalAnalyzer(eventBus,classDependencyInfo,classDependencyInfoBuilder,
-//                cache,srcClasses,projectAnalysisResultBuilder,fileAnalyzer);
-//
-//        ProjectFileListener listener=new ProjectFileListener(eventBus);
-//        ProjectFileWatcher watcher=new ProjectFileWatcher();
-//        try {
-//            watcher.start(projectFolder,listener);
-//        }catch (Exception e){
-//            e.printStackTrace();
-//        }
-//
-//        UiRerfeshController uiRerfeshController=new UiRerfeshController(FileTreeView,fileTreeNodeFactory,codeTabPane,projectAnalysisResult,rightPanelTabManager,analysisViewBuilder);
-//        eventBus.subscribe(UiRefreshEvent.class, uiRerfeshController::onUiRefresh);
+        UiRerfeshController uiRerfeshController=new UiRerfeshController(FileTreeView,fileTreeNodeFactory,codeTabPane,rightPanelTabManager,projectAnalysisUi,projectInfoBuilder);
+        eventBus.subscribe(UiRefreshEvent.class, uiRerfeshController::onUiRefresh);
 
     }
 

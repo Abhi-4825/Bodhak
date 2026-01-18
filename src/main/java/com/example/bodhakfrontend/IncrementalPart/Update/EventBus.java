@@ -1,4 +1,4 @@
-package com.example.bodhakfrontend.incremental;
+package com.example.bodhakfrontend.IncrementalPart.Update;
 
 import java.util.*;
 import java.util.function.Consumer;

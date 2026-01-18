@@ -23,13 +23,13 @@ public class EntryPointInfo {
 
     private final Set<ProjectFlavor> projectFlavors;
     private final Entry primaryEntry;
-    private final List<Entry> secondaryEntries;
+    private final Set<Entry> secondaryEntries;
     private final Set<Entry> frameworkRoots = new HashSet<>();
 
     public EntryPointInfo(
             Set<ProjectFlavor> projectFlavors,
             Entry primaryEntry,
-            List<Entry> secondaryEntries
+            Set<Entry> secondaryEntries
     ) {
         this.projectFlavors = projectFlavors;
         this.primaryEntry = primaryEntry;
@@ -47,7 +47,7 @@ public class EntryPointInfo {
     public Entry getPrimaryEntry() {
         return primaryEntry;
     }
-    public List<Entry> getSecondaryEntries() {
+    public Set<Entry> getSecondaryEntries() {
         return secondaryEntries;
     }
     public Set<Entry> getFrameworkRoots() {

@@ -4,9 +4,7 @@ import com.example.bodhakfrontend.IncrementalPart.model.Class.*;
 import com.example.bodhakfrontend.util.ClassNameResolver;
 import com.example.bodhakfrontend.util.ParseCache;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.body.TypeDeclaration;
+import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 
@@ -19,6 +17,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 public class ClassInfoBuilder {
     private static final Set<String> SPRING_ANNOTATIONS = Set.of(
@@ -34,12 +33,13 @@ public class ClassInfoBuilder {
     );
 
 
-    private final ClassNameResolver classNameResolver = new ClassNameResolver();
+
     private final ParseCache cache;
     private final ClassDependecygraphBuilder classDependecygraphBuilder;
 
 
     private Map<Path, List<ClassInfo>> classInfoMap = new ConcurrentHashMap<>();
+    private Set<String> srcClasses;
 
 
     private Path normalize(Path path) {
@@ -51,13 +51,38 @@ public class ClassInfoBuilder {
         this.classDependecygraphBuilder = classDependecygraphBuilder;
 
     }
-    //pkg---> classinfo
-    Map<String,Set<ClassInfo>> pkgToClassInfo = new ConcurrentHashMap<>();
+    private Set<String> getSourceClasses(Path projectPath) {
+        Set<String> classes = new HashSet<>();
+        try(Stream<Path> paths= Files.walk(projectPath) ) {
+            paths.filter(p-> p.toString().endsWith(".java"))
+                    .forEach(javaFile->{
+                        try {
+                            CompilationUnit cu=cache.get(javaFile);
+                            cu.findAll(ClassOrInterfaceDeclaration.class)
+                                    .forEach(classOrI -> {
+                                        String className = ClassNameResolver.resolveFqn(cu,classOrI);
+                                        classes.add(className);
+                                    });
+                            cu.findAll(EnumDeclaration.class).forEach(enumDeclaration -> {
+                                String  enumName = ClassNameResolver.resolveFqn(cu,enumDeclaration);
+                                classes.add(enumName);
+                            });
+                            cu.findAll(RecordDeclaration.class).forEach(recordDeclaration -> {
+                                String  recordName = ClassNameResolver.resolveFqn(cu,recordDeclaration);
+                                classes.add(recordName);
+                            });
+                        }catch (Exception ignored){}
 
-
-
+                    });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return classes;
+    }
     public Map<Path, List<ClassInfo>> buildAll(Path projectPath) {
         classInfoMap.clear();
+        srcClasses = getSourceClasses(projectPath);
+        classDependecygraphBuilder.buildDependsOnGraph(projectPath,srcClasses);
         try {
             Files.walk(projectPath)
                     .filter(p -> p.toString().endsWith(".java"))
@@ -84,7 +109,7 @@ public class ClassInfoBuilder {
         List<ClassInfo> classInfoList = new ArrayList<>();
         Set<Set<String>> AllCircularGroups = classDependecygraphBuilder.getClassDependenciesGroups();
 
-
+        if(!normalizedPath.toString().endsWith(".java")) {return classInfoList;}
         try {
             File sourceFile = path.toFile();
             CompilationUnit cu = cache.get(normalizedPath);
@@ -443,29 +468,7 @@ public class ClassInfoBuilder {
 
     //Incremental part
 
-    //for file create
-    public void onFileCreate(Path filePath, Set<String> sourceClasses) {
-        classDependecygraphBuilder.onFileCreate(filePath, sourceClasses);
-        List<ClassInfo> classes = scanFile(filePath);
 
-        classInfoMap.put(normalize(filePath), classes);
-
-    }
-    // on file deletion
-
-    public void onFileDelete(Path filePath) {
-        classDependecygraphBuilder.onFileDelete(filePath);
-        classInfoMap.remove(normalize(filePath));
-    }
-
-
-    //on file update
-    public void onFileModify(Path filePath, Set<String> sourceClasses) {
-
-        classDependecygraphBuilder.onFileModify(filePath, sourceClasses);
-        List<ClassInfo> classes = scanFile(filePath);
-        classInfoMap.put(normalize(filePath), classes);
-    }
 
 
     // get the classInfoMap
@@ -516,7 +519,53 @@ public class ClassInfoBuilder {
     }
 
 
+    //for file create
+    public void onFileCreate(Path filePath) {
+        List<ClassInfo> classes = scanFile(filePath);
+        for (ClassInfo classInfo : classes) {
+            srcClasses.add(classInfo.getClassName());
+        }
+        classDependecygraphBuilder.onFileCreate(filePath, srcClasses);
+        classInfoMap.put(normalize(filePath), classes);
 
+    }
+    // on file deletion
+
+    public void onFileDelete(Path filePath) {
+        cache.invalidate(filePath.toAbsolutePath().normalize());
+        List<ClassInfo> classes = classInfoMap.get(normalize(filePath));
+        for (ClassInfo classInfo : classes) {
+            srcClasses.remove(classInfo.getClassName());
+        }
+        classDependecygraphBuilder.onFileDelete(filePath);
+        classInfoMap.remove(normalize(filePath));
+    }
+
+
+    //on file update
+    public void onFileModify(Path filePath) {
+        Path p = normalize(filePath);
+        cache.invalidate(p);
+        //  remove old classes
+        List<ClassInfo> oldClasses = classInfoMap.getOrDefault(p, List.of());
+        for (ClassInfo ci : oldClasses) {
+            srcClasses.remove(ci.getClassName());
+        }
+
+        //  re-scan file
+        List<ClassInfo> newClasses = scanFile(filePath);
+
+        //  add new classes
+        for (ClassInfo ci : newClasses) {
+            srcClasses.add(ci.getClassName());
+        }
+
+        // update dependency graph
+        classDependecygraphBuilder.onFileModify(filePath, srcClasses);
+
+        //  replace class info
+        classInfoMap.put(p, newClasses);
+    }
 
 
 

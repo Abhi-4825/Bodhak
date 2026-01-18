@@ -41,7 +41,7 @@ public class ProjectInfo {
 
     private final Set<Path> knownFolders;
     private final Set<Path> knownFiles;
-    private final List<PackageInfo> packageInfos;
+    private final Map<String,PackageInfo> packageInfos;
     private final List<ClassInfo> classInfos;
 
     //sates that can be found though classInfos
@@ -63,7 +63,7 @@ public class ProjectInfo {
     private final Set<UnusedClassInfo> unusedClassInfos;
 
 
-    public ProjectInfo(Map<String, Set<Path>> laguageCountMap, List<LargestFileInfo> top5, Set<Path> knownFolders, Set<Path> knownFiles, List<ClassInfo> classInfos, List<PackageInfo> packageInfos, List<Hotspots> hotspots, EntryPointInfo entryPointInfo, Set<UnusedClassInfo> unusedClassInfos
+    public ProjectInfo(Map<String, Set<Path>> laguageCountMap, List<LargestFileInfo> top5, Set<Path> knownFolders, Set<Path> knownFiles, List<ClassInfo> classInfos, Map<String,PackageInfo> packageInfos, List<Hotspots> hotspots, EntryPointInfo entryPointInfo, Set<UnusedClassInfo> unusedClassInfos
             ,int totalClasses,int healthyClasses,int classesWithWarnings,int godClasses,int circularClasses,int highlyCoupledClasses ) {
         this.laguageCountMap = laguageCountMap;
         this.largetFiles = top5;
@@ -98,7 +98,7 @@ public class ProjectInfo {
         return knownFiles;
     }
 
-    public List<PackageInfo> getPackageInfos() {
+    public Map<String,PackageInfo> getPackageInfos() {
         return packageInfos;
     }
 
@@ -142,14 +142,7 @@ public class ProjectInfo {
         return unusedClassInfos;
     }
 
-    public Map<String,PackageInfo> getPackageInfoMap(){
-        Map<String, PackageInfo> pkgMap =new HashMap<>();
-        for(PackageInfo packageInfo : packageInfos){
-            pkgMap.put(packageInfo.getPackageName(), packageInfo);
-        }
-          return pkgMap;
 
-    }
     public List<ClassInfo> getClassesInCycles(){
         List<ClassInfo> classesInCycles = new ArrayList<>();
         for(ClassInfo classInfo : classInfos){

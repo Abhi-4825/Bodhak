@@ -137,7 +137,7 @@ public class ClassInfo {
 
     @Override
     public String toString() {
-        return className;
+        return className.substring(className.lastIndexOf('.') + 1);
     }
 
 
@@ -206,6 +206,8 @@ public class ClassInfo {
         evaluateSmells();
         return warnings;
     }
+
+
 
 
 }

@@ -61,9 +61,9 @@ public class EntryClassAnalyzer {
         EntryPointInfo.Entry primary = choosePrimary(mainEntries);
 
         //  SECONDARY
-        List<EntryPointInfo.Entry> secondary = new ArrayList<>();
+        Set<EntryPointInfo.Entry> secondary = new HashSet<>();
         for (EntryPointInfo.Entry e : mainEntries) {
-            if (!e.equals(primary)) {
+            if (!e.className().equals(primary.className())) {
                 secondary.add(e);
             }
         }

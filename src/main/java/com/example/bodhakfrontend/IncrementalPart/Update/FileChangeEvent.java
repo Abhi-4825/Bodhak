@@ -1,4 +1,4 @@
-package com.example.bodhakfrontend.Models.Incremental;
+package com.example.bodhakfrontend.IncrementalPart.Update;
 
 import java.nio.file.Path;
 
@@ -9,7 +9,6 @@ public record FileChangeEvent(ChangeType type, Path path) {
         FILE_MODIFIED,
         DIR_CREATED,
         DIR_DELETED
-
     }
 
 }

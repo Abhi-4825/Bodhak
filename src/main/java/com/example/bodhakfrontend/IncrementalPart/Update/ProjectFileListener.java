@@ -1,6 +1,5 @@
-package com.example.bodhakfrontend.incremental;
+package com.example.bodhakfrontend.IncrementalPart.Update;
 
-import com.example.bodhakfrontend.Models.Incremental.FileChangeEvent;
 import com.example.bodhakfrontend.util.IgnoreRules;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 
@@ -14,20 +13,18 @@ public class ProjectFileListener extends FileAlterationListenerAdaptor {
     }
     public void onFileCreate(File file) {
         if(IgnoreRules.shouldIgnore(file)) {return;}
-        bus.publish(new FileChangeEvent(FileChangeEvent.ChangeType.FILE_CREATED,file.toPath().toAbsolutePath()));
+        bus.publish(new FileChangeEvent(FileChangeEvent.ChangeType.FILE_CREATED,file.toPath()));
         System.out.println("File created: " + file.getAbsolutePath());
-
-
     }
     public void onFileChange(File file) {
         if(IgnoreRules.shouldIgnore(file)) {return;}
-        bus.publish(new FileChangeEvent(FileChangeEvent.ChangeType.FILE_MODIFIED,file.toPath().toAbsolutePath()));
+        bus.publish(new FileChangeEvent(FileChangeEvent.ChangeType.FILE_MODIFIED,file.toPath()));
 
         System.out.println("File changed: " + file.getAbsolutePath());
     }
     public void onFileDelete(File file) {
         if(IgnoreRules.shouldIgnore(file)) {return;}
-        bus.publish(new FileChangeEvent(FileChangeEvent.ChangeType.FILE_DELETED,file.toPath().toAbsolutePath()));
+        bus.publish(new FileChangeEvent(FileChangeEvent.ChangeType.FILE_DELETED,file.toPath()));
 
         System.out.println("File deleted: " + file.getAbsolutePath());
     }
@@ -41,7 +38,7 @@ public class ProjectFileListener extends FileAlterationListenerAdaptor {
     @Override
     public void onDirectoryCreate(File directory) {
         if(IgnoreRules.shouldIgnore(directory)) {return;}
-        bus.publish(new FileChangeEvent(FileChangeEvent.ChangeType.DIR_CREATED,directory.toPath().toAbsolutePath()));
+        bus.publish(new FileChangeEvent(FileChangeEvent.ChangeType.DIR_CREATED,directory.toPath()));
 
         System.out.println("Directory created: " + directory.getAbsolutePath());
     }
@@ -49,7 +46,7 @@ public class ProjectFileListener extends FileAlterationListenerAdaptor {
     @Override
     public void onDirectoryDelete(File directory) {
         if(IgnoreRules.shouldIgnore(directory)) {return;}
-        bus.publish(new FileChangeEvent(FileChangeEvent.ChangeType.DIR_DELETED,directory.toPath().toAbsolutePath()));
+        bus.publish(new FileChangeEvent(FileChangeEvent.ChangeType.DIR_DELETED,directory.toPath()));
 
         System.out.println("Directory deleted: " + directory.getAbsolutePath());
     }

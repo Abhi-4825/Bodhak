@@ -17,18 +17,18 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ClassDependecygraphBuilder {
     private final ParseCache cache;
-    private final ClassNameResolver  classNameResolver;
     private final Map<Path,Map<String,Set<String>>> classDependenciesToPath =new ConcurrentHashMap<>();
     private final Map<Path,Map<String,Set<String>>> reverseClassDependencies =new ConcurrentHashMap<>();
     Map<String,Set<String>> classDependencies=new ConcurrentHashMap<>();
 
-    public ClassDependecygraphBuilder(ParseCache cache, ClassNameResolver classNameResolver) {
+    public ClassDependecygraphBuilder(ParseCache cache) {
         this.cache = cache;
-        this.classNameResolver = classNameResolver;
+
     }
 
 
     public Map<Path,Map<String, Set<String>>> buildDependsOnGraph (Path projectPath,Set<String> sourceClasses){
+        classDependenciesToPath.clear();
         try {
             Files.walk(projectPath).
                     filter(path -> path.toString().endsWith(".java")).forEach(path -> {
@@ -128,14 +128,12 @@ public class ClassDependecygraphBuilder {
     public void onFileCreate(Path filePath,Set<String> sourceClasses){
         buildDependencyGraph(normalize(filePath),sourceClasses);
         getAffectedClassDependencies(classDependenciesToPath);
-
-
     }
 
     // update classDependency on File modify
     public void onFileModify(Path filePath,Set<String> sourceClasses){
         Path normalizedPath = normalize(filePath);
-        cache.invalidate(normalizedPath);
+
         buildDependencyGraph(normalizedPath,sourceClasses);
         getAffectedClassDependencies(classDependenciesToPath);
 
@@ -144,7 +142,6 @@ public class ClassDependecygraphBuilder {
     // update on file Delete
     public void onFileDelete(Path filePath){
         Path normalizedPath = normalize(filePath);
-        cache.invalidate(normalizedPath);
         classDependenciesToPath.remove(normalizedPath);
         getAffectedClassDependencies(classDependenciesToPath);
 
