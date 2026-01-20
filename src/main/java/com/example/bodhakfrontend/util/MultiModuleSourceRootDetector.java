@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Stream;
-
 public class MultiModuleSourceRootDetector {
 
     private static final Set<String> IGNORED_DIRS = Set.of(
@@ -13,49 +12,63 @@ public class MultiModuleSourceRootDetector {
             ".gradle", ".m2", "out"
     );
 
-    public  List<Path> detectSourceRoots(Path projectRoot) {
+    public List<Path> detectSourceRoots(Path projectRoot) {
 
-        Set<Path> sourceRoots = new HashSet<>();
+        Set<Path> roots = new HashSet<>();
 
-        try (Stream<Path> paths = Files.walk(projectRoot)) {
+        try (Stream<Path> stream = Files.walk(projectRoot)) {
 
-            paths.filter(Files::isDirectory)
-                    .filter(MultiModuleSourceRootDetector::isNotIgnored)
+            stream.filter(Files::isDirectory)
+                    .filter(this::notIgnored)
                     .forEach(dir -> {
 
-                        // Standard Maven / Gradle layout
-                        if (dir.endsWith("src/main/java")
-                                || dir.endsWith("src/test/java")) {
-                            sourceRoots.add(dir);
+                        // Maven / Gradle Java
+                        if (endsWith(dir, "src", "main", "java") ||
+                                endsWith(dir, "src", "test", "java")) {
+                            roots.add(dir);
                         }
 
-                        // Plain src folder containing .java files
+                        // Kotlin support
+                        else if (endsWith(dir, "src", "main", "kotlin") ||
+                                endsWith(dir, "src", "test", "kotlin")) {
+                            roots.add(dir);
+                        }
+
+                        // Plain src folder
                         else if (dir.getFileName().toString().equals("src")
-                                && containsJavaFiles(dir)) {
-                            sourceRoots.add(dir);
+                                && containsJavaFiles(dir)
+                                && !hasDeeperSourceRoot(dir)) {
+                            roots.add(dir);
                         }
                     });
 
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Source root detection failed", e);
         }
 
-        return new ArrayList<>(sourceRoots);
+        return new ArrayList<>(roots);
     }
 
-    private static boolean isNotIgnored(Path path) {
-        return !IGNORED_DIRS.contains(path.getFileName().toString());
+    private boolean notIgnored(Path p) {
+        return !IGNORED_DIRS.contains(p.getFileName().toString());
     }
 
-    private static boolean containsJavaFiles(Path dir) {
-        try (Stream<Path> files = Files.walk(dir, 2)) {
+    private boolean endsWith(Path path, String... parts) {
+        return path.endsWith(Paths.get("", parts));
+    }
+
+    private boolean containsJavaFiles(Path dir) {
+        try (Stream<Path> files = Files.walk(dir, 3)) {
             return files.anyMatch(p -> p.toString().endsWith(".java"));
         } catch (IOException e) {
             return false;
         }
     }
 
-
-
+    // Prevent adding src if src/main/java exists
+    private boolean hasDeeperSourceRoot(Path srcDir) {
+        return Files.exists(srcDir.resolve("main/java")) ||
+                Files.exists(srcDir.resolve("test/java"));
+    }
 }
 

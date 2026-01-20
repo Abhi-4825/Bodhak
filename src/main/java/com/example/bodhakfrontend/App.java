@@ -421,8 +421,7 @@ public class App extends Application {
             protected ProjectContext call() {
                 return new ProjectContext(
                         projectFolder,
-                        detector,
-                        rootDetector
+                        detector
 
                 );
             }
@@ -463,6 +462,12 @@ public class App extends Application {
         this.updateManager=ctx.updateManager;
        projectInfoBuilder.buildAll(projectFolder.toPath());
         projectInfo=projectInfoBuilder.getProjectInfo();
+        List<ClassInfo> c=projectInfo.getClassInfos();
+        for(ClassInfo ci:c){
+            System.out.println(ci);
+            for (String a:ci.getUsedBy())
+                System.out.println(a);
+        }
         Platform.runLater(()-> analyzeBtn.setVisible(true));
 
         EventBus eventBus=new EventBus();

@@ -11,6 +11,7 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeS
 
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -19,12 +20,13 @@ public class ParseCache {
     private final Map<Path, CompilationUnit> cache = new ConcurrentHashMap<>();
     private final JavaParser parser;
 
-    public ParseCache(Path sourceRoot) {
+    public ParseCache(List<Path> sourceRoot) {
 
         CombinedTypeSolver typeSolver = new CombinedTypeSolver();
 
         // Project source code
-        typeSolver.add(new JavaParserTypeSolver(sourceRoot));
+        for(Path src : sourceRoot){
+        typeSolver.add(new JavaParserTypeSolver(src));}
 
         // JDK classes
         typeSolver.add(new ReflectionTypeSolver());

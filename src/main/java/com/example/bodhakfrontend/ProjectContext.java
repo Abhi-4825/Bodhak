@@ -25,10 +25,12 @@ public class ProjectContext {
     public final UpdateManager updateManager;
     public final List<Path> sourceRoots;
     public final Set<String> sourceClasses;
+    public final MultiModuleSourceRootDetector multiModuleSourceRootDetector;
     public ProjectContext(File projectFolder,
-                          LanguageDetector detector,
-                          MultiModuleSourceRootDetector rootDetector) {
-        this.cache = new ParseCache(projectFolder.toPath());
+                          LanguageDetector detector) {
+      this. multiModuleSourceRootDetector = new MultiModuleSourceRootDetector();
+        this.sourceRoots = multiModuleSourceRootDetector.detectSourceRoots(projectFolder.toPath());
+        this.cache = new ParseCache(sourceRoots);
         this.javaFileParser = new JavaFileParser(cache);
         this.classNameResolver = new ClassNameResolver();
         this.classDependecygraphBuilder=new ClassDependecygraphBuilder(cache);
@@ -36,7 +38,7 @@ public class ProjectContext {
         this.packageInfoBuilder=new PackageInfoBuilder(classInfoBuilder);
         this.projectInfoBuilder=new ProjectInfoBuilder(classInfoBuilder,packageInfoBuilder);
         this.parsermanager = new Parsermanager(detector, javaFileParser);
-        this.sourceRoots = rootDetector.detectSourceRoots(projectFolder.toPath());
+
         this.sourceClasses = javaFileParser.getClassesfromSource(sourceRoots);
         this.updateManager=new UpdateManager(classInfoBuilder,packageInfoBuilder,projectInfoBuilder,classDependecygraphBuilder,projectFolder.toPath());
     }

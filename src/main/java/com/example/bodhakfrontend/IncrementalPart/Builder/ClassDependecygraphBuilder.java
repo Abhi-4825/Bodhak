@@ -4,12 +4,18 @@ import com.example.bodhakfrontend.dependency.CircularDependency;
 import com.example.bodhakfrontend.util.ClassNameResolver;
 import com.example.bodhakfrontend.util.ParseCache;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.body.TypeDeclaration;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.EnumDeclaration;
+import com.github.javaparser.ast.body.RecordDeclaration;
 import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
+import com.github.javaparser.ast.type.Type;
+import com.github.javaparser.resolution.types.ResolvedReferenceType;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -17,9 +23,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ClassDependecygraphBuilder {
     private final ParseCache cache;
-    private final Map<Path,Map<String,Set<String>>> classDependenciesToPath =new ConcurrentHashMap<>();
-    private final Map<Path,Map<String,Set<String>>> reverseClassDependencies =new ConcurrentHashMap<>();
-    Map<String,Set<String>> classDependencies=new ConcurrentHashMap<>();
+    private final Map<String,Set<String>> reverseClassDependencies =new ConcurrentHashMap<>();
+    private final Map<Path,Map<String,Set<String>>> classDependencies=new HashMap<>();
+    Map<String,Set<String>> classDependenciesGroups =new ConcurrentHashMap<>();
 
     public ClassDependecygraphBuilder(ParseCache cache) {
         this.cache = cache;
@@ -28,7 +34,7 @@ public class ClassDependecygraphBuilder {
 
 
     public Map<Path,Map<String, Set<String>>> buildDependsOnGraph (Path projectPath,Set<String> sourceClasses){
-        classDependenciesToPath.clear();
+        classDependencies.clear();
         try {
             Files.walk(projectPath).
                     filter(path -> path.toString().endsWith(".java")).forEach(path -> {
@@ -42,8 +48,9 @@ public class ClassDependecygraphBuilder {
             System.out.println("Error reading project path"+e.getMessage());;
         }
 
+        getAffectedClassDependencies(classDependencies);
+        return classDependencies;
 
-        return classDependenciesToPath;
     }
 
     // for finding dependencies for class in a file
@@ -51,108 +58,252 @@ public class ClassDependecygraphBuilder {
 
         Path normalizedPath = filePath.toAbsolutePath().normalize();
         CompilationUnit cu = cache.get(normalizedPath);
+        if (cu == null) return;
 
-        cu.findAll(TypeDeclaration.class).forEach(clazz -> {
+        // 1> first for classes or interfaces
+        cu.findAll(ClassOrInterfaceDeclaration.class).forEach(clazz -> {
+            Set<String> dependencies=new HashSet<>();
 
-            String className = ClassNameResolver.resolveFqn(cu, clazz);
-            Set<String> dependsOn = new HashSet<>();
-
-            clazz.findAll(ClassOrInterfaceType.class).forEach(type -> {
-                String dep = ClassNameResolver.resolveTypeFqn(cu, type);
-
-                if (dep != null
-                        && !dep.equals(className)
-                        && sourceClasses.contains(dep)) {
-
-                    dependsOn.add(dep);
-                }
-            });
-            clazz.findAll(MethodCallExpr.class).forEach(call -> {
-                call.getScope().ifPresent(scope -> {
-
-                    String dep = ClassNameResolver.resolveScopeFqn(cu, scope);
-
-                    if (dep != null
-                            && !dep.equals(className)
-                            && sourceClasses.contains(dep)) {
-
-                        dependsOn.add(dep);
-                    }
+            String className = ClassNameResolver.resolveFqn(cu,clazz);
+            // fields types--> private Parsecache cache;
+            clazz.getFields().forEach(field -> {
+                field.getVariables().forEach(variable -> {
+                    resolveType(variable.getType(),dependencies,sourceClasses);
                 });
             });
 
-            classDependenciesToPath
-                    .computeIfAbsent(normalizedPath, k -> new ConcurrentHashMap<>())
-                    .put(className, dependsOn);
+            // constructor parameter type
+            clazz.getConstructors().forEach(constructor -> {
+                constructor.getParameters().forEach(parameter -> {
+                    resolveType(parameter.getType(),dependencies,sourceClasses);
+                });
+            });
+
+            //method Parameter type and return type
+            clazz.getMethods().forEach(method -> {
+                method.getParameters().forEach(parameter -> {
+                    resolveType(parameter.getType(),dependencies,sourceClasses);
+                });
+                resolveType(method.getType(),dependencies,sourceClasses);
+            });
+            // methods called
+            clazz.findAll(MethodCallExpr.class).forEach(call -> {
+                try {
+                    String dep = call.resolve()
+                            .declaringType()
+                            .getQualifiedName();
+                    if(sourceClasses.contains(dep)) dependencies.add(dep);
+                } catch (Exception ignored) {
+
+                }
+            });
+
+            // object creation
+            clazz.findAll(ObjectCreationExpr.class).forEach(expr -> {
+                try {
+                    String dep = expr.getType()
+                            .resolve()
+                            .asReferenceType()
+                            .getQualifiedName();
+                    if(sourceClasses.contains(dep))dependencies.add(dep);
+                } catch (Exception ignored) {
+                }
+            });
+            //generics
+            clazz.findAll(ClassOrInterfaceType.class).forEach(type ->
+                    type.getTypeArguments().ifPresent(args ->
+                            args.forEach(arg ->
+                                    resolveType(arg, dependencies, sourceClasses)
+                            )
+                    )
+            );
+
+            // inheritance and extended
+            clazz.getExtendedTypes().forEach(extendedType ->
+                    resolveType(extendedType, dependencies, sourceClasses));
+            clazz.getImplementedTypes().forEach(implementedType ->
+                    resolveType(implementedType, dependencies, sourceClasses));
+
+
+            // annotation
+            clazz.getAnnotations().forEach(ann -> {
+                try {
+                    String dep = ann.resolve()
+                            .getQualifiedName();
+                    if(sourceClasses.contains(dep)) dependencies.add(dep);
+                } catch (Exception ignored) {
+
+                }
+
+            });
+            dependencies.remove(className);
+            classDependencies
+                    .computeIfAbsent(filePath, k -> new HashMap<>())
+                    .put(className, dependencies);
         });
+        cu.findAll(RecordDeclaration.class).forEach(record -> {
+
+            String recordName = ClassNameResolver.resolveFqn(cu, record);
+            Set<String> dependencies = new HashSet<>();
+
+            /* 1 Record components */
+            record.getParameters().forEach(param ->
+                    resolveType(param.getType(), dependencies, sourceClasses)
+            );
+
+            /* 2 Implemented interfaces */
+            record.getImplementedTypes().forEach(type ->
+                    resolveType(type, dependencies, sourceClasses)
+            );
+
+            /* 3 Annotations */
+            record.getAnnotations().forEach(ann -> {
+                try {
+                    String dep = ann.resolve().getQualifiedName();
+                    if (sourceClasses.contains(dep)) {
+                        dependencies.add(dep);
+                    }
+                } catch (Exception ignored) {}
+            });
+
+            /* 4 Remove self */
+            dependencies.remove(recordName);
+
+            classDependencies.computeIfAbsent(normalizedPath, k -> new HashMap<>()).put(recordName, dependencies);
+        });
+
+        // for Enums
+        cu.findAll(EnumDeclaration.class).forEach(enumDecl -> {
+
+            String enumName = ClassNameResolver.resolveFqn(cu, enumDecl);
+            Set<String> dependencies = new HashSet<>();
+
+            /* 1 Implemented interfaces */
+            enumDecl.getImplementedTypes().forEach(type ->
+                    resolveType(type, dependencies, sourceClasses)
+            );
+
+            /* 2 Fields */
+            enumDecl.getFields().forEach(field ->
+                    field.getVariables().forEach(var ->
+                            resolveType(var.getType(), dependencies, sourceClasses)
+                    )
+            );
+
+            /* 3 Constructors */
+            enumDecl.getConstructors().forEach(cons ->
+                    cons.getParameters().forEach(param ->
+                            resolveType(param.getType(), dependencies, sourceClasses)
+                    )
+            );
+
+            /* 4 Methods */
+            enumDecl.getMethods().forEach(method -> {
+                method.getParameters().forEach(param ->
+                        resolveType(param.getType(), dependencies, sourceClasses)
+                );
+                resolveType(method.getType(), dependencies, sourceClasses);
+            });
+
+            /* 5 Method calls */
+            enumDecl.findAll(MethodCallExpr.class).forEach(call -> {
+                try {
+                    String dep = call.resolve()
+                            .declaringType()
+                            .getQualifiedName();
+                    if (sourceClasses.contains(dep)) {
+                        dependencies.add(dep);
+                    }
+                } catch (Exception ignored) {}
+            });
+
+            /* 6️ Object creation */
+            enumDecl.findAll(ObjectCreationExpr.class).forEach(expr -> {
+                try {
+                    String dep = expr.getType()
+                            .resolve()
+                            .asReferenceType()
+                            .getQualifiedName();
+                    if (sourceClasses.contains(dep)) {
+                        dependencies.add(dep);
+                    }
+                } catch (Exception ignored) {}
+            });
+
+            /* 7️Annotations */
+            enumDecl.getAnnotations().forEach(ann -> {
+                try {
+                    String dep = ann.resolve().getQualifiedName();
+                    if (sourceClasses.contains(dep)) {
+                        dependencies.add(dep);
+                    }
+                } catch (Exception ignored) {}
+            });
+
+            /* 8 Remove self */
+            dependencies.remove(enumName);
+
+            classDependencies.computeIfAbsent(normalizedPath, k -> new HashMap<>()).put(enumName, dependencies);
+        });
+
+
     }
 
 
-
-
-    public Map<Path, Map<String, Set<String>>> getAffectedClassDependencies(
+    public Map<String, Set<String>> getAffectedClassDependencies(
             Map<Path, Map<String, Set<String>>> classDependenciesToPath) {
 
         reverseClassDependencies.clear();
 
-        for (Map.Entry<Path, Map<String, Set<String>>> pathEntry
-                : classDependenciesToPath.entrySet()) {
+        classDependenciesToPath.forEach((path, classMap) -> {
 
-            Path fromPath = pathEntry.getKey();
-            Map<String, Set<String>> classDeps = pathEntry.getValue();
+            classMap.forEach((fromClass, dependsOnSet) -> {
 
-            for (Map.Entry<String, Set<String>> classEntry : classDeps.entrySet()) {
-
-                String fromClass = classEntry.getKey();
-                Set<String> dependsOn = classEntry.getValue();
-
-                for (String toClass : dependsOn) {
+                for (String toClass : dependsOnSet) {
 
                     reverseClassDependencies
-                            .computeIfAbsent(fromPath, k -> new ConcurrentHashMap<>())
                             .computeIfAbsent(toClass, k -> ConcurrentHashMap.newKeySet())
                             .add(fromClass);
                 }
-            }
-        }
+            });
+        });
 
         return reverseClassDependencies;
     }
 
+
+
+
+
     public Path normalize(Path filePath) {
         return filePath.toAbsolutePath().normalize();
     }
-
-
     // update the classDependency on File create
     public void onFileCreate(Path filePath,Set<String> sourceClasses){
         buildDependencyGraph(normalize(filePath),sourceClasses);
-        getAffectedClassDependencies(classDependenciesToPath);
+        getAffectedClassDependencies(classDependencies);
     }
 
     // update classDependency on File modify
     public void onFileModify(Path filePath,Set<String> sourceClasses){
         Path normalizedPath = normalize(filePath);
-
         buildDependencyGraph(normalizedPath,sourceClasses);
-        getAffectedClassDependencies(classDependenciesToPath);
-
+        getAffectedClassDependencies(classDependencies);
     }
 
     // update on file Delete
     public void onFileDelete(Path filePath){
         Path normalizedPath = normalize(filePath);
-        classDependenciesToPath.remove(normalizedPath);
-        getAffectedClassDependencies(classDependenciesToPath);
+        classDependencies.remove(normalizedPath);
+        getAffectedClassDependencies(classDependencies);
 
     }
-
 
     // get the maps
-    public Map<Path, Map<String, Set<String>>> getClassDependenciesToPath() {
-        return classDependenciesToPath;
+    public Map<Path,Map<String, Set<String>>> getClassDependenciesToPath() {
+        return classDependencies;
     }
-    public Map<Path, Map<String, Set<String>>> getReverseClassDependencies() {
+    public Map<String, Set<String>> getReverseClassDependencies() {
         return reverseClassDependencies;
     }
 
@@ -161,17 +312,18 @@ public class ClassDependecygraphBuilder {
     // first get the required Map
 
     private Set<Set<String>> updateClassDependencies(){
-        classDependencies.clear();
-        Map<Path, Map<String, Set<String>>> perFileDeps = getClassDependenciesToPath();
+        classDependenciesGroups.clear();
+       Map<Path,Map<String, Set<String>>>perFileDeps = getClassDependenciesToPath();
 
-        for (Map<String, Set<String>> classMap : perFileDeps.values()) {
-            for (Map.Entry<String, Set<String>> e : classMap.entrySet()) {
-                classDependencies
+     for(Map.Entry<Path,Map<String, Set<String>>> entry:perFileDeps.entrySet()){
+
+            for (Map.Entry<String, Set<String>> e : entry.getValue().entrySet()) {
+                classDependenciesGroups
                         .computeIfAbsent(e.getKey(), k -> new HashSet<>())
                         .addAll(e.getValue());
-            }
-        }
-        return circularDependency.findCircularDependency(classDependencies);
+            }}
+
+        return circularDependency.findCircularDependency(classDependenciesGroups);
 
     }
 
@@ -181,7 +333,21 @@ public class ClassDependecygraphBuilder {
         return updateClassDependencies();
     }
 
+    private static void resolveType(Type type, Set<String> deps, Set<String> sourceClasses) {
 
+        if (type.isPrimitiveType() || type.isVoidType()) return;
+
+        try {
+            ResolvedReferenceType resolved =
+                    type.resolve().asReferenceType();
+            String name=resolved.getQualifiedName();
+            if (sourceClasses.contains(name)) {
+                deps.add(name);
+            }
+        } catch (Exception e) {
+
+        }
+    }
 
 
 

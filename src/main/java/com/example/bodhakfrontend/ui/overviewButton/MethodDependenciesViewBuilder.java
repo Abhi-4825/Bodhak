@@ -60,11 +60,7 @@ public class MethodDependenciesViewBuilder {
         row.getChildren().addAll(icon, name);
         return row;
     }
-
-    /**
-     * Temporary heuristic.
-     * Later this will use SymbolSolver.
-     */
+    
     private boolean isExternal(String methodName) {
         return Character.isUpperCase(methodName.charAt(0));
     }

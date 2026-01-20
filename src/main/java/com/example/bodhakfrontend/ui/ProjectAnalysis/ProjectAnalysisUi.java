@@ -66,7 +66,7 @@ public class ProjectAnalysisUi {
         createSection(root,"/icons/classMetric.png","Class Metrics |" + projectInfo.getClassInfos().size() + " classes",buildClassMetricsView(projectInfo),"icon-blue",false);
         createSection(root,"/icons/health.png","Project Health",buildHealthSummary(projectInfo),"icon-blue",false);
         createSection(root,"/icons/hotspot.png","Risk Hotspots", buildHotspotView(projectInfo, uiFeatures),"icon-blue",false);
-
+        createSection(root,"/icons/unused.png","🧹 Unused or Suspicious Classes", buildUnusedClassView(projectInfo, uiFeatures),"icon-blue",false);
 
     }
   // for Project Overview section

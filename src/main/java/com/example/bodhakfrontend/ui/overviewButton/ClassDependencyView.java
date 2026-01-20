@@ -116,7 +116,7 @@ public class ClassDependencyView {
                         treeView.getSelectionModel()
                                 .getSelectedItem()
                                 .getValue();
-
+                if(value == null) return;
                 if (value instanceof ClassInfo ci) {
                     uiFeatures.openAndHighlight(
                             ci.getClassName(),

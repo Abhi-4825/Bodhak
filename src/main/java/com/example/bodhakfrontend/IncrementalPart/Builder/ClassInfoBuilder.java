@@ -220,7 +220,6 @@ public class ClassInfoBuilder {
                 Set<String> usedBy =
                         classDependecygraphBuilder
                                 .getReverseClassDependencies()
-                                .getOrDefault(normalizedPath, Map.of())
                                 .getOrDefault(className, Set.of());
 
 

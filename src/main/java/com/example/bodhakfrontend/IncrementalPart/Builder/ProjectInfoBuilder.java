@@ -186,7 +186,30 @@ public class ProjectInfoBuilder {
     }
 
 }
+// get map<ClassName, Set<Depends on>>
+//    public Map<ClassInfo,Set<ClassInfo>> getClassDependsOnMap(){
+//        Map<ClassInfo,Set<ClassInfo>> map=new HashMap<>();
+//        Map<String, ClassInfo> map2=classInfoToPathMapBuilder.getClassMap(classInfos);
+//        for(ClassInfo classInfo : classInfos){
+//            Set<ClassInfo> set=new HashSet<>();
+//             for(String dep:classInfo.getDependsOn()){
+//                 ClassInfo depClassInfo=map2.get(dep);
+//                 set.add(depClassInfo);
+//             }
+//             map.put(classInfo,set);
+//        }
+//
+//
+//
+//        return map;
+//
+//    }
+//
 
+
+
+
+// get projectINfo
     public ProjectInfo getProjectInfo() {
         return new ProjectInfo(laguageCountMap,top5,knownFolders,knownFiles,classInfos,packageInfoMap,
                 hotspots,entryPointInfo,unusedClassInfos,totalClasses,healthyClasses,warningClasses,godClasses,circularClasses,highlyCoupledClasses);
