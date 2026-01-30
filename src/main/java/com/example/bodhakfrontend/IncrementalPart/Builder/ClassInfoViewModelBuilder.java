@@ -1,7 +1,6 @@
 package com.example.bodhakfrontend.IncrementalPart.Builder;
 
 import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
-import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
 import com.example.bodhakfrontend.IncrementalPart.model.incrementalModel.ClassInfoViewModel;
 
 import java.util.HashMap;
@@ -10,93 +9,115 @@ import java.util.Map;
 import java.util.Set;
 
 public class ClassInfoViewModelBuilder {
-    private final ClassDependecygraphBuilder classDependecygraphBuilder;
-    public Map<String, ClassInfoViewModel> classInfoViewModelMap = new HashMap<String,ClassInfoViewModel>();
 
-    public ClassInfoViewModelBuilder(ClassDependecygraphBuilder classDependecygraphBuilder) {
-        this.classDependecygraphBuilder = classDependecygraphBuilder;
+    private final ClassDependecygraphBuilder dependencyGraphBuilder;
+
+    private final Map<String, ClassInfoViewModel> vmMap = new HashMap<>();
+
+    public ClassInfoViewModelBuilder(
+            ClassDependecygraphBuilder dependencyGraphBuilder
+    ) {
+        this.dependencyGraphBuilder = dependencyGraphBuilder;
     }
 
+    /* ==========================================================
+       INITIAL BUILD
+       ========================================================== */
 
-    public Map<String,ClassInfoViewModel> initialBuild(ProjectInfo projectInfo){
-        List<ClassInfo> classes=projectInfo.getClassInfos();
-        for(ClassInfo classInfo:classes){
-            classInfoViewModelMap.computeIfAbsent(classInfo.getClassName(),key->new ClassInfoViewModel(classInfo));
+    public Map<String, ClassInfoViewModel> initialBuild(List<ClassInfo> classes) {
+        for (ClassInfo info : classes) {
+            vmMap.computeIfAbsent(
+                    info.getClassName(),
+                    k -> new ClassInfoViewModel(info)
+            );
         }
-        return  classInfoViewModelMap;
+
+        refreshDependencies();
+        return vmMap;
     }
 
-    // get the map
-
-    public Map<String,ClassInfoViewModel> getClassInfoViewModelMap(){
-        return classInfoViewModelMap;
+    public Map<String, ClassInfoViewModel> getClassInfoViewModelMap() {
+        return vmMap;
     }
 
-    // on File update
-    public void onFileCreate(List<ClassInfo> classes){
-       for(ClassInfo classInfo:classes){
-           classInfoViewModelMap.computeIfAbsent(classInfo.getClassName(),key->new ClassInfoViewModel(classInfo));
-       }
-       updateUsedByDeps();
+
+    public void onFileCreate(List<ClassInfo> classes) {
+        for (ClassInfo info : classes) {
+            vmMap.computeIfAbsent(
+                    info.getClassName(),
+                    k -> new ClassInfoViewModel(info)
+            );
+        }
+
+        refreshDependencies();
     }
 
-    // on File Modify
+
+
     public void onFileModify(
             List<ClassInfo> oldClasses,
             List<ClassInfo> newClasses
     ) {
-        Map<String, ClassInfo> oldMap = new HashMap<>();
-        for (ClassInfo c : oldClasses) {
-            oldMap.put(c.getClassName(), c);
-        }
-
         Map<String, ClassInfo> newMap = new HashMap<>();
         for (ClassInfo c : newClasses) {
             newMap.put(c.getClassName(), c);
         }
 
-        // 1 REMOVE deleted classes
-        for (String oldName : oldMap.keySet()) {
-            if (!newMap.containsKey(oldName)) {
-                classInfoViewModelMap.remove(oldName);
+        for (ClassInfo old : oldClasses) {
+            if (!newMap.containsKey(old.getClassName())) {
+                vmMap.remove(old.getClassName());
             }
         }
 
-        // 2 UPDATE existing + ADD new
-        for (ClassInfo newClass : newClasses) {
-            classInfoViewModelMap
-                    .computeIfAbsent(
-                            newClass.getClassName(),
-                            k -> new ClassInfoViewModel(newClass)
-                    )
-                    .updateFrom(newClass);
 
+        for (ClassInfo info : newClasses) {
+            vmMap.computeIfAbsent(
+                    info.getClassName(),
+                    k -> new ClassInfoViewModel(info)
+            ).updateFrom(info);
         }
-        updateUsedByDeps();
 
-
-
-
-
-    }
-    // on file delete
-    public void onFileDelete(List<ClassInfo> classes){
-         for(ClassInfo classInfo:classes){
-             classInfoViewModelMap.remove(classInfo.getClassName());
-         }
-         updateUsedByDeps();
+        refreshDependencies();
     }
 
-    // update all classes used by Dependencies
-    private void updateUsedByDeps(){
-        Map<String, Set<String>> usedByDepsMap = classDependecygraphBuilder.getReverseClassDependencies();
-        classInfoViewModelMap.forEach((className,vm)->{
-            Set<String> usedByDeps = usedByDepsMap.getOrDefault(className,Set.of());
+
+
+    public void onFileDelete(List<ClassInfo> classes) {
+        for (ClassInfo info : classes) {
+            vmMap.remove(info.getClassName());
+        }
+
+        refreshDependencies();
+    }
+
+
+
+    private void refreshDependencies() {
+
+        // dependsOn map (forward)
+        Map<String, Set<String>> dependsOnMap =
+                dependencyGraphBuilder.getDependsOn();
+
+        // usedBy map (reverse)
+        Map<String, Set<String>> usedByMap =
+                dependencyGraphBuilder.getReverseClassDependencies();
+
+        vmMap.forEach((className, vm) -> {
+
+            // ---- dependsOn ----
+            Set<String> deps =
+                    dependsOnMap.getOrDefault(className, Set.of());
+            vm.getDependsOn().clear();
+            vm.getDependsOn().addAll(deps);
+
+            // ---- usedBy ----
+            Set<String> users =
+                    usedByMap.getOrDefault(className, Set.of());
             vm.getUsedBy().clear();
-            vm.getUsedBy().addAll(usedByDeps);
+            vm.getUsedBy().addAll(users);
         });
-
     }
+
 
 
 

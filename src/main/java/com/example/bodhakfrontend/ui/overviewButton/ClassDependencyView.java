@@ -51,15 +51,11 @@ public class ClassDependencyView {
 
 
     private void bindTo(ClassInfoViewModel vm) {
-
-        // unbind previous
         if (currentVm != null) {
             currentVm.getDependsOn().removeListener(depListener);
             currentVm.getUsedBy().removeListener(depListener);
         }
-
         currentVm = vm;
-
         // bind new
         vm.getDependsOn().addListener(depListener);
         vm.getUsedBy().addListener(depListener);
@@ -70,22 +66,19 @@ public class ClassDependencyView {
         Platform.runLater(this::rebuild);
     };
 
-
     private void rebuild() {
-
         if (currentVm == null) return;
-
         TreeItem<Object> root = new TreeItem<>("ROOT");
         root.setExpanded(true);
-
         TreeItem<Object> classNode = new TreeItem<>(currentVm);
         classNode.setExpanded(true);
-
-        // ---------------- DEPENDS ON ----------------
+        // depends on
         TreeItem<Object> dependsOnNode = new TreeItem<>("Depends On");
         Set<String> visited = new HashSet<>();
+        List<String> depsSnapshot =
+                new ArrayList<>(currentVm.getDependsOn());
 
-        for (String dep : currentVm.getDependsOn()) {
+        for (String dep : depsSnapshot) {
             ClassInfoViewModel depVm = vmMap.get(dep);
             if (depVm != null) {
                 TreeItem<Object> depItem = new TreeItem<>(depVm);
@@ -100,10 +93,11 @@ public class ClassDependencyView {
             );
         }
 
-        // ---------------- USED BY ----------------
+        // used by
         TreeItem<Object> usedByNode = new TreeItem<>("Used By");
-
-        for (String user : currentVm.getUsedBy()) {
+        List<String> usedBySnapshot =
+                new ArrayList<>(currentVm.getDependsOn());
+        for (String user : usedBySnapshot) {
             ClassInfoViewModel userVm = vmMap.get(user);
             if (userVm != null) {
                 usedByNode.getChildren().add(
@@ -111,16 +105,13 @@ public class ClassDependencyView {
                 );
             }
         }
-
         if (usedByNode.getChildren().isEmpty()) {
             usedByNode.getChildren().add(
                     new TreeItem<>("— None")
             );
         }
-
         classNode.getChildren().addAll(dependsOnNode, usedByNode);
         root.getChildren().add(classNode);
-
         treeView.setRoot(root);
     }
 
@@ -130,7 +121,6 @@ public class ClassDependencyView {
             Set<String> visited
     ) {
         if (!visited.add(vm.getName())) return;
-
         for (String dep : vm.getDependsOn()) {
             ClassInfoViewModel depVm = vmMap.get(dep);
             if (depVm != null) {
@@ -140,7 +130,6 @@ public class ClassDependencyView {
             }
         }
     }
-
 
     private void configureCells() {
 
@@ -163,7 +152,6 @@ public class ClassDependencyView {
                     setText(s);
                     return;
                 }
-
                 if (item instanceof ClassInfoViewModel vm) {
                     boundVm = vm;
                     textProperty().bind(vm.simpleNameProperty());
@@ -179,7 +167,6 @@ public class ClassDependencyView {
             }
         });
     }
-
 
 
     private void configureClicks() {

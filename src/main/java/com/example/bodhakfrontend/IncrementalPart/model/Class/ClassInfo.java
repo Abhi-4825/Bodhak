@@ -3,6 +3,8 @@ package com.example.bodhakfrontend.IncrementalPart.model.Class;
 
 
 
+import com.example.bodhakfrontend.Models.WarningRule;
+
 import java.io.File;
 
 import java.util.ArrayList;
@@ -37,7 +39,7 @@ public class ClassInfo {
     private final int beginColumn;
     private final ClassContribution classContribution;
     private final Set<IssueType> issueType = new HashSet<>();
-    private final List<String> warnings = new ArrayList<>();
+    private final List<WarningRule> warnings = new ArrayList<>();
 
 
     public ClassInfo(String className, String packageName, File sourceFile, Kind kind, Set<String> fields, List<MethodInfo> methods, List<ConstructorInfo> constructors
@@ -171,24 +173,7 @@ public class ClassInfo {
                 || getFields().size() > 15;
     }
 
-    private void evaluateSmells() {
 
-        if (isGodClass()) {
-            warnings.add("God Class: too large, split responsibilities");
-        }
-
-        if (dependsOn.size() + usedBy.size() > 10) {
-            warnings.add("Highly Coupled: many dependencies");
-        }
-
-        if (!circularDependencyGroups.isEmpty()) {
-            warnings.add("Circular Dependency: tightly coupled");
-        }
-
-        if (getFields().size() >= 3 && getMethods().size() <= 2) {
-            warnings.add("Data Holder: logic may be outside the class");
-        }
-    }
 
 
     // get issue
@@ -200,10 +185,13 @@ public class ClassInfo {
         return issueType;
     }
 
+    public void setWarnings(List<WarningRule> warnings) {
+        this.warnings.addAll(warnings);
+    }
+
     //get warnings
-    public List<String> getWarnings() {
-        warnings.clear();
-        evaluateSmells();
+    public List<WarningRule> getWarnings() {
+
         return warnings;
     }
 

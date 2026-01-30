@@ -558,24 +558,44 @@
 /* Apply fade-in animation via JavaFX Timeline in code */
 
 /* =========================
-   AI FIX CARD
+   AI FIX CARD (MODERN)
    ========================= */
+
 .ai-fix-card {
-    -fx-background-color: #1E1E1E;
-    -fx-border-color: #64B5F6;
-    -fx-border-radius: 6;
-    -fx-padding: 10;
-    -fx-background-radius: 6;
+    -fx-background-color: #F8FAFF;
+    -fx-border-color: #C7D2FE;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 14;
+    -fx-spacing: 8;
+    -fx-effect: dropshadow(gaussian, rgba(79,70,229,0.15), 10, 0.3, 0, 3);
 }
 
+/* AI title */
 .ai-fix-title {
+    -fx-font-size: 14px;
     -fx-font-weight: bold;
-    -fx-text-fill: #FFFFFF;
+    -fx-text-fill: #1E3A8A;
 }
 
-.ai-fix-example {
-    -fx-text-fill: #90CAF9;
+/* AI description */
+.ai-fix-desc {
+    -fx-text-fill: #334155;
+    -fx-font-size: 13px;
 }
+
+/* AI example block */
+.ai-fix-example {
+    -fx-background-color: #EEF2FF;
+    -fx-border-color: #C7D2FE;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 8;
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 12px;
+    -fx-text-fill: #312E81;
+}
+
 
 /* =========================
    THINKING PANE

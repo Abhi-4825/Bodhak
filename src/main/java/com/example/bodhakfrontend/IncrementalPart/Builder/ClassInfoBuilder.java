@@ -1,6 +1,7 @@
 package com.example.bodhakfrontend.IncrementalPart.Builder;
 
 import com.example.bodhakfrontend.IncrementalPart.model.Class.*;
+import com.example.bodhakfrontend.projectAnalysis.warning.WarningBuilder;
 import com.example.bodhakfrontend.util.ClassNameResolver;
 import com.example.bodhakfrontend.util.ParseCache;
 import com.github.javaparser.ast.CompilationUnit;
@@ -32,7 +33,7 @@ public class ClassInfoBuilder {
             "EnableAutoConfiguration"
     );
 
-
+    private final WarningBuilder warningBuilder = new WarningBuilder();
 
     private final ParseCache cache;
     private final ClassDependecygraphBuilder classDependecygraphBuilder;
@@ -246,7 +247,10 @@ public class ClassInfoBuilder {
                     isAbstract = ci.isAbstract();
                     isFinal = ci.isFinal();
                 }
+
                 ClassInfo cls=new ClassInfo(className, packageName, path.toFile(), kind, fields, methods, construcors, annotations, dependsOn, usedBy, myCycles, isAbstract, isFinal, clazz.isPublic(), loc, beginLine, beginColumn,classContribution);
+                cls.getWarnings().clear();
+                cls.setWarnings(warningBuilder.buildWarnings(cls));
                 classInfoList.add(cls);
 
 
@@ -520,13 +524,14 @@ public class ClassInfoBuilder {
 
     //for file create
     public void onFileCreate(Path filePath) {
-        List<ClassInfo> classes = scanFile(filePath);
-        for (ClassInfo classInfo : classes) {
-            srcClasses.add(classInfo.getClassName());
-        }
+        Path p = normalize(filePath);
+        CompilationUnit cu = cache.get(p);
+        cu.findAll(TypeDeclaration.class).forEach(td ->
+                srcClasses.add(ClassNameResolver.resolveFqn(cu, td))
+        );
         classDependecygraphBuilder.onFileCreate(filePath, srcClasses);
+        List<ClassInfo> classes = scanFile(filePath);
         classInfoMap.put(normalize(filePath), classes);
-
     }
     // on file deletion
 

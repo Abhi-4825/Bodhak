@@ -75,6 +75,7 @@ public class App extends Application {
     private ProjectAnalysisUi projectAnalysisUi;
     private UpdateManager updateManager;
     private Map<String, ClassInfoViewModel> vmMap;
+    private ProjectFileWatcher watcher;
 
 
     private FileTreeNodeFactory fileTreeNodeFactory;
@@ -253,7 +254,7 @@ public class App extends Application {
         overviewBtn.setOnAction(e ->{
             MethodView methodView=new MethodView(uiFeatures,vmMap);
             ClassDependencyView classDependencyView=new ClassDependencyView(uiFeatures,vmMap);
-            HealthAnalyserViewBuilder healthAnalyserViewBuilder=new HealthAnalyserViewBuilder();
+            HealthAnalyserView healthAnalyserView=new HealthAnalyserView(vmMap);
 
             Tab selectedTab = codeTabPane.getSelectionModel().getSelectedItem();
             if(selectedTab==null){return;}
@@ -269,7 +270,7 @@ public class App extends Application {
                         classDependencyView.show(classInfo.getClassName()),
 
                         methodView.show(classInfo.getClassName()),
-                        healthAnalyserViewBuilder.build(classInfo)
+                        healthAnalyserView.show(classInfo.getClassName())
                 ).getRoot();
             };
 
@@ -456,14 +457,14 @@ public class App extends Application {
        projectInfoBuilder.buildAll(projectFolder.toPath());
         projectInfo=projectInfoBuilder.getProjectInfo();
         List<ClassInfo> c=projectInfo.getClassInfos();
-        this.vmMap=ctx.classInfoViewModelBuilder.initialBuild(projectInfo);
+        this.vmMap=ctx.classInfoViewModelBuilder.initialBuild(projectInfo.getClassInfos());
         Platform.runLater(()-> analyzeBtn.setVisible(true));
 
         EventBus eventBus=new EventBus();
         new IncrementalAnalyzer(eventBus,updateManager);
 
         ProjectFileListener listener=new ProjectFileListener(eventBus);
-        ProjectFileWatcher watcher=new ProjectFileWatcher();
+        watcher=new ProjectFileWatcher();
         try {
             watcher.start(projectFolder,listener);
         }catch (Exception e){
@@ -472,5 +473,13 @@ public class App extends Application {
         UiRerfeshController uiRerfeshController=new UiRerfeshController(FileTreeView,fileTreeNodeFactory,codeTabPane,rightPanelTabManager,projectAnalysisUi,projectInfoBuilder);
         eventBus.subscribe(UiRefreshEvent.class, uiRerfeshController::onUiRefresh);
     }
-
+    @Override
+    public void stop() throws Exception {
+        System.out.println(" Shutting down application...");
+        if (watcher != null) {
+            watcher.stop();
+            System.out.println("File watcher stopped");
+        }
+        super.stop();
+    }
 }

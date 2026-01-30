@@ -1,13 +1,15 @@
 package com.example.bodhakfrontend.IncrementalPart.model.incrementalModel;
 
 import com.example.bodhakfrontend.IncrementalPart.model.Class.*;
+import com.example.bodhakfrontend.Models.WarningRule;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 
 import java.io.File;
-import java.util.Map;
+import java.util.List;
+
 import java.util.Set;
 
 public class ClassInfoViewModel {
@@ -31,7 +33,7 @@ public class ClassInfoViewModel {
     private final IntegerProperty beginColumn=new SimpleIntegerProperty();
     private final ObjectProperty<ClassContribution> classContribution=new SimpleObjectProperty<>();
     private final ObservableSet<IssueType> issueType =FXCollections.observableSet();
-    private final ObservableList<String> warnings =FXCollections.observableArrayList();
+    private final ObservableList<WarningRule> warnings =FXCollections.observableArrayList();
 
 
 
@@ -67,7 +69,7 @@ public class ClassInfoViewModel {
 
 
     }
-    public ObservableList<String> getWarnings() {
+    public ObservableList<WarningRule> getWarnings() {
         return warnings;
     }
 
@@ -235,6 +237,35 @@ public class ClassInfoViewModel {
         issueType.addAll(ci.getIssueType());
         warnings.setAll(ci.getWarnings());
     }
+
+    public ClassInfo toClassInfo() {
+        return new ClassInfo(
+                name.get(),
+                packageName.get(),
+                sourceFile.get(),
+                kind.get(),
+
+                Set.copyOf(fields),
+                List.copyOf(methods),
+                List.copyOf(constructors),
+                Set.copyOf(annotations),
+
+                Set.copyOf(dependsOn),
+                Set.copyOf(usedBy),
+                Set.copyOf(circularDependencyGroups),
+
+                isAbstract.get(),
+                isFinal.get(),
+                isPublic.get(),
+
+                linesOfCode.get(),
+                beginLine.get(),
+                beginColumn.get(),
+
+                classContribution.get()
+        );
+    }
+
 
 
 
