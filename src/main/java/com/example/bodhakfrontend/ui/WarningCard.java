@@ -17,7 +17,11 @@ public class WarningCard {
         text.setWrapText(true);
         Label level = new Label(rule.getSeverity().name());
         level.getStyleClass().add("label-bold");
-        level.setStyle("-fx-text-fill: " + SeverityStyle.color(rule.getSeverity()) + ";");
+        switch (rule.getSeverity()) {
+            case HIGH -> level.getStyleClass().add("label-severity-high");
+            case MEDIUM -> level.getStyleClass().add("label-severity-medium");
+            case LOW -> level.getStyleClass().add("label-severity-low");
+        }
         VBox content = new VBox(level, text);
         content.setSpacing(4);
 
@@ -30,7 +34,6 @@ public class WarningCard {
             case MEDIUM -> card.getStyleClass().add("warning-card-medium");
             case LOW -> card.getStyleClass().add("warning-card-low");
         }
-        card.setStyle("-fx-border-color: " + SeverityStyle.color(rule.getSeverity()) + ";");
 
         return card;
 

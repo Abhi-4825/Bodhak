@@ -1,8 +1,11 @@
 package com.example.bodhakfrontend.ui.rightPanel;
 
+import javafx.animation.TranslateTransition;
 import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.layout.StackPane;
+import javafx.util.Duration;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -20,6 +23,17 @@ public class RightPanelTabManager {
         this.rightTabPane = rightTabPane;
     }
 
+    /** UI-only: wrap content with a short slide-in animation. */
+    private Node wrapWithSlideIn(Node content) {
+        StackPane wrapper = new StackPane(content);
+        content.setTranslateX(40);
+        TranslateTransition tt = new TranslateTransition(Duration.millis(220), content);
+        tt.setFromX(40);
+        tt.setToX(0);
+        tt.play();
+        return wrapper;
+    }
+
     public void openAnalyzeTab(Supplier<Node> analyzeContent) {
         Tab tab = singletonTabs.get("ANALYZE");
 
@@ -32,7 +46,7 @@ public class RightPanelTabManager {
             tab.setOnClosed(e -> singletonTabs.remove("ANALYZE"));
         }
 
-        tab.setContent(analyzeContent.get());
+        tab.setContent(wrapWithSlideIn(analyzeContent.get()));
         rightTabPane.getSelectionModel().select(tab);
     }
 
@@ -43,7 +57,7 @@ public class RightPanelTabManager {
         if (tab == null) {
             tab = new Tab(file.getName());
             tab.setClosable(true);
-            tab.setContent(overviewContent);
+            tab.setContent(wrapWithSlideIn(overviewContent));
             tab.setUserData(path);
 
             overviewTabs.put(path, tab);

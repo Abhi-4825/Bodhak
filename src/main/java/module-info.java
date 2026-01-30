@@ -5,6 +5,7 @@ module com.example.bodhakfrontend {
     requires java.desktop;
     requires com.github.javaparser.core;
     requires org.fxmisc.richtext;
+    requires reactfx;
     requires jdk.compiler;
     requires javafx.graphics;
     requires javafx.base;

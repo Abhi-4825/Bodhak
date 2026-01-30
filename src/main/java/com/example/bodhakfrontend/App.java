@@ -26,6 +26,7 @@ import com.example.bodhakfrontend.uiHelper.UiFeatures;
 import com.example.bodhakfrontend.util.MultiModuleSourceRootDetector;
 import com.example.bodhakfrontend.util.ParseCache;
 import com.github.javaparser.ast.CompilationUnit;
+import javafx.animation.FadeTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.binding.BooleanBinding;
@@ -40,6 +41,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import javafx.stage.DirectoryChooser;
 import java.io.File;
 import java.nio.file.Files;
@@ -80,15 +82,18 @@ public class App extends Application {
 
     private FileTreeNodeFactory fileTreeNodeFactory;
 
+    /** UI-only: current theme. Light by default. */
+    private boolean isDarkMode = false;
+    /** UI-only: main scene for theme switching. */
+    private Scene mainScene;
+
     @Override
     public void start(Stage stage) throws Exception {
 
-
-
-        BorderPane root=new BorderPane();
-        Scene scene=new Scene(root);
-        scene.getStylesheets().add(getClass().getResource("/styles/bodhak.css").toExternalForm());
-        stage.setScene(scene);
+        BorderPane root = new BorderPane();
+        mainScene = new Scene(root);
+        applyTheme(mainScene);
+        stage.setScene(mainScene);
         stage.setTitle("Bodhak");
         stage.setMaximized(true);
         stage.show();
@@ -98,9 +103,24 @@ public class App extends Application {
 
 
         // for upper buttons
-        ToolBar toolBar=new ToolBar();
-        Button SelectBtn=new Button("Select Folder");
-        toolBar.getItems().addAll(SelectBtn);
+        ToolBar toolBar = new ToolBar();
+        Button SelectBtn = new Button("Select Folder");
+        ToggleButton darkModeToggle = new ToggleButton("Dark");
+        darkModeToggle.setSelected(false);
+        darkModeToggle.getStyleClass().add("dark-mode-toggle");
+        darkModeToggle.setTooltip(new Tooltip("Toggle dark mode"));
+        darkModeToggle.setOnAction(e -> {
+            isDarkMode = darkModeToggle.isSelected();
+            applyTheme(mainScene);
+            darkModeToggle.setText(isDarkMode ? "Light" : "Dark");
+            FadeTransition ft = new FadeTransition(Duration.millis(150), root);
+            ft.setFromValue(0.97);
+            ft.setToValue(1);
+            ft.play();
+        });
+        HBox toolbarSpacer = new HBox();
+        HBox.setHgrow(toolbarSpacer, javafx.scene.layout.Priority.ALWAYS);
+        toolBar.getItems().addAll(SelectBtn, toolbarSpacer, darkModeToggle);
         root.setTop(toolBar);
 
         // for bottom
@@ -326,6 +346,9 @@ public class App extends Application {
 
         Stage astStage = new Stage();
         Scene astScene = new Scene(split);
+        astScene.getStylesheets().clear();
+        String css = isDarkMode ? "/styles/dark.css" : "/styles/light.css";
+        astScene.getStylesheets().add(getClass().getResource(css).toExternalForm());
         astStage.setScene(astScene);
         astStage.setTitle("AST Viewer - " + file.getName());
         astStage.setWidth(900);
@@ -401,6 +424,16 @@ public class App extends Application {
 
 
 
+    }
+
+    /** UI-only: switch scene stylesheet to light or dark. No logic impact. */
+    private void applyTheme(Scene scene) {
+        if (scene == null) return;
+        scene.getStylesheets().clear();
+        String css = isDarkMode
+                ? "/styles/dark.css"
+                : "/styles/light.css";
+        scene.getStylesheets().add(getClass().getResource(css).toExternalForm());
     }
 
     public static void main(String[] args) {
