@@ -1,7 +1,6 @@
 package com.example.bodhakfrontend.ui;
 
 import com.example.bodhakfrontend.IncrementalPart.Builder.ProjectInfoBuilder;
-import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
 import com.example.bodhakfrontend.IncrementalPart.Update.UiRefreshEvent;
 
 import com.example.bodhakfrontend.ui.Front.FileTreeNodeFactory;
@@ -32,8 +31,6 @@ public class UiRerfeshController {
         this.treeView = treeView;
         this.factory = factory;
         this.tabPane = tabPane;
-
-
         this.rightPanelTabManager = rightPanelTabManager;
         this.projectAnalysisUi = projectAnalysisUi;
         this.projectInfoBuilder = projectInfoBuilder;
@@ -51,6 +48,7 @@ public class UiRerfeshController {
                 case CLOSE_EDITOR -> closeEditorTab(path);
                 case REFRESH_EDITOR -> refreshEditorTab(path);
                 case PROJECTINFO_CHANGED -> refreshAnalysis();
+                case OVERVIEWTAB_CLOSED -> closeOverviewTab(path);
 
             }
         });
@@ -99,6 +97,12 @@ public class UiRerfeshController {
             }
             return false;
         });
+    }
+
+    // for closing the overviewtab related to deleted file
+    private void closeOverviewTab(Path path) {
+        rightPanelTabManager.closeOverviewTabs(path);
+
     }
 
     // for File tree update
@@ -161,7 +165,7 @@ public class UiRerfeshController {
 
 
     private void refreshAnalysis() {
-        rightPanelTabManager.openAnalyzeTab(()->projectAnalysisUi.build(projectInfoBuilder.getProjectInfo()));
+        rightPanelTabManager.refreshAnalyzeTabIfOpen(()->projectAnalysisUi.build(projectInfoBuilder.getProjectInfo()));
     }
 
     private void refreshDependency() {

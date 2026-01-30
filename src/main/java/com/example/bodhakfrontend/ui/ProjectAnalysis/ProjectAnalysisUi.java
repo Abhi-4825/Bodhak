@@ -299,7 +299,7 @@ private Node buildHotspotView(ProjectInfo projectInfo, UiFeatures uiFeatures) {
         card.setPadding(new Insets(8));
 
         Label title = new Label(
-                rank++ + ". " + ci.getClassName()
+                rank++ + ". " + getSimpleName(ci.getClassName())
                         + " (Risk Score: " + hs.getScore() + ")"
         );
         title.getStyleClass().add("label-bold");
@@ -317,7 +317,7 @@ private Node buildHotspotView(ProjectInfo projectInfo, UiFeatures uiFeatures) {
 
         // 🔗 click navigation
         card.setOnMouseClicked(e -> {
-                    uiFeatures.openAndHighlight(ci.getClassName(),ci.getBeginLine(),ci.getBeginColumn(),ci.getSourceFile());
+                    uiFeatures.openAndHighlight(getSimpleName(ci.getClassName()),ci.getBeginLine(),ci.getBeginColumn(),ci.getSourceFile());
                 }
         );
 
@@ -346,7 +346,7 @@ private Node buildHotspotView(ProjectInfo projectInfo, UiFeatures uiFeatures) {
             card.getStyleClass().add("unused-class-card");
             card.setPadding(new Insets(8));
 
-            Label title = new Label(ci.getClassName() +" | "+ ci.getLinesOfCode());
+            Label title = new Label(getSimpleName(ci.getClassName()) +" | "+ ci.getLinesOfCode());
             title.getStyleClass().add("label-bold");
 
             Label meta = new Label("Package Name: " + ci.getPackageName()
@@ -360,7 +360,7 @@ private Node buildHotspotView(ProjectInfo projectInfo, UiFeatures uiFeatures) {
 
             // 🔗 click navigation
             card.setOnMouseClicked(e -> {
-                        uiFeatures.openAndHighlight(ci.getClassName(),ci.getBeginLine(),ci.getBeginColumn(),ci.getSourceFile());
+                        uiFeatures.openAndHighlight(getSimpleName(ci.getClassName()),ci.getBeginLine(),ci.getBeginColumn(),ci.getSourceFile());
                     }
             );
 

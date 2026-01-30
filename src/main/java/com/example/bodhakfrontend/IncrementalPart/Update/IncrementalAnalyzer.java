@@ -57,23 +57,20 @@ public class IncrementalAnalyzer {
         publishProjectInfoChange(path);
 
     }
-
-
-
-
     private void handleFileCreate(FileChangeEvent event) {
         publishFileTreeRefresh(event.path().getParent());
         updateManager.onFileCreate(event.path());
         publishProjectInfoChange(event.path());
 
-    }
 
+    }
     private void handleFileDelete(FileChangeEvent event) {
         Path path=event.path();
         bus.publish(new UiRefreshEvent(UiRefreshEvent.UiRefreshType.CLOSE_EDITOR, path));
         publishFileTreeRefresh(path.getParent());
         updateManager.onFileDelete(path);
         publishProjectInfoChange(path);
+        bus.publish(new UiRefreshEvent(UiRefreshEvent.UiRefreshType.OVERVIEWTAB_CLOSED, event.path()));
     }
 
     private void publishFileTreeRefresh(Path path){

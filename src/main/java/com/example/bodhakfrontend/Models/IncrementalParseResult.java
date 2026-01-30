@@ -1,7 +1,4 @@
 //package com.example.bodhakfrontend.Models;
-//
-//
-//
 //import java.util.List;
 //import java.util.Set;
 //

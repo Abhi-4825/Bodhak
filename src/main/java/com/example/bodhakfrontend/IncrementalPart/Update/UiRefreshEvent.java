@@ -10,7 +10,8 @@ public record UiRefreshEvent(
         FILE_TREE,
         CLOSE_EDITOR,
         REFRESH_EDITOR,
-        PROJECTINFO_CHANGED
+        PROJECTINFO_CHANGED,
+        OVERVIEWTAB_CLOSED
     }
 
 }

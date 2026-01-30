@@ -550,17 +550,19 @@ public class ClassInfoBuilder {
         for (ClassInfo ci : oldClasses) {
             srcClasses.remove(ci.getClassName());
         }
+// just finding new class names
+        CompilationUnit cu = cache.get(p);
+        cu.findAll(TypeDeclaration.class).forEach(td ->
+                srcClasses.add(ClassNameResolver.resolveFqn(cu, td))
+        );
+        // update dependency graph
+        classDependecygraphBuilder.onFileModify(filePath, srcClasses);
 
         //  re-scan file
         List<ClassInfo> newClasses = scanFile(filePath);
 
-        //  add new classes
-        for (ClassInfo ci : newClasses) {
-            srcClasses.add(ci.getClassName());
-        }
 
-        // update dependency graph
-        classDependecygraphBuilder.onFileModify(filePath, srcClasses);
+
 
         //  replace class info
         classInfoMap.put(p, newClasses);

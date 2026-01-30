@@ -12,6 +12,7 @@ import com.example.bodhakfrontend.IncrementalPart.UpdateManager;
 import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
 import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
 import com.example.bodhakfrontend.IncrementalPart.Update.UiRefreshEvent;
+import com.example.bodhakfrontend.IncrementalPart.model.incrementalModel.ClassInfoViewModel;
 import com.example.bodhakfrontend.Parser.AstLabelProvider;
 import com.example.bodhakfrontend.Parser.javaParser.JavaFileParser;
 import com.example.bodhakfrontend.Parser.Parsermanager;
@@ -73,6 +74,7 @@ public class App extends Application {
     private Button analyzeBtn;
     private ProjectAnalysisUi projectAnalysisUi;
     private UpdateManager updateManager;
+    private Map<String, ClassInfoViewModel> vmMap;
 
 
     private FileTreeNodeFactory fileTreeNodeFactory;
@@ -249,8 +251,8 @@ public class App extends Application {
         Ast.setOnAction(e -> showASTWindow(codeTabPane));
         // overview button
         overviewBtn.setOnAction(e ->{
-            MethodsViewBuilder methodsViewBuilder=new MethodsViewBuilder(uiFeatures,projectInfo);
-            ClassDependencyView classDependencyView=new ClassDependencyView(uiFeatures,projectInfo);
+            MethodView methodView=new MethodView(uiFeatures,vmMap);
+            ClassDependencyView classDependencyView=new ClassDependencyView(uiFeatures,vmMap);
             HealthAnalyserViewBuilder healthAnalyserViewBuilder=new HealthAnalyserViewBuilder();
 
             Tab selectedTab = codeTabPane.getSelectionModel().getSelectedItem();
@@ -264,8 +266,9 @@ public class App extends Application {
                 }
 
                 return new OverviewView(
-                        classDependencyView.build(classInfo.getClassName()),
-                        methodsViewBuilder.build(classInfo.getClassName()),
+                        classDependencyView.show(classInfo.getClassName()),
+
+                        methodView.show(classInfo.getClassName()),
                         healthAnalyserViewBuilder.build(classInfo)
                 ).getRoot();
             };
@@ -275,39 +278,28 @@ public class App extends Application {
 
             rightPanelTabManager.openOverviewTab(file,container.getRoot());
         });
-
-
-
-
     }
-
-
 
     // AST window
     private void showASTWindow(TabPane codeTabPane) {
-
         Tab selectedTab = codeTabPane.getSelectionModel().getSelectedItem();
-
         if (selectedTab == null) {
             return;
         }
-
         File file = (File)selectedTab.getUserData();
-
         try {
             // Parse AST
             CompilationUnit cu =cache.get(file.toPath());
-
             // Get correct label provider
             @SuppressWarnings("unchecked")
             AstLabelProvider<com.github.javaparser.ast.Node> labelProvider =
                     (AstLabelProvider<com.github.javaparser.ast.Node>)
                             parsermanager.getLabelProvider(file);
 
-            // 3️⃣ Build AST tree USING provider
+            // 3 Build AST tree USING provider
             TreeItem<String> astRoot = buildASTTree(cu, labelProvider);
 
-            // 4️⃣ Show window
+            // 4 Show window
             showASTStage(file, astRoot);
 
         } catch (Exception e) {
@@ -459,15 +451,12 @@ public class App extends Application {
         this.classInfoBuilder=ctx.classInfoBuilder;
         this.packageInfoBuilder=ctx.packageInfoBuilder;
         this.projectInfoBuilder=ctx.projectInfoBuilder;
+
         this.updateManager=ctx.updateManager;
        projectInfoBuilder.buildAll(projectFolder.toPath());
         projectInfo=projectInfoBuilder.getProjectInfo();
         List<ClassInfo> c=projectInfo.getClassInfos();
-        for(ClassInfo ci:c){
-            System.out.println(ci);
-            for (String a:ci.getUsedBy())
-                System.out.println(a);
-        }
+        this.vmMap=ctx.classInfoViewModelBuilder.initialBuild(projectInfo);
         Platform.runLater(()-> analyzeBtn.setVisible(true));
 
         EventBus eventBus=new EventBus();
@@ -480,10 +469,8 @@ public class App extends Application {
         }catch (Exception e){
             e.printStackTrace();
         }
-
         UiRerfeshController uiRerfeshController=new UiRerfeshController(FileTreeView,fileTreeNodeFactory,codeTabPane,rightPanelTabManager,projectAnalysisUi,projectInfoBuilder);
         eventBus.subscribe(UiRefreshEvent.class, uiRerfeshController::onUiRefresh);
-
     }
 
 }

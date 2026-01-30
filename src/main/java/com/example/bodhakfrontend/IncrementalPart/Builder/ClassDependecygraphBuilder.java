@@ -296,9 +296,7 @@ public class ClassDependecygraphBuilder {
         Path normalizedPath = normalize(filePath);
         classDependencies.remove(normalizedPath);
         getAffectedClassDependencies(classDependencies);
-
     }
-
     // get the maps
     public Map<Path,Map<String, Set<String>>> getClassDependenciesToPath() {
         return classDependencies;
@@ -307,32 +305,40 @@ public class ClassDependecygraphBuilder {
         return reverseClassDependencies;
     }
 
+    public Map<String, Set<String>> getDependsOn() {
+        Map<String, Set<String>> dependsOn = new HashMap<>();
+        for (Map<String, Set<String>> perFileDeps : classDependencies.values()) {
+            for (Map.Entry<String, Set<String>> entry : perFileDeps.entrySet()) {
+                String className = entry.getKey();
+                Set<String> deps = entry.getValue();
+                dependsOn
+                        .computeIfAbsent(className, k -> new HashSet<>())
+                        .addAll(deps);
+            }
+        }
+        return dependsOn;
+    }
+
+
     // Circular - dependency group
     CircularDependency circularDependency=new CircularDependency();
     // first get the required Map
 
     private Set<Set<String>> updateClassDependencies(){
         classDependenciesGroups.clear();
-       Map<Path,Map<String, Set<String>>>perFileDeps = getClassDependenciesToPath();
-
-     for(Map.Entry<Path,Map<String, Set<String>>> entry:perFileDeps.entrySet()){
-
+        Map<Path,Map<String, Set<String>>>perFileDeps = getClassDependenciesToPath();
+        for(Map.Entry<Path,Map<String, Set<String>>> entry:perFileDeps.entrySet()){
             for (Map.Entry<String, Set<String>> e : entry.getValue().entrySet()) {
                 classDependenciesGroups
                         .computeIfAbsent(e.getKey(), k -> new HashSet<>())
                         .addAll(e.getValue());
             }}
-
         return circularDependency.findCircularDependency(classDependenciesGroups);
-
     }
-
     // get Cirulardependencies graph
-
     public Set<Set<String>> getClassDependenciesGroups() {
         return updateClassDependencies();
     }
-
     private static void resolveType(Type type, Set<String> deps, Set<String> sourceClasses) {
 
         if (type.isPrimitiveType() || type.isVoidType()) return;
@@ -348,8 +354,4 @@ public class ClassDependecygraphBuilder {
 
         }
     }
-
-
-
-
 }

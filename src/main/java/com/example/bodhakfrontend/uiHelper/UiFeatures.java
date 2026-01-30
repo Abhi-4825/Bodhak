@@ -16,9 +16,6 @@ public class UiFeatures {
         this.tabPane = tabPane;
     }
 
-    // ===============================
-    // UNIVERSAL FILE OPEN METHOD
-    // ===============================
     public Tab openFile(File file) {
 
 
@@ -54,31 +51,42 @@ public class UiFeatures {
         return tab;
     }
 
-    // ===============================
-    // OPEN + HIGHLIGHT
-    // ===============================
     public void openAndHighlight(String name,int beginLine,int column,File sourceFile) {
 
         Tab tab = openFile(sourceFile);
         highlight(tab,beginLine,column,name);
     }
 
-    // ===============================
-    // HIGHLIGHT LOGIC
-    // ===============================
-    private void highlight(Tab tab, int beginLine,int column,String name) {
+    private void highlight(Tab tab, int beginLine, int ignoredColumn, String name) {
 
         CodeArea codeArea = (CodeArea) tab.getContent();
 
-        int paragraphIndex = beginLine - 1;
+        int lineIndex = beginLine - 1;
+
         int totalLines =
                 ((javafx.collections.ObservableList<?>) codeArea.getParagraphs()).size();
-        if (paragraphIndex < 0 || paragraphIndex >= totalLines) {
+
+        if (lineIndex < 0 || lineIndex >= totalLines) {
             return;
         }
-        int absolutePos=codeArea.getAbsolutePosition(paragraphIndex,column-1);
-        codeArea.showParagraphAtTop(Math.max(0,paragraphIndex-3));
-        codeArea.moveTo(absolutePos);
-        codeArea.selectRange(absolutePos,absolutePos+name.length());
+
+        String lineText = codeArea.getParagraph(lineIndex).getText();
+        if (lineText == null || lineText.isEmpty()) {
+            return;
+        }
+
+        int nameIndex = lineText.indexOf(name);
+        if (nameIndex < 0) {
+            codeArea.showParagraphAtTop(Math.max(0, lineIndex - 3));
+            return;
+        }
+
+        int start = codeArea.getAbsolutePosition(lineIndex, nameIndex);
+        int end   = start + name.length();
+
+        codeArea.showParagraphAtTop(Math.max(0, lineIndex - 3));
+        codeArea.moveTo(start);
+        codeArea.selectRange(start, end);
     }
+
 }

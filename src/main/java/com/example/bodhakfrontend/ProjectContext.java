@@ -1,8 +1,5 @@
 package com.example.bodhakfrontend;
-import com.example.bodhakfrontend.IncrementalPart.Builder.ClassDependecygraphBuilder;
-import com.example.bodhakfrontend.IncrementalPart.Builder.ClassInfoBuilder;
-import com.example.bodhakfrontend.IncrementalPart.Builder.PackageInfoBuilder;
-import com.example.bodhakfrontend.IncrementalPart.Builder.ProjectInfoBuilder;
+import com.example.bodhakfrontend.IncrementalPart.Builder.*;
 import com.example.bodhakfrontend.IncrementalPart.UpdateManager;
 import com.example.bodhakfrontend.Parser.Parsermanager;
 import com.example.bodhakfrontend.Parser.javaParser.JavaFileParser;
@@ -26,6 +23,7 @@ public class ProjectContext {
     public final List<Path> sourceRoots;
     public final Set<String> sourceClasses;
     public final MultiModuleSourceRootDetector multiModuleSourceRootDetector;
+    public final ClassInfoViewModelBuilder classInfoViewModelBuilder;
     public ProjectContext(File projectFolder,
                           LanguageDetector detector) {
       this. multiModuleSourceRootDetector = new MultiModuleSourceRootDetector();
@@ -40,7 +38,8 @@ public class ProjectContext {
         this.parsermanager = new Parsermanager(detector, javaFileParser);
 
         this.sourceClasses = javaFileParser.getClassesfromSource(sourceRoots);
-        this.updateManager=new UpdateManager(classInfoBuilder,packageInfoBuilder,projectInfoBuilder,classDependecygraphBuilder,projectFolder.toPath());
+        this.classInfoViewModelBuilder=new ClassInfoViewModelBuilder(classDependecygraphBuilder);
+        this.updateManager=new UpdateManager(classInfoBuilder,packageInfoBuilder,projectInfoBuilder,classDependecygraphBuilder,projectFolder.toPath(),classInfoViewModelBuilder);
     }
 }
 

@@ -13,8 +13,6 @@ module com.example.bodhakfrontend {
     requires com.fasterxml.jackson.databind;
     requires org.apache.commons.io;
 
-
-
     opens com.example.bodhakfrontend to javafx.fxml;
     exports com.example.bodhakfrontend;
     exports com.example.bodhakfrontend.Parser;

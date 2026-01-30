@@ -5,15 +5,17 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
 public class RightPanelTabManager {
+
     private final TabPane rightTabPane;
-    private  final Map<String, Tab> singletonTabs=new HashMap<>();
-    private final Map<String, Tab> overviewTabs=new HashMap<>();
+    private final Map<String, Tab> singletonTabs = new HashMap<>();
+    private final Map<Path, Tab> overviewTabs = new HashMap<>();
+
     public RightPanelTabManager(TabPane rightTabPane) {
         this.rightTabPane = rightTabPane;
     }
@@ -26,49 +28,77 @@ public class RightPanelTabManager {
             tab.setClosable(true);
             singletonTabs.put("ANALYZE", tab);
             rightTabPane.getTabs().add(tab);
+
+            tab.setOnClosed(e -> singletonTabs.remove("ANALYZE"));
         }
 
-        tab.setContent(null);
         tab.setContent(analyzeContent.get());
         rightTabPane.getSelectionModel().select(tab);
-        tab.setOnClosed(event -> {
-            singletonTabs.remove("ANALYZE");
-        });
     }
 
     public void openOverviewTab(File file, Node overviewContent) {
-        String key = file.getAbsolutePath();
-        Tab tab = overviewTabs.get(key);
+        Path path = file.toPath().toAbsolutePath().normalize();
+        Tab tab = overviewTabs.get(path);
 
         if (tab == null) {
             tab = new Tab(file.getName());
-            tab.setContent(overviewContent);
             tab.setClosable(true);
+            tab.setContent(overviewContent);
+            tab.setUserData(path);
 
-            overviewTabs.put(key, tab);
+            overviewTabs.put(path, tab);
             rightTabPane.getTabs().add(tab);
 
-            tab.setOnClosed(e -> overviewTabs.remove(key));
+            tab.setOnClosed(e -> overviewTabs.remove(path));
         }
 
         rightTabPane.getSelectionModel().select(tab);
     }
 
-    public void refreshOverviewTabs(
-            Function<File, Node> overviewContentBuilder
-    ) {
-        for (Map.Entry<String, Tab> entry : overviewTabs.entrySet()) {
-            File file = new File(entry.getKey());
-            Tab tab = entry.getValue();
+    public void refreshOverviewTabs(Function<File, Node> builder) {
+        overviewTabs.forEach((path, tab) -> {
+            tab.setContent(builder.apply(path.toFile()));
+        });
+    }
 
-            Node refreshedContent = overviewContentBuilder.apply(file);
-            tab.setContent(refreshedContent);
+    public void closeOverviewTabs(Path path) {
+        if (path == null) return;
+
+        Path normalized = path.toAbsolutePath().normalize();
+
+        rightTabPane.getTabs().removeIf(tab ->
+                tab.getUserData() instanceof Path p &&
+                        p.equals(normalized)
+        );
+
+        overviewTabs.remove(normalized);
+    }
+
+
+    public void refreshAnalyzeTabIfOpen(Supplier<Node> analyzeContent) {
+
+        Tab tab = singletonTabs.get("ANALYZE");
+
+        if (tab == null) {
+            return;
         }
+        boolean wasSelected =
+                rightTabPane.getSelectionModel().getSelectedItem() == tab;
+
+        // Refresh content
+        tab.setContent(analyzeContent.get());
+
+
+        if (wasSelected) {
+            rightTabPane.getSelectionModel().select(tab);
+        }
+
     }
 
 
     public void clear() {
         singletonTabs.clear();
         overviewTabs.clear();
+        rightTabPane.getTabs().clear();
     }
 }
