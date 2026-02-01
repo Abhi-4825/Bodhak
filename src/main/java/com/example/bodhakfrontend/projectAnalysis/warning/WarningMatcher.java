@@ -2,10 +2,7 @@ package com.example.bodhakfrontend.projectAnalysis.warning;
 
 import com.example.bodhakfrontend.IncrementalPart.model.Class.IssueType;
 import com.example.bodhakfrontend.Models.WarningRule;
-
-import javax.print.attribute.standard.Severity;
 import java.util.Set;
-
 public class WarningMatcher {
     public static Boolean matches(WarningRule rule, Set<IssueType> issues)
     {
