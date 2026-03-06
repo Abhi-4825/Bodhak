@@ -8,6 +8,7 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.ast.stmt.Statement;
 
 import java.io.File;
 import java.io.IOException;
@@ -342,9 +343,10 @@ public class ClassInfoBuilder {
             int endLine = range.end.line;
 
             boolean hasBody = method.getBody().isPresent();
-            int statementCount = hasBody
-                    ? method.getBody().get().getStatements().size()
-                    : 0;
+            int statementCount = method.getBody()
+                    .map(b -> b.findAll(Statement.class).size())
+                    .orElse(0);
+
 
 
             MethodInfo info = new MethodInfo(methodName, returnType, params, calledMethods, modifiers, startLine, startColumn, endLine, hasBody, statementCount,file);

@@ -13,10 +13,22 @@ import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
 import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
 import com.example.bodhakfrontend.IncrementalPart.Update.UiRefreshEvent;
 import com.example.bodhakfrontend.IncrementalPart.model.incrementalModel.ClassInfoViewModel;
+import com.example.bodhakfrontend.Nic.Builder.GenePoolBuilder;
+import com.example.bodhakfrontend.Nic.Builder.PopulationBuilder;
+import com.example.bodhakfrontend.Nic.Builder.ProjectMetricsBuilder;
+import com.example.bodhakfrontend.Nic.Crossover.UniformCrossover;
+import com.example.bodhakfrontend.Nic.GALoop;
+import com.example.bodhakfrontend.Nic.LookUpClasses;
+import com.example.bodhakfrontend.Nic.Model.Genes;
+import com.example.bodhakfrontend.Nic.Model.Metrics;
+import com.example.bodhakfrontend.Nic.Model.Population;
+import com.example.bodhakfrontend.Nic.Mutation.Mutation;
+import com.example.bodhakfrontend.Nic.Selection.TournamentSelection;
 import com.example.bodhakfrontend.Parser.AstLabelProvider;
 import com.example.bodhakfrontend.Parser.javaParser.JavaFileParser;
 import com.example.bodhakfrontend.Parser.Parsermanager;
 import com.example.bodhakfrontend.ui.Front.FileTreeNodeFactory;
+import com.example.bodhakfrontend.ui.Optimization.OptimizationController;
 import com.example.bodhakfrontend.ui.OverviewContentFactory;
 import com.example.bodhakfrontend.ui.ProjectAnalysis.ProjectAnalysisUi;
 import com.example.bodhakfrontend.ui.UiRerfeshController;
@@ -44,6 +56,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.stage.DirectoryChooser;
 import java.io.File;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -74,6 +87,7 @@ public class App extends Application {
     private ProjectInfoBuilder projectInfoBuilder;
     private ProjectInfo projectInfo;
     private Button analyzeBtn;
+    private Button optimizeBtn;
     private ProjectAnalysisUi projectAnalysisUi;
     private UpdateManager updateManager;
     private Map<String, ClassInfoViewModel> vmMap;
@@ -128,12 +142,17 @@ public class App extends Application {
         analyzeBtn=new Button("Analyze");
         analyzeBtn.setVisible(false);
 
+        // optimization button
+        optimizeBtn=new Button("Optimize");
+        optimizeBtn.setVisible(false);
 
 
+        HBox bottomButtons=new HBox(15);
+        bottomButtons.getChildren().addAll(optimizeBtn, analyzeBtn);
         BorderPane bottomBar = new BorderPane();
         bottomBar.setPadding(new Insets(8));
         bottomBar.setLeft(globalProgressBar);
-        bottomBar.setRight(analyzeBtn);
+        bottomBar.setRight(bottomButtons);
         root.setBottom(bottomBar);
         // for code view
         codeTabPane=new TabPane();
@@ -231,7 +250,24 @@ public class App extends Application {
 
 
 
+
         });
+
+        optimizeBtn.setOnAction(e -> {
+
+            if (projectInfo == null) return;
+
+            OptimizationController controller =
+                    new OptimizationController(
+                            rightPanelTabManager, projectInfo
+                    );
+
+            controller.startOptimization();
+
+            optimizeBtn.setText("Refresh");
+        });
+
+
         // for dependencies tree view working
         dependencyTreeView.setOnMouseClicked(e -> {
 
@@ -487,11 +523,10 @@ public class App extends Application {
         this.projectInfoBuilder=ctx.projectInfoBuilder;
 
         this.updateManager=ctx.updateManager;
-       projectInfoBuilder.buildAll(projectFolder.toPath());
-        projectInfo=projectInfoBuilder.getProjectInfo();
-        List<ClassInfo> c=projectInfo.getClassInfos();
-        this.vmMap=ctx.classInfoViewModelBuilder.initialBuild(projectInfo.getClassInfos());
-        Platform.runLater(()-> analyzeBtn.setVisible(true));
+        this.projectInfo=ctx.projectInfo;
+        this.vmMap=ctx.vmMap;
+        Platform.runLater(()-> {analyzeBtn.setVisible(true);
+        optimizeBtn.setVisible(true);});
 
         EventBus eventBus=new EventBus();
         new IncrementalAnalyzer(eventBus,updateManager);
@@ -505,6 +540,8 @@ public class App extends Application {
         }
         UiRerfeshController uiRerfeshController=new UiRerfeshController(FileTreeView,fileTreeNodeFactory,codeTabPane,rightPanelTabManager,projectAnalysisUi,projectInfoBuilder);
         eventBus.subscribe(UiRefreshEvent.class, uiRerfeshController::onUiRefresh);
+
+
     }
     @Override
     public void stop() throws Exception {

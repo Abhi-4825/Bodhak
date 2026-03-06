@@ -14,6 +14,10 @@ module com.example.bodhakfrontend {
     requires com.fasterxml.jackson.databind;
     requires org.apache.commons.io;
 
+    requires org.checkerframework.checker.qual;
+
+
+    opens com.example.bodhakfrontend.ui.Optimization to javafx.base;
 
     opens com.example.bodhakfrontend to javafx.fxml;
     exports com.example.bodhakfrontend;
@@ -28,6 +32,8 @@ module com.example.bodhakfrontend {
     opens com.example.bodhakfrontend.IncrementalPart.model.Package to com.fasterxml.jackson.databind;
     opens com.example.bodhakfrontend.IncrementalPart.model.Project to com.fasterxml.jackson.databind;
     opens com.example.bodhakfrontend.IncrementalPart.Update to com.fasterxml.jackson.databind;
+    exports com.example.bodhakfrontend.Nic;
+    opens com.example.bodhakfrontend.Nic to javafx.fxml;
 
 
 }

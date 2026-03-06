@@ -96,7 +96,7 @@ public class ClassDependencyView {
         // used by
         TreeItem<Object> usedByNode = new TreeItem<>("Used By");
         List<String> usedBySnapshot =
-                new ArrayList<>(currentVm.getDependsOn());
+                new ArrayList<>(currentVm.getUsedBy());
         for (String user : usedBySnapshot) {
             ClassInfoViewModel userVm = vmMap.get(user);
             if (userVm != null) {

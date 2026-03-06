@@ -23,7 +23,6 @@ public class RightPanelTabManager {
         this.rightTabPane = rightTabPane;
     }
 
-    /** UI-only: wrap content with a short slide-in animation. */
     private Node wrapWithSlideIn(Node content) {
         StackPane wrapper = new StackPane(content);
         content.setTranslateX(40);
@@ -115,4 +114,20 @@ public class RightPanelTabManager {
         overviewTabs.clear();
         rightTabPane.getTabs().clear();
     }
+
+    public void openOptimizationTab(Supplier<Node> contentSupplier) {
+
+        Tab tab = new Tab("Optimization");
+        tab.setContent(contentSupplier.get());
+
+        rightTabPane.getTabs().removeIf(t ->
+                t.getText().equals("Optimization"));
+
+        rightTabPane.getTabs().add(tab);
+        rightTabPane.getSelectionModel().select(tab);
+    }
+
+
+
+
 }
