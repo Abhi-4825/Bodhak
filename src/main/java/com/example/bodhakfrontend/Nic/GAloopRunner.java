@@ -75,14 +75,54 @@ public class GAloopRunner {
                 RefactoringSuggestionEngine refactoringSuggestionEngine =new RefactoringSuggestionEngine();
 
                 List<RefactoringSuggestion> suggestions=refactoringSuggestionEngine.generateSuggestions(result,projectInfo,metrics);
+
+                double beforeScore=calculateScore(result.beforeMetrics());
+                double afterScore=calculateScore(result.afterMetrics());
+
+                System.out.println(beforeScore);
+                System.out.println(afterScore);
                 progressListener.accept("Optimization analysis completed.");
 
 
 
 
 
-                return new OptimizationReport(result,suggestions);
+                return new OptimizationReport(result,suggestions,beforeScore,afterScore);
             }
         };
     }
+
+    private double calculateScore(Metrics metrics) {
+
+        double maxLoc=metrics.getMaxLoc();
+        double minLoc=metrics.getMinLoc();
+        double avgLoc=metrics.getAverageLoc();
+        double avgDeps=metrics.getAverageDeps();
+        double maxDeps= metrics.getMaxDeps();
+        double minDeps= metrics.getMinDeps();
+        double avgMethodsLength= metrics.getAverageMethodLoc();
+        double maxMethodsLength= metrics.getMaxMethodLoc();
+        double minMethodsLength= metrics.getMinMethodLoc();
+
+
+        double methodScore= normalize(avgMethodsLength,minMethodsLength,maxMethodsLength);
+        double locScore=normalize(avgLoc,minLoc,maxLoc);
+        double depsScore=normalize(avgDeps,minDeps,maxDeps);
+
+        double score=(methodScore+locScore+depsScore)/3.0;
+
+        score=Math.max(0,Math.min(score,1));
+
+        return score*100;
+
+
+    }
+    private double normalize(double value, double min, double max) {
+
+        if (max - min == 0) return 1;
+
+        return 1 - ((value - min) / (max - min));
+    }
+
+
 }

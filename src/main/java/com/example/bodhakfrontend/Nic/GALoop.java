@@ -137,7 +137,7 @@ public class GALoop {
             avgMethodLoc*=gene.getMethodLengthFactor();
             deps*=gene.getDependencyFactor();
         }
-        return new Metrics(metrics.getTotalClass(),loc,metrics.getAverageLoc(),metrics.getTotalMethods(),avgMethodLoc,deps,metrics.getTotalCircularDependencies(),metrics.getTotalUnusedClasses(),metrics.getTotalFanIn());
+        return new Metrics(metrics.getTotalClass(),loc,metrics.getAverageLoc(),metrics.getTotalMethods(),avgMethodLoc,metrics.getAverageDeps(),deps,metrics.getTotalCircularDependencies(),metrics.getTotalUnusedClasses(),metrics.getTotalFanIn(),metrics.getMaxLoc(),metrics.getMinLoc(),metrics.getMaxMethodLoc(),metrics.getMinMethodLoc(),metrics.getMaxDeps(),metrics.getMinDeps());
 
 
     }

@@ -38,7 +38,7 @@ public class OptimizationReportPanel {
         }
         // Header
         VBox headerBox = new VBox(5);
-        VBox healthBar=createHealthScoreSection();
+        VBox healthBar=createHealthScoreSection(optimizationReport);
 
         Label title = new Label("Optimization Complete");
         title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #e8eaed;");
@@ -73,7 +73,10 @@ public class OptimizationReportPanel {
     }
 
 
-    private VBox createHealthScoreSection() {
+    private VBox createHealthScoreSection(OptimizationReport report) {
+        double beforeScore = report.getBeforeScore();
+        double afterScore = report.getAfterScore();
+        double improvement = afterScore - beforeScore;
         VBox sectionBox = new VBox(15);
 
         VBox card = new VBox(25);
@@ -84,9 +87,11 @@ public class OptimizationReportPanel {
         Label titleLabel = new Label("Architecture Health");
         titleLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: #9aa0a6; -fx-font-weight: bold;");
 
-        Label improvementLabel = new Label("Improvement +24");
+        Label improvementLabel = new Label(String.format("%+.2f", improvement));
         improvementLabel.setStyle("-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #81c995;");
-        topBox.getChildren().addAll(titleLabel, improvementLabel);
+        Label improve=new Label("Improvement");
+        improve.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #81c995;");
+        topBox.getChildren().addAll(titleLabel, improvementLabel, improve);
 
         // Bottom Part - Progress Bars
         VBox barsBox = new VBox(20);
@@ -98,12 +103,12 @@ public class OptimizationReportPanel {
 
         // Stackpane lets us put text over the progressbar
         javafx.scene.layout.StackPane beforeStack = new javafx.scene.layout.StackPane();
-        ProgressBar beforeBar = new ProgressBar(0.58);
+        ProgressBar beforeBar = new ProgressBar(beforeScore/100);
         beforeBar.setPrefWidth(Double.MAX_VALUE);
         beforeBar.setPrefHeight(25);
         beforeBar.setStyle("-fx-accent: #f28b82; -fx-control-inner-background: #2b2b2b; -fx-background-color: #2b2b2b; -fx-background-radius: 8;");
 
-        Label beforeScoreFormat = new Label("58 / 100");
+        Label beforeScoreFormat = new Label(String.format("%.2f", beforeScore));
         beforeScoreFormat.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px;");
         beforeStack.getChildren().addAll(beforeBar, beforeScoreFormat);
         beforeBox.getChildren().addAll(beforeLabel, beforeStack);
@@ -114,12 +119,12 @@ public class OptimizationReportPanel {
         afterLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #e8eaed;");
 
         javafx.scene.layout.StackPane afterStack = new javafx.scene.layout.StackPane();
-        ProgressBar afterBar = new ProgressBar(0.82);
+        ProgressBar afterBar = new ProgressBar(afterScore/100);
         afterBar.setPrefWidth(Double.MAX_VALUE);
         afterBar.setPrefHeight(25);
         afterBar.setStyle("-fx-accent: #81c995; -fx-control-inner-background: #2b2b2b; -fx-background-color: #2b2b2b; -fx-background-radius: 8;");
 
-        Label afterScoreFormat = new Label("82 / 100");
+        Label afterScoreFormat = new Label(String.format("%.2f", afterScore));
         afterScoreFormat.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px;");
         afterStack.getChildren().addAll(afterBar, afterScoreFormat);
         afterBox.getChildren().addAll(afterLabel, afterStack);
