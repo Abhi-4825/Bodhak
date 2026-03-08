@@ -1,7 +1,4 @@
-package com.example.bodhakfrontend.Nic;
-
-import com.example.bodhakfrontend.Nic.Model.Chromosome;
-import com.example.bodhakfrontend.Nic.Model.Metrics;
+package com.example.bodhakfrontend.Nic.Model;
 
 import java.util.List;
 

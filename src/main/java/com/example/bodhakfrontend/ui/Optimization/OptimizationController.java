@@ -1,8 +1,9 @@
 package com.example.bodhakfrontend.ui.Optimization;
 
 import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
-import com.example.bodhakfrontend.Nic.GAResult;
+import com.example.bodhakfrontend.Nic.Model.GAResult;
 import com.example.bodhakfrontend.Nic.GAloopRunner;
+import com.example.bodhakfrontend.Nic.Model.OptimizationReport;
 import com.example.bodhakfrontend.ui.rightPanel.RightPanelTabManager;
 import javafx.concurrent.Task;
 
@@ -22,21 +23,21 @@ private OptimizationPanel optimizationPanel;
         rightPanelTabManager.openOptimizationTab(()->optimizationPanel.getRoot());
         GAloopRunner runner = new GAloopRunner();
 
-        Task<GAResult> task = runner.createTask(
+        Task<OptimizationReport> task = runner.createTask(
                 projectInfo,
                 message -> optimizationPanel.appendMessage(message)
         );
 
         task.setOnSucceeded(event -> {
-            GAResult result = task.getValue();
-            optimizationPanel.setOnTypingFinished(()->showFinalReport(result));
+
+            optimizationPanel.setOnTypingFinished(()->showFinalReport(task.getValue()));
 
         });
 
         new Thread(task, "GA-Thread").start();
     }
 
-    private void showFinalReport(GAResult result) {
+    private void showFinalReport(OptimizationReport result) {
 
         OptimizationReportPanel reportPanel =
                 new OptimizationReportPanel(result);

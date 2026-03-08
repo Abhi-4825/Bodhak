@@ -34,6 +34,8 @@ module com.example.bodhakfrontend {
     opens com.example.bodhakfrontend.IncrementalPart.Update to com.fasterxml.jackson.databind;
     exports com.example.bodhakfrontend.Nic;
     opens com.example.bodhakfrontend.Nic to javafx.fxml;
+    exports com.example.bodhakfrontend.Nic.Model;
+    opens com.example.bodhakfrontend.Nic.Model to javafx.fxml;
 
 
 }

@@ -29,9 +29,9 @@ public class FitnessEvaluator {
            double loc=metrics.getTotalLoc();
            double avgMethodsLoc=metrics.getAverageMethodLoc();
            double deps=metrics.getTotalDependency();
-           Set<Genes> uniqueGenes=new HashSet<>(chromosome.getGenesList());
+//           Set<Genes> uniqueGenes=new HashSet<>(chromosome.getGenesList());
 
-           for(Genes gene:uniqueGenes){
+           for(Genes gene:chromosome.getGenesList()) {
                loc*=gene.getLocFactor();
                avgMethodsLoc*=gene.getMethodLengthFactor();
                deps*=gene.getDependencyFactor();

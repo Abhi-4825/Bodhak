@@ -1,75 +1,317 @@
 package com.example.bodhakfrontend.ui.Optimization;
 
-import com.example.bodhakfrontend.Nic.GAResult;
-import com.example.bodhakfrontend.Nic.Model.Genes;
-import com.example.bodhakfrontend.Nic.Model.Metrics;
+import com.example.bodhakfrontend.Nic.Model.*;
 import javafx.animation.FadeTransition;
 import javafx.animation.ParallelTransition;
+import javafx.animation.ScaleTransition;
 import javafx.animation.TranslateTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.util.Duration;
+
+import java.util.HashSet;
+import java.util.List;
 
 public class OptimizationReportPanel {
 
-    private final VBox root = new VBox(25);
+    private final ScrollPane scrollPane = new ScrollPane();
+    private final VBox root = new VBox(30);
 
-    public OptimizationReportPanel(GAResult result) {
+    public OptimizationReportPanel(OptimizationReport optimizationReport) {
         root.setPadding(new Insets(30));
         root.setStyle("-fx-background-color: #121212;");
-
+        scrollPane.setContent(root);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background-color: #121212; -fx-control-inner-background: #121212;");
+        var css = getClass().getResource("/style.css");
+        if (css != null) {
+            scrollPane.getStylesheets().add(css.toExternalForm());
+        }
         // Header
         VBox headerBox = new VBox(5);
+        VBox healthBar=createHealthScoreSection();
+
         Label title = new Label("Optimization Complete");
         title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #e8eaed;");
-        Label subtitle = new Label("AI has successfully determined the optimal architecture structure.");
+        Label subtitle = new Label(" Successfully determined the optimal architecture structure.");
         subtitle.setStyle("-fx-font-size: 14px; -fx-text-fill: #9aa0a6;");
         headerBox.getChildren().addAll(title, subtitle);
 
-        // Metrics Table
+
+        // 3. Impact Analysis Table Section
         VBox tableBox = new VBox(10);
-        Label tableTitle = new Label("Impact Analysis (Tabular View)");
-        tableTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #e8eaed;");
-        TableView<Row> table = buildTable(result);
+        Label tableTitle = new Label("📊 Impact Analysis");
+        tableTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e8eaed;");
+        TableView<Row> table = buildTable(optimizationReport.getGAResult());
         tableBox.getChildren().addAll(tableTitle, table);
 
-        // Strategy Section (Cards)
-        VBox strategyBox = new VBox(10);
-        Label strategyTitle = new Label("Recommended Refactoring Strategies:");
-        strategyTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #e8eaed;");
-        
-        FlowPane strategyCards = new FlowPane(15, 15);
-        strategyCards.setAlignment(Pos.CENTER_LEFT);
-        for(Genes gene : result.bestChromosome().getGenesList()) {
-            VBox card = new VBox(8);
-            card.setStyle("-fx-background-color: #1e1e1e; -fx-background-radius: 8; -fx-padding: 15; -fx-border-color: #3d3d3d; -fx-border-width: 1; -fx-border-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 5, 0, 0, 2);");
-            card.setPrefWidth(200);
-            
-            Label opLabel = new Label("Refactor Operation");
-            opLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #9aa0a6;");
-            
-            Label valLabel = new Label(gene.toString());
-            valLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #8ab4f8; -fx-font-weight: bold; -fx-wrap-text: true;");
-            
-            card.getChildren().addAll(opLabel, valLabel);
-            strategyCards.getChildren().add(card);
-        }
-        strategyBox.getChildren().addAll(strategyTitle, strategyCards);
+        // 4. Strategy Section
+        VBox strategyBox = createStrategySection(optimizationReport.getGAResult());
 
-        root.getChildren().addAll(headerBox, tableBox, strategyBox);
+        // 5. Suggested Refactoring Locations Section
+        VBox suggestionsBox = createSuggestionsSection(optimizationReport);
+
+        // 6. Code Hotspots Section
+        VBox hotspotsBox = createHotspotsSection();
+
+        root.getChildren().addAll(headerBox, healthBar, tableBox, strategyBox, suggestionsBox, hotspotsBox);
 
         animateEntrance();
     }
 
-    public VBox getRoot() {
-        return root;
+    public Node getRoot() {
+        return scrollPane;
+    }
+
+
+    private VBox createHealthScoreSection() {
+        VBox sectionBox = new VBox(15);
+
+        VBox card = new VBox(25);
+        card.setStyle("-fx-background-color: #1e1e1e; -fx-background-radius: 12; -fx-padding: 30; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 12;");
+
+        // Top Part - Title & Improvement
+        VBox topBox = new VBox(5);
+        Label titleLabel = new Label("Architecture Health");
+        titleLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: #9aa0a6; -fx-font-weight: bold;");
+
+        Label improvementLabel = new Label("Improvement +24");
+        improvementLabel.setStyle("-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #81c995;");
+        topBox.getChildren().addAll(titleLabel, improvementLabel);
+
+        // Bottom Part - Progress Bars
+        VBox barsBox = new VBox(20);
+
+        // Before Optimization
+        VBox beforeBox = new VBox(8);
+        Label beforeLabel = new Label("Before Optimization");
+        beforeLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #e8eaed;");
+
+        // Stackpane lets us put text over the progressbar
+        javafx.scene.layout.StackPane beforeStack = new javafx.scene.layout.StackPane();
+        ProgressBar beforeBar = new ProgressBar(0.58);
+        beforeBar.setPrefWidth(Double.MAX_VALUE);
+        beforeBar.setPrefHeight(25);
+        beforeBar.setStyle("-fx-accent: #f28b82; -fx-control-inner-background: #2b2b2b; -fx-background-color: #2b2b2b; -fx-background-radius: 8;");
+
+        Label beforeScoreFormat = new Label("58 / 100");
+        beforeScoreFormat.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px;");
+        beforeStack.getChildren().addAll(beforeBar, beforeScoreFormat);
+        beforeBox.getChildren().addAll(beforeLabel, beforeStack);
+
+        // After Optimization
+        VBox afterBox = new VBox(8);
+        Label afterLabel = new Label("After Optimization");
+        afterLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #e8eaed;");
+
+        javafx.scene.layout.StackPane afterStack = new javafx.scene.layout.StackPane();
+        ProgressBar afterBar = new ProgressBar(0.82);
+        afterBar.setPrefWidth(Double.MAX_VALUE);
+        afterBar.setPrefHeight(25);
+        afterBar.setStyle("-fx-accent: #81c995; -fx-control-inner-background: #2b2b2b; -fx-background-color: #2b2b2b; -fx-background-radius: 8;");
+
+        Label afterScoreFormat = new Label("82 / 100");
+        afterScoreFormat.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px;");
+        afterStack.getChildren().addAll(afterBar, afterScoreFormat);
+        afterBox.getChildren().addAll(afterLabel, afterStack);
+
+        barsBox.getChildren().addAll(beforeBox, afterBox);
+        card.getChildren().addAll(topBox, barsBox);
+
+        DropShadow shadow = new DropShadow(15, Color.rgb(0,0,0, 0.4));
+        card.setEffect(shadow);
+
+        sectionBox.getChildren().addAll(card);
+        return sectionBox;
+    }
+
+
+    private VBox createQuickSummarySection(GAResult result) {
+        VBox sectionBox = new VBox(15);
+        Label sectionTitle = new Label("⚡ Quick Optimization Summary");
+        sectionTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e8eaed;");
+
+        FlowPane cardsContainer = new FlowPane(20, 20);
+        cardsContainer.setAlignment(Pos.CENTER_LEFT);
+
+        Metrics before = result.beforeMetrics();
+        Metrics after = result.afterMetrics();
+
+        cardsContainer.getChildren().addAll(
+                createSummaryCard("Total LOC", formatDouble(before.getTotalLoc()), formatDouble(after.getTotalLoc()), calculateImprovement(before.getTotalLoc(), after.getTotalLoc())),
+                createSummaryCard("Avg Method Length", formatDouble(before.getAverageMethodLoc()), formatDouble(after.getAverageMethodLoc()), calculateImprovement(before.getAverageMethodLoc(), after.getAverageMethodLoc())),
+                createSummaryCard("Dependencies", formatDouble(before.getTotalDependency()), formatDouble(after.getTotalDependency()), calculateImprovement(before.getTotalDependency(), after.getTotalDependency()))
+        );
+
+        sectionBox.getChildren().addAll(sectionTitle, cardsContainer);
+        return sectionBox;
+    }
+
+    private VBox createSummaryCard(String title, String before, String after, String improvement) {
+        VBox card = new VBox(10);
+        card.setStyle("-fx-background-color: #1e1e1e; -fx-background-radius: 10; -fx-padding: 20; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 10;");
+        card.setPrefWidth(220);
+
+        Label titleLabel = new Label(title);
+        titleLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #9aa0a6; -fx-font-weight: bold;");
+
+        HBox valuesBox = new HBox(10);
+        valuesBox.setAlignment(Pos.CENTER_LEFT);
+        Label beforeLabel = new Label(before);
+        beforeLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: #e8eaed; -fx-strikethrough: true;");
+        Label arrowLabel = new Label("→");
+        arrowLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: #9aa0a6;");
+        Label afterLabel = new Label(after);
+        afterLabel.setStyle("-fx-font-size: 22px; -fx-text-fill: #81c995; -fx-font-weight: bold;");
+        valuesBox.getChildren().addAll(beforeLabel, arrowLabel, afterLabel);
+
+        Label impLabel = new Label((improvement.startsWith("-") || improvement.equals("0.00%") ? "" : "+") + improvement + " Improvement");
+        impLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: " + (improvement.startsWith("-") ? "#f28b82" : "#8ab4f8") + "; -fx-font-weight: bold;");
+
+        card.getChildren().addAll(titleLabel, valuesBox, impLabel);
+        addHoverEffect(card);
+        return card;
+    }
+
+    private VBox createStrategySection(GAResult result) {
+        VBox sectionBox = new VBox(15);
+        Label sectionTitle = new Label("🧠 Recommended Refactoring Strategies");
+        sectionTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e8eaed;");
+
+        FlowPane strategyCards = new FlowPane(15, 15);
+        strategyCards.setAlignment(Pos.CENTER_LEFT);
+        for(Genes gene : new HashSet<>(result.bestChromosome().getGenesList())) {
+            VBox card = new VBox(10);
+            card.setStyle("-fx-background-color: #242424; -fx-background-radius: 8; -fx-padding: 15; -fx-border-color: #404040; -fx-border-width: 1; -fx-border-radius: 8;");
+            card.setPrefWidth(220);
+
+            String opName = gene.getDispalyName();
+            String icon = getIconForStrategy(opName);
+
+            HBox header = new HBox(8);
+            header.setAlignment(Pos.CENTER_LEFT);
+            Label iconLabel = new Label(icon);
+            iconLabel.setStyle("-fx-font-size: 18px;");
+            Label opLabel = new Label("Strategy");
+            opLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #9aa0a6;");
+            header.getChildren().addAll(iconLabel, opLabel);
+
+            Label valLabel = new Label(opName);
+            valLabel.setStyle("-fx-font-size: 15px; -fx-text-fill: #aecbfa; -fx-font-weight: bold; -fx-wrap-text: true;");
+
+            card.getChildren().addAll(header, valLabel);
+            addHoverEffect(card);
+            strategyCards.getChildren().add(card);
+        }
+        sectionBox.getChildren().addAll(sectionTitle, strategyCards);
+        return sectionBox;
+    }
+
+    private VBox createSuggestionsSection(OptimizationReport optimizationReport) {
+        VBox sectionBox = new VBox(15);
+        Label sectionTitle = new Label("📍 Suggested Refactoring Locations");
+        sectionTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e8eaed;");
+
+        FlowPane cardsContainer = new FlowPane(20, 20);
+        cardsContainer.setAlignment(Pos.CENTER_LEFT);
+
+        List<RefactoringSuggestion > suggestions = optimizationReport.getSuggestions();
+
+
+        for(RefactoringSuggestion suggestion : suggestions) {
+            String methodName=null;
+            if(suggestion.getMethod()!=null){
+                methodName=suggestion.getMethod().getMethodName();
+            }
+
+            cardsContainer.getChildren().add(createSuggestionCard(suggestion.getOperation(),suggestion.getClazz().getClassName(),methodName,suggestion.getReason(),suggestion.getSuggestion()));
+        }
+
+//        // Placeholder Data
+//        cardsContainer.getChildren().addAll(
+//                createSuggestionCard("✂ Break Large Method", "OrderController", "processOrder()", "Method length exceeds recommended size (120 lines).", "Extract validation and payment processing logic into separate helper methods."),
+//                createSuggestionCard("📦 Introduce Interface", "PaymentService", null, "Multiple implementations exist but are tightly coupled.", "Extract an IPaymentService interface to decouple components."),
+//                createSuggestionCard("🪓 Split Large Class", "UserManager", null, "Class handles too many responsibilities (Authentication, Profile, Settings).", "Decompose into AuthService, UserProfileService, and UserSettingsService.")
+//        );
+
+        sectionBox.getChildren().addAll(sectionTitle, cardsContainer);
+        return sectionBox;
+    }
+
+    private VBox createSuggestionCard(String title, String className, String methodName, String reason, String suggestion) {
+        VBox card = new VBox(8);
+        card.setStyle("-fx-background-color: #1e1e24; -fx-background-radius: 10; -fx-padding: 15; -fx-border-color: #3b3b4f; -fx-border-width: 1; -fx-border-radius: 10; -fx-pref-width: 320px;");
+
+        Label titleLabel = new Label(title);
+        titleLabel.setStyle("-fx-font-size: 15px; -fx-text-fill: #fbbc04; -fx-font-weight: bold;");
+
+        Text targetText = new Text("Target: " + className + (methodName != null ? " :: " + methodName : ""));
+        targetText.setStyle("-fx-fill: #e8eaed; -fx-font-size: 14px; -fx-font-family: 'Courier New';");
+
+        Label reasonLabel = new Label("Reason: " + reason);
+        reasonLabel.setStyle("-fx-text-fill: #9aa0a6; -fx-font-size: 13px; -fx-wrap-text: true;");
+
+        Label actionLabel = new Label("Action: " + suggestion);
+        actionLabel.setStyle("-fx-text-fill: #8ab4f8; -fx-font-size: 13px; -fx-wrap-text: true;");
+
+        card.getChildren().addAll(titleLabel, targetText, reasonLabel, actionLabel);
+        addHoverEffect(card);
+        return card;
+    }
+
+    private VBox createHotspotsSection() {
+        VBox sectionBox = new VBox(15);
+        Label sectionTitle = new Label("🔥 Code Hotspots");
+        sectionTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e8eaed;");
+
+        FlowPane cardsContainer = new FlowPane(15, 15);
+        cardsContainer.setAlignment(Pos.CENTER_LEFT);
+
+        // Placeholder hotspots
+        cardsContainer.getChildren().addAll(
+                createHotspotCard("DatabaseConnectionPool", "High Centrality / Coupling"),
+                createHotspotCard("MainApplicationController", "God Class"),
+                createHotspotCard("ReportGeneratorUtils", "High Cyclomatic Complexity")
+        );
+
+        sectionBox.getChildren().addAll(sectionTitle, cardsContainer);
+        return sectionBox;
+    }
+
+    private VBox createHotspotCard(String className, String issue) {
+        VBox card = new VBox(5);
+        card.setStyle("-fx-background-color: #2b1c1c; -fx-background-radius: 8; -fx-padding: 12; -fx-border-color: #5c3a3a; -fx-border-width: 1; -fx-border-radius: 8; -fx-pref-width: 250px;");
+
+        Label classLabel = new Label(className);
+        classLabel.setStyle("-fx-font-size: 14px; -fx-font-family: 'Courier New'; -fx-text-fill: #f28b82; -fx-font-weight: bold; -fx-wrap-text: true;");
+
+        Label issueLabel = new Label(issue);
+        issueLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #e8eaed;");
+
+        card.getChildren().addAll(classLabel, issueLabel);
+        addHoverEffect(card);
+        return card;
+    }
+
+    private String getIconForStrategy(String strategyName) {
+        if (strategyName == null) return "✨";
+        String lower = strategyName.toLowerCase();
+        if (lower.contains("break") || lower.contains("extract")) return "✂";
+        if (lower.contains("dead") || lower.contains("unused")) return "🧹";
+        if (lower.contains("interface") || lower.contains("decouple")) return "📦";
+        if (lower.contains("split") || lower.contains("decompose")) return "🪓";
+        if (lower.contains("dependency") || lower.contains("circular")) return "🔁";
+        if (lower.contains("inline")) return "🔄";
+        return "🧩";
     }
 
     private TableView<Row> buildTable(GAResult result) {
@@ -113,19 +355,41 @@ public class OptimizationReportPanel {
         for(int i=0; i<root.getChildren().size(); i++){
             Node node = root.getChildren().get(i);
             node.setOpacity(0);
-            
-            TranslateTransition tt = new TranslateTransition(Duration.millis(500), node);
-            tt.setFromY(20);
+
+            TranslateTransition tt = new TranslateTransition(Duration.millis(600), node);
+            tt.setFromY(30);
             tt.setToY(0);
-            
-            FadeTransition ft = new FadeTransition(Duration.millis(500), node);
+
+            FadeTransition ft = new FadeTransition(Duration.millis(600), node);
             ft.setFromValue(0);
             ft.setToValue(1);
-            
+
             ParallelTransition pt = new ParallelTransition(tt, ft);
             pt.setDelay(Duration.millis(150 * i));
             pt.play();
         }
+    }
+
+    private void addHoverEffect(Node node) {
+        ScaleTransition scaleIn = new ScaleTransition(Duration.millis(150), node);
+        scaleIn.setToX(1.02);
+        scaleIn.setToY(1.02);
+
+        ScaleTransition scaleOut = new ScaleTransition(Duration.millis(150), node);
+        scaleOut.setToX(1.0);
+        scaleOut.setToY(1.0);
+
+        node.setOnMouseEntered(e -> scaleIn.playFromStart());
+        node.setOnMouseExited(e -> scaleOut.playFromStart());
+    }
+
+    private String formatDouble(double value) {
+        return String.format("%.2f", value);
+    }
+
+    private String calculateImprovement(double before, double after) {
+        double imp = before == 0 ? 0 : ((before - after) / before) * 100;
+        return String.format("%.2f%%", imp);
     }
 
     public static class Row {
@@ -142,10 +406,9 @@ public class OptimizationReportPanel {
             double imp = before == 0 ? 0 : ((before - after) / before) * 100;
             this.improvement = String.format("%s%.2f%%", imp > 0 ? "+" : "", imp);
         }
-
         public String getMetric() { return metric; }
         public String getBefore() { return before; }
         public String getAfter() { return after; }
-        public String getImprovement() { return improvement; }
+        public String getImprovement(){ return improvement; }
     }
 }

@@ -4,10 +4,7 @@ import com.example.bodhakfrontend.Nic.Crossover.UniformCrossover;
 import com.example.bodhakfrontend.Nic.Fitness.FitnessEvaluator;
 import com.example.bodhakfrontend.Nic.Fitness.FitnessWeight;
 import com.example.bodhakfrontend.Nic.Fitness.FitnessWeightStrategy;
-import com.example.bodhakfrontend.Nic.Model.Chromosome;
-import com.example.bodhakfrontend.Nic.Model.Genes;
-import com.example.bodhakfrontend.Nic.Model.Metrics;
-import com.example.bodhakfrontend.Nic.Model.Population;
+import com.example.bodhakfrontend.Nic.Model.*;
 import com.example.bodhakfrontend.Nic.Mutation.Mutation;
 import com.example.bodhakfrontend.Nic.Selection.TournamentSelection;
 
@@ -36,7 +33,7 @@ public class GALoop {
     }
 
 
-    public GAResult run(Population population, Metrics metrics,Map<Genes,Double> geneWeihtedMap){
+    public GAResult run(Population population, Metrics metrics, Map<Genes,Double> geneWeihtedMap){
 
         List<Double> fitnessHistory = new ArrayList<>();
         boolean convergedEarly=false;
@@ -130,12 +127,12 @@ public class GALoop {
 
 
     private Metrics getAfterMetrics(Metrics metrics,Chromosome chromosome) {
-        Set<Genes> Genes= new HashSet<>(chromosome.getGenesList());
+//        Set<Genes> Genes= new HashSet<>(chromosome.getGenesList());
         long loc=metrics.getTotalLoc();
         double avgMethodLoc=metrics.getAverageMethodLoc();
         int deps=metrics.getTotalDependency();
 
-        for(Genes gene:Genes){
+        for(Genes gene:chromosome.getGenesList()){
             loc*=gene.getLocFactor();
             avgMethodLoc*=gene.getMethodLengthFactor();
             deps*=gene.getDependencyFactor();

@@ -6,21 +6,25 @@ import com.example.bodhakfrontend.Nic.Crossover.UniformCrossover;
 import com.example.bodhakfrontend.Nic.Model.*;
 import com.example.bodhakfrontend.Nic.Mutation.Mutation;
 import com.example.bodhakfrontend.Nic.Selection.TournamentSelection;
+import com.example.bodhakfrontend.Nic.Suggestions.RefactoringSuggestionEngine;
 import javafx.concurrent.Task;
 
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+
+
+
 public class GAloopRunner {
 
-    public Task<GAResult> createTask(
+    public Task<OptimizationReport> createTask(
             ProjectInfo projectInfo,
             Consumer<String> progressListener
     ) {
-
         return new Task<>() {
             @Override
-            protected GAResult call() {
+            protected OptimizationReport call() {
 
                 ProjectMetricsBuilder projectMetricsBuilder =
                         new ProjectMetricsBuilder();
@@ -66,8 +70,18 @@ public class GAloopRunner {
                         new GALoop(100, selection, crossover, mutation);
 
                 ga.setProgressListener(progressListener);
+                GAResult result=ga.run(population, metrics, genePoolMap);
+                progressListener.accept("Analyzing refactoring targets...");
+                RefactoringSuggestionEngine refactoringSuggestionEngine =new RefactoringSuggestionEngine();
 
-                return ga.run(population, metrics, genePoolMap);
+                List<RefactoringSuggestion> suggestions=refactoringSuggestionEngine.generateSuggestions(result,projectInfo,metrics);
+                progressListener.accept("Optimization analysis completed.");
+
+
+
+
+
+                return new OptimizationReport(result,suggestions);
             }
         };
     }
