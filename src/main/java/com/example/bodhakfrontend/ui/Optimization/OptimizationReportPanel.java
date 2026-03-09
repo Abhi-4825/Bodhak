@@ -16,13 +16,17 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 
+import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -57,8 +61,7 @@ public class OptimizationReportPanel {
 
         // 3. Impact Analysis Table Section
         VBox tableBox = new VBox(10);
-        Label tableTitle = new Label("📊 Impact Analysis");
-        tableTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e8eaed;");
+        HBox tableTitle=loadLabelWithIcon("largestFiles.png","Impact Analysis");
         TableView<Row> table = buildTable(optimizationReport.getGAResult());
         tableBox.getChildren().addAll(tableTitle, table);
 
@@ -197,9 +200,8 @@ public class OptimizationReportPanel {
 
     private VBox createStrategySection(GAResult result) {
         VBox sectionBox = new VBox(15);
-        Label sectionTitle = new Label("🧠 Recommended Refactoring Strategies");
-        sectionTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e8eaed;");
 
+        HBox sectionTitle=loadLabelWithIcon("suggestion.png"," Recommended Refactoring Strategies");
         FlowPane strategyCards = new FlowPane(15, 15);
         strategyCards.setAlignment(Pos.CENTER_LEFT);
         for(Genes gene : new HashSet<>(result.bestChromosome().getGenesList())) {
@@ -208,15 +210,15 @@ public class OptimizationReportPanel {
             card.setPrefWidth(220);
 
             String opName = gene.getDispalyName();
-            String icon = getIconForStrategy(opName);
+            ImageView icon = getIconForStrategy(opName);
 
             HBox header = new HBox(8);
             header.setAlignment(Pos.CENTER_LEFT);
-            Label iconLabel = new Label(icon);
-            iconLabel.setStyle("-fx-font-size: 18px;");
+
+
             Label opLabel = new Label("Strategy");
             opLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #9aa0a6;");
-            header.getChildren().addAll(iconLabel, opLabel);
+            header.getChildren().addAll(icon, opLabel);
 
             Label valLabel = new Label(opName);
             valLabel.setStyle("-fx-font-size: 15px; -fx-text-fill: #aecbfa; -fx-font-weight: bold; -fx-wrap-text: true;");
@@ -231,8 +233,8 @@ public class OptimizationReportPanel {
 
     private VBox createSuggestionsSection(OptimizationReport optimizationReport) {
         VBox sectionBox = new VBox(15);
-        Label sectionTitle = new Label("📍 Suggested Refactoring Locations");
-        sectionTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e8eaed;");
+
+        HBox header = loadLabelWithIcon("location.png","Suggested Refactoring Locations");
 
         FlowPane cardsContainer = new FlowPane(20, 20);
         cardsContainer.setAlignment(Pos.CENTER_LEFT);
@@ -246,7 +248,7 @@ public class OptimizationReportPanel {
             cardsContainer.getChildren().add(createSuggestionCard(suggestion.getOperation(),suggestion.getClazz(),suggestion.getMethod(),suggestion.getReason(),suggestion.getSuggestion()));
         }
 
-        sectionBox.getChildren().addAll(sectionTitle, cardsContainer);
+        sectionBox.getChildren().addAll(header, cardsContainer);
         return sectionBox;
     }
 
@@ -296,9 +298,7 @@ public class OptimizationReportPanel {
     private VBox createHotspotsSection(OptimizationReport optimizationReport) {
         List<Hotspots> hotspots = optimizationReport.getHotspots();
         VBox sectionBox = new VBox(15);
-        Label sectionTitle = new Label("🔥 Code Hotspots");
-        sectionTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e8eaed;");
-
+        HBox sectionTitle = loadLabelWithIcon("hotspot.png","Code Hotspots");
         FlowPane cardsContainer = new FlowPane(15, 15);
         cardsContainer.setAlignment(Pos.CENTER_LEFT);
 
@@ -341,17 +341,43 @@ public class OptimizationReportPanel {
         return card;
     }
 
-    private String getIconForStrategy(String strategyName) {
-        if (strategyName == null) return "✨";
+    private ImageView getIconForStrategy(String strategyName) {
+        if (strategyName == null) return loadIcon("star.png");
         String lower = strategyName.toLowerCase();
-        if (lower.contains("break") || lower.contains("extract")) return "✂";
-        if (lower.contains("dead") || lower.contains("unused")) return "🧹";
-        if (lower.contains("interface") || lower.contains("decouple")) return "📦";
-        if (lower.contains("split") || lower.contains("decompose")) return "🪓";
-        if (lower.contains("dependency") || lower.contains("circular")) return "🔁";
-        if (lower.contains("inline")) return "🔄";
-        return "🧩";
+        if (lower.contains("break") || lower.contains("extract")) return loadIcon("scissor.png");
+        if (lower.contains("dead") || lower.contains("unused")) return loadIcon("broom.png");
+        if (lower.contains("interface") || lower.contains("decouple")) return loadIcon("box.png");
+        if (lower.contains("split") || lower.contains("decompose")) return loadIcon("axe.png");
+        if (lower.contains("dependency") || lower.contains("circular")) return loadIcon("reuse.png");
+        if (lower.contains("inline")) return loadIcon("reuse.png");
+        return loadIcon("puzzle.png");
     }
+
+    private ImageView loadIcon(String iconName) {
+
+        URL url = getClass().getResource("/icons/" + iconName);
+
+        if (url == null) {
+            System.out.println("Icon not found: " + iconName);
+            return new ImageView();
+        }
+
+        ImageView icon = new ImageView(new Image(url.toExternalForm()));
+        icon.setFitWidth(18);
+        icon.setFitHeight(18);
+
+        return icon;
+    }
+
+    private HBox loadLabelWithIcon(String iconName,String  label) {
+        HBox labelBox = new HBox(8);
+        ImageView icon = loadIcon(iconName);
+        Label header = new Label(label);
+        header.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e8eaed;");
+        labelBox.getChildren().addAll(icon,header);
+        return labelBox;
+    }
+
 
     private TableView<Row> buildTable(GAResult result) {
         Metrics before = result.beforeMetrics();
@@ -445,7 +471,25 @@ public class OptimizationReportPanel {
             double imp = before == 0 ? 0 : ((before - after) / before) * 100;
             this.improvement = String.format("%s%.2f%%", imp > 0 ? "+" : "", imp);
         }
+
+        public String getMetric() {
+            return metric;
+        }
+
+        public String getBefore() {
+            return before;
+        }
+
+        public String getAfter() {
+            return after;
+        }
+
+        public String getImprovement() {
+            return improvement;
+        }
     }
+
+
 
 
 
