@@ -5,17 +5,20 @@ import com.example.bodhakfrontend.Nic.Model.GAResult;
 import com.example.bodhakfrontend.Nic.GAloopRunner;
 import com.example.bodhakfrontend.Nic.Model.OptimizationReport;
 import com.example.bodhakfrontend.ui.rightPanel.RightPanelTabManager;
+import com.example.bodhakfrontend.uiHelper.UiFeatures;
 import javafx.concurrent.Task;
 
 public class OptimizationController {
 private final RightPanelTabManager  rightPanelTabManager;
 private final ProjectInfo projectInfo;
 private OptimizationPanel optimizationPanel;
+private final UiFeatures uiFeatures;
 
 
-    public OptimizationController(RightPanelTabManager rightPanelTabManager, ProjectInfo projectInfo) {
+    public OptimizationController(RightPanelTabManager rightPanelTabManager, ProjectInfo projectInfo, UiFeatures uiFeatures) {
         this.rightPanelTabManager = rightPanelTabManager;
         this.projectInfo = projectInfo;
+        this.uiFeatures = uiFeatures;
     }
 
     public void startOptimization(){
@@ -40,7 +43,7 @@ private OptimizationPanel optimizationPanel;
     private void showFinalReport(OptimizationReport result) {
 
         OptimizationReportPanel reportPanel =
-                new OptimizationReportPanel(result);
+                new OptimizationReportPanel(result,uiFeatures);
 
         optimizationPanel.replaceContent(
                 reportPanel.getRoot()

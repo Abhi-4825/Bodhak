@@ -1,12 +1,17 @@
 package com.example.bodhakfrontend.ui.Optimization;
 
+import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
+import com.example.bodhakfrontend.IncrementalPart.model.Class.MethodInfo;
+import com.example.bodhakfrontend.IncrementalPart.model.Project.Hotspots;
 import com.example.bodhakfrontend.Nic.Model.*;
+import com.example.bodhakfrontend.uiHelper.UiFeatures;
 import javafx.animation.FadeTransition;
 import javafx.animation.ParallelTransition;
 import javafx.animation.ScaleTransition;
 import javafx.animation.TranslateTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -20,13 +25,16 @@ import javafx.util.Duration;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class OptimizationReportPanel {
 
     private final ScrollPane scrollPane = new ScrollPane();
     private final VBox root = new VBox(30);
+    private final UiFeatures uiFeatures;
 
-    public OptimizationReportPanel(OptimizationReport optimizationReport) {
+    public OptimizationReportPanel(OptimizationReport optimizationReport, UiFeatures uiFeatures) {
+        this.uiFeatures = uiFeatures;
         root.setPadding(new Insets(30));
         root.setStyle("-fx-background-color: #121212;");
         scrollPane.setContent(root);
@@ -61,7 +69,7 @@ public class OptimizationReportPanel {
         VBox suggestionsBox = createSuggestionsSection(optimizationReport);
 
         // 6. Code Hotspots Section
-        VBox hotspotsBox = createHotspotsSection();
+        VBox hotspotsBox = createHotspotsSection(optimizationReport);
 
         root.getChildren().addAll(headerBox, healthBar, tableBox, strategyBox, suggestionsBox, hotspotsBox);
 
@@ -233,34 +241,29 @@ public class OptimizationReportPanel {
 
 
         for(RefactoringSuggestion suggestion : suggestions) {
-            String methodName=null;
-            if(suggestion.getMethod()!=null){
-                methodName=suggestion.getMethod().getMethodName();
-            }
 
-            cardsContainer.getChildren().add(createSuggestionCard(suggestion.getOperation(),suggestion.getClazz().getClassName(),methodName,suggestion.getReason(),suggestion.getSuggestion()));
+
+            cardsContainer.getChildren().add(createSuggestionCard(suggestion.getOperation(),suggestion.getClazz(),suggestion.getMethod(),suggestion.getReason(),suggestion.getSuggestion()));
         }
-
-//        // Placeholder Data
-//        cardsContainer.getChildren().addAll(
-//                createSuggestionCard("✂ Break Large Method", "OrderController", "processOrder()", "Method length exceeds recommended size (120 lines).", "Extract validation and payment processing logic into separate helper methods."),
-//                createSuggestionCard("📦 Introduce Interface", "PaymentService", null, "Multiple implementations exist but are tightly coupled.", "Extract an IPaymentService interface to decouple components."),
-//                createSuggestionCard("🪓 Split Large Class", "UserManager", null, "Class handles too many responsibilities (Authentication, Profile, Settings).", "Decompose into AuthService, UserProfileService, and UserSettingsService.")
-//        );
 
         sectionBox.getChildren().addAll(sectionTitle, cardsContainer);
         return sectionBox;
     }
 
-    private VBox createSuggestionCard(String title, String className, String methodName, String reason, String suggestion) {
+    private VBox createSuggestionCard(String title, ClassInfo clazz, MethodInfo method, String reason, String suggestion) {
         VBox card = new VBox(8);
         card.setStyle("-fx-background-color: #1e1e24; -fx-background-radius: 10; -fx-padding: 15; -fx-border-color: #3b3b4f; -fx-border-width: 1; -fx-border-radius: 10; -fx-pref-width: 320px;");
 
         Label titleLabel = new Label(title);
         titleLabel.setStyle("-fx-font-size: 15px; -fx-text-fill: #fbbc04; -fx-font-weight: bold;");
 
-        Text targetText = new Text("Target: " + className + (methodName != null ? " :: " + methodName : ""));
+        Text targetText = new Text("Target: " + clazz );
         targetText.setStyle("-fx-fill: #e8eaed; -fx-font-size: 14px; -fx-font-family: 'Courier New';");
+
+
+
+
+
 
         Label reasonLabel = new Label("Reason: " + reason);
         reasonLabel.setStyle("-fx-text-fill: #9aa0a6; -fx-font-size: 13px; -fx-wrap-text: true;");
@@ -268,12 +271,30 @@ public class OptimizationReportPanel {
         Label actionLabel = new Label("Action: " + suggestion);
         actionLabel.setStyle("-fx-text-fill: #8ab4f8; -fx-font-size: 13px; -fx-wrap-text: true;");
 
-        card.getChildren().addAll(titleLabel, targetText, reasonLabel, actionLabel);
+       if(method!=null){
+           Text methodName=new Text("Method: " + method.getMethodName());
+           methodName.setStyle("-fx-fill: #e8eaed; -fx-font-size: 14px; -fx-font-family: 'Courier New';");
+           card.getChildren().addAll(titleLabel, targetText,methodName, reasonLabel, actionLabel);
+       }
+       else {card.getChildren().addAll(titleLabel, targetText, reasonLabel, actionLabel);}
+
+
         addHoverEffect(card);
+       card.setCursor(Cursor.HAND);
+       card.setOnMouseClicked(mouseEvent -> {
+           if(method!=null){
+               uiFeatures.openAndHighlight(method.getMethodName(), method.getStartLine(), method.getStartColumn(), method.getSourceFile());
+           }
+           else{
+               uiFeatures.openAndHighlight(clazz.toString(), clazz.getBeginLine(), clazz.getBeginColumn(), clazz.getSourceFile());
+           }
+
+       });
         return card;
     }
 
-    private VBox createHotspotsSection() {
+    private VBox createHotspotsSection(OptimizationReport optimizationReport) {
+        List<Hotspots> hotspots = optimizationReport.getHotspots();
         VBox sectionBox = new VBox(15);
         Label sectionTitle = new Label("🔥 Code Hotspots");
         sectionTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e8eaed;");
@@ -281,29 +302,42 @@ public class OptimizationReportPanel {
         FlowPane cardsContainer = new FlowPane(15, 15);
         cardsContainer.setAlignment(Pos.CENTER_LEFT);
 
-        // Placeholder hotspots
-        cardsContainer.getChildren().addAll(
-                createHotspotCard("DatabaseConnectionPool", "High Centrality / Coupling"),
-                createHotspotCard("MainApplicationController", "God Class"),
-                createHotspotCard("ReportGeneratorUtils", "High Cyclomatic Complexity")
-        );
+
+        for(Hotspots hotspot:hotspots){
+
+            cardsContainer.getChildren().add(createHotspotCard(hotspot.getClassInfo(),hotspot.getReasons()));
+
+        }
+
+
+
 
         sectionBox.getChildren().addAll(sectionTitle, cardsContainer);
         return sectionBox;
     }
 
-    private VBox createHotspotCard(String className, String issue) {
+    private VBox createHotspotCard(ClassInfo clazz, Set<String> reasons) {
         VBox card = new VBox(5);
         card.setStyle("-fx-background-color: #2b1c1c; -fx-background-radius: 8; -fx-padding: 12; -fx-border-color: #5c3a3a; -fx-border-width: 1; -fx-border-radius: 8; -fx-pref-width: 250px;");
 
-        Label classLabel = new Label(className);
+        Label classLabel = new Label(clazz.toString());
         classLabel.setStyle("-fx-font-size: 14px; -fx-font-family: 'Courier New'; -fx-text-fill: #f28b82; -fx-font-weight: bold; -fx-wrap-text: true;");
+        VBox reasonsBox = new VBox(5);
+        for(String reason: reasons){
+            Label issueLabel = new Label(reason);
+            issueLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #e8eaed;");
+            reasonsBox.getChildren().add(issueLabel);
 
-        Label issueLabel = new Label(issue);
-        issueLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #e8eaed;");
+        }
+        card.getChildren().addAll(classLabel, reasonsBox);
 
-        card.getChildren().addAll(classLabel, issueLabel);
+
+
         addHoverEffect(card);
+        card.setCursor(Cursor.HAND);
+        card.setOnMouseClicked(mouseEvent -> {
+            uiFeatures.openAndHighlight(clazz.toString(), clazz.getBeginLine(), clazz.getBeginColumn(), clazz.getSourceFile());
+        });
         return card;
     }
 
@@ -411,9 +445,10 @@ public class OptimizationReportPanel {
             double imp = before == 0 ? 0 : ((before - after) / before) * 100;
             this.improvement = String.format("%s%.2f%%", imp > 0 ? "+" : "", imp);
         }
-        public String getMetric() { return metric; }
-        public String getBefore() { return before; }
-        public String getAfter() { return after; }
-        public String getImprovement(){ return improvement; }
     }
+
+
+
+
+
 }

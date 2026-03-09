@@ -1,5 +1,6 @@
 package com.example.bodhakfrontend.Nic;
 
+import com.example.bodhakfrontend.IncrementalPart.model.Project.Hotspots;
 import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
 import com.example.bodhakfrontend.Nic.Builder.*;
 import com.example.bodhakfrontend.Nic.Crossover.UniformCrossover;
@@ -78,16 +79,14 @@ public class GAloopRunner {
 
                 double beforeScore=calculateScore(result.beforeMetrics());
                 double afterScore=calculateScore(result.afterMetrics());
-
-                System.out.println(beforeScore);
-                System.out.println(afterScore);
+                List<Hotspots> hotspots=projectInfo.getHotspotClasses();
                 progressListener.accept("Optimization analysis completed.");
 
 
 
 
 
-                return new OptimizationReport(result,suggestions,beforeScore,afterScore);
+                return new OptimizationReport(result,suggestions,beforeScore,afterScore,hotspots);
             }
         };
     }

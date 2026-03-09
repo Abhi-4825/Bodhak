@@ -58,7 +58,7 @@ public class RefactoringSuggestionEngine {
          double threshold=metrics.getAverageLoc();
          for(ClassInfo clazz:projectInfo.getClassInfos()){
              if(clazz.getLinesOfCode()>threshold){
-                 suggestions.add(new RefactoringSuggestion(clazz,null,"Class has "+clazz.getLinesOfCode()+ "lines","Split Large Class","Consider separating responsibilities into multiple classes"));
+                 suggestions.add(new RefactoringSuggestion(clazz,null,clazz + " has "+clazz.getLinesOfCode()+ " lines","Split Large Class","Consider separating responsibilities into multiple classes"));
              }
          }
 
@@ -72,7 +72,7 @@ public class RefactoringSuggestionEngine {
         List<RefactoringSuggestion> suggestions = new ArrayList<>();
 
        for(ClassInfo clazz:projectInfo.getClassesInCycles()){
-           suggestions.add(new RefactoringSuggestion(clazz,null,clazz.getClassName()+"has circular Dependencies","Fix Circular dependencies", "Consider introducing an interface or restructuring dependencies"));
+           suggestions.add(new RefactoringSuggestion(clazz,null,clazz+" has circular Dependencies","Fix Circular dependencies", "Consider introducing an interface or restructuring dependencies"));
        }
       return suggestions;
     }
@@ -87,13 +87,9 @@ public class RefactoringSuggestionEngine {
                 }
             }
         }
-
      return suggestions.stream().limit(5).toList();
 
     }
-
-
-
 
 
 }

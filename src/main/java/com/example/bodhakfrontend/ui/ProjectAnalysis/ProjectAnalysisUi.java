@@ -20,6 +20,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
@@ -391,7 +392,14 @@ private Node buildHotspotView(ProjectInfo projectInfo, UiFeatures uiFeatures) {
 
     }
     private Node iconBadge(String iconPath,String bgClass){
-        ImageView icon = new ImageView(new Image(getClass().getResourceAsStream(iconPath)));
+
+        URL url=getClass().getResource(iconPath);
+        ImageView icon;
+        if(url!=null){
+            icon=new ImageView(new Image(url.toExternalForm()));
+        }
+        else
+        {icon=new ImageView();}
         icon.setFitHeight(16);
         icon.setFitWidth(16);
         icon.setPreserveRatio(true);

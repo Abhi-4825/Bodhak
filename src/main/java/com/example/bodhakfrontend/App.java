@@ -259,7 +259,7 @@ public class App extends Application {
 
             OptimizationController controller =
                     new OptimizationController(
-                            rightPanelTabManager, projectInfo
+                            rightPanelTabManager, projectInfo,uiFeatures
                     );
 
             controller.startOptimization();
