@@ -9,8 +9,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ProjectInfo {
-
-
     public static class LargestFileInfo {
         String name;
         File sourceFile;
@@ -52,17 +50,10 @@ public class ProjectInfo {
     private final int circularClasses;
     private final int highlyCoupledClasses;
     private final List<Hotspots> hotspotClasses;
-
-
     // Entry Point
-
     private final EntryPointInfo entryPointInfo;
-
     //UnusedClass
-
     private final Set<UnusedClassInfo> unusedClassInfos;
-
-
     public ProjectInfo(Map<String, Set<Path>> laguageCountMap, List<LargestFileInfo> top5, Set<Path> knownFolders, Set<Path> knownFiles, List<ClassInfo> classInfos, Map<String,PackageInfo> packageInfos, List<Hotspots> hotspots, EntryPointInfo entryPointInfo, Set<UnusedClassInfo> unusedClassInfos
             ,int totalClasses,int healthyClasses,int classesWithWarnings,int godClasses,int circularClasses,int highlyCoupledClasses ) {
         this.laguageCountMap = laguageCountMap;
@@ -81,68 +72,51 @@ public class ProjectInfo {
         this.highlyCoupledClasses = highlyCoupledClasses;
         this.godClasses=godClasses;
     }
-
     public Map<String, Set<Path>> getLaguageCountMap() {
         return laguageCountMap;
     }
-
     public List<LargestFileInfo> getLargetFiles() {
         return largetFiles;
     }
-
     public Set<Path> getKnownFolders() {
         return knownFolders;
     }
-
     public Set<Path> getKnownFiles() {
         return knownFiles;
     }
-
     public Map<String,PackageInfo> getPackageInfos() {
         return packageInfos;
     }
-
     public List<ClassInfo> getClassInfos() {
         return classInfos;
     }
-
     public int getTotalClasses() {
         return totalClasses;
     }
-
     public int getHealthyClasses() {
         return healthyClasses;
     }
-
     public int getClassesWithWarnings() {
         return classesWithWarnings;
     }
-
     public int getGodClasses() {
         return godClasses;
     }
-
     public int getCircularClasses() {
         return circularClasses;
     }
-
     public int getHighlyCoupledClasses() {
         return highlyCoupledClasses;
     }
-
     public List<Hotspots> getHotspotClasses() {
         return hotspotClasses;
     }
-
     public EntryPointInfo getEntryPointInfo() {
         return entryPointInfo;
     }
-
     public Set<UnusedClassInfo> getUnusedClassInfos() {
         return unusedClassInfos;
     }
-
-
     public List<ClassInfo> getClassesInCycles(){
         List<ClassInfo> classesInCycles = new ArrayList<>();
         for(ClassInfo classInfo : classInfos){
@@ -159,9 +133,4 @@ public class ProjectInfo {
         }
         return classInfoMap;
     }
-
-
-
-
-
 }
