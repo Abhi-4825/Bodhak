@@ -1,6 +1,6 @@
 package com.example.bodhakfrontend.projectAnalysis.ui;
 
-import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassContribution;
+import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassRole;
 import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
 import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
 import com.example.bodhakfrontend.Models.Severity;
@@ -20,7 +20,7 @@ public class classHealthAnalyserViewBuilder {
    private ClassInfo getClassInfo(String name){
        return new ClassInfo(name,null,null,null,null,null,null,
                null,null,null,null,false,false,
-               false,-1,-1,-1,new ClassContribution(false,false,false,false,false,false));
+               false,-1,-1,-1,new ClassRole(false,false,false,false,false,false));
    }
 
 

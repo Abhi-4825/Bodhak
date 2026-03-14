@@ -15,6 +15,8 @@ module com.example.bodhakfrontend {
     requires org.apache.commons.io;
 
     requires org.checkerframework.checker.qual;
+    requires tree.sitter;
+    requires tree.sitter.python;
 
 
     opens com.example.bodhakfrontend.ui.Optimization to javafx.base;

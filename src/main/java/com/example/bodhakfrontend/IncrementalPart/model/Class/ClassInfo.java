@@ -18,8 +18,11 @@ public class ClassInfo {
         CLASS,
         INTERFACE,
         ENUM,
-        RECORDS
+        RECORDS,
+        DATACLASS,
+        ABC
     }
+    private String language;
     private final String className;
     private final String packageName;
     private final File sourceFile;
@@ -37,7 +40,7 @@ public class ClassInfo {
     private final int linesOfCode;
     private final int beginLine;
     private final int beginColumn;
-    private final ClassContribution classContribution;
+    private final Set<ClassRole> classRole;
     private final Set<IssueType> issueType = new HashSet<>();
     private final List<WarningRule> warnings = new ArrayList<>();
 
@@ -46,7 +49,7 @@ public class ClassInfo {
             , Set<String> annotations, Set<String> dependsOn
             , Set<String> usedBy,
                      Set<Set<String>> circularDependencyGroups, boolean isAbstract, boolean isFinal, boolean isPublic
-            , int linesOfCode, int beginLine, int beginColumn, ClassContribution classContribution) {
+            , int linesOfCode, int beginLine, int beginColumn, Set<ClassRole> classRole) {
         this.className = className;
         this.packageName = packageName;
         this.sourceFile = sourceFile;
@@ -64,7 +67,7 @@ public class ClassInfo {
         this.linesOfCode = linesOfCode;
         this.beginLine = beginLine;
         this.beginColumn = beginColumn;
-        this.classContribution = classContribution;
+        this.classRole = classRole;
     }
     public String getClassName() {
         return className;
@@ -133,8 +136,8 @@ public class ClassInfo {
     public int getBeginColumn() {
         return beginColumn;
     }
-    public  ClassContribution getClassContribution() {
-        return classContribution;
+    public Set<ClassRole> getClassContribution() {
+        return classRole;
     }
 
     @Override

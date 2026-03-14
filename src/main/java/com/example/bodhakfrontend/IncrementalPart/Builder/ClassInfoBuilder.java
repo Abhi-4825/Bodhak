@@ -209,7 +209,7 @@ public class ClassInfoBuilder {
 
 
                 // classContributions
-                ClassContribution classContribution = new ClassContribution(hasSpring, isJavaFx, hasMain, hasJPA, isRestController, isTestClass);
+                ClassRole classRole = new ClassRole(hasSpring, isJavaFx, hasMain, hasJPA, isRestController, isTestClass);
 
 
                 //Set<String> Class depends on
@@ -249,7 +249,7 @@ public class ClassInfoBuilder {
                     isFinal = ci.isFinal();
                 }
 
-                ClassInfo cls=new ClassInfo(className, packageName, path.toFile(), kind, fields, methods, construcors, annotations, dependsOn, usedBy, myCycles, isAbstract, isFinal, clazz.isPublic(), loc, beginLine, beginColumn,classContribution);
+                ClassInfo cls=new ClassInfo(className, packageName, path.toFile(), kind, fields, methods, construcors, annotations, dependsOn, usedBy, myCycles, isAbstract, isFinal, clazz.isPublic(), loc, beginLine, beginColumn, classRole);
                 cls.getWarnings().clear();
                 cls.setWarnings(warningBuilder.buildWarnings(cls));
                 classInfoList.add(cls);

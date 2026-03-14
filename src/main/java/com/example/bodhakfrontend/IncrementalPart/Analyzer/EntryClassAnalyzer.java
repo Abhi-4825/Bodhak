@@ -1,12 +1,8 @@
 package com.example.bodhakfrontend.IncrementalPart.Analyzer;
 
-import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassContribution;
 import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
 import com.example.bodhakfrontend.IncrementalPart.model.Project.EntryPointInfo;
-import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 
-import java.nio.file.Path;
 import java.util.*;
 
 public class EntryClassAnalyzer {

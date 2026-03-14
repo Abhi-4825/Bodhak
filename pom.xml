@@ -68,6 +68,20 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- Source: https://mvnrepository.com/artifact/io.github.bonede/tree-sitter -->
+        <dependency>
+            <groupId>io.github.bonede</groupId>
+            <artifactId>tree-sitter</artifactId>
+            <version>0.26.6</version>
+        </dependency>
+        <!-- Source: https://mvnrepository.com/artifact/io.github.bonede/tree-sitter-python -->
+        <dependency>
+            <groupId>io.github.bonede</groupId>
+            <artifactId>tree-sitter-python</artifactId>
+            <version>0.25.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>

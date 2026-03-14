@@ -31,7 +31,7 @@ public class ClassInfoViewModel {
     private final IntegerProperty linesOfCode=new SimpleIntegerProperty();
     private final IntegerProperty beginLine=new SimpleIntegerProperty();
     private final IntegerProperty beginColumn=new SimpleIntegerProperty();
-    private final ObjectProperty<ClassContribution> classContribution=new SimpleObjectProperty<>();
+    private final ObjectProperty<ClassRole> classContribution=new SimpleObjectProperty<>();
     private final ObservableSet<IssueType> issueType =FXCollections.observableSet();
     private final ObservableList<WarningRule> warnings =FXCollections.observableArrayList();
 
@@ -77,11 +77,11 @@ public class ClassInfoViewModel {
         return issueType;
     }
 
-    public ClassContribution getClassContribution() {
+    public ClassRole getClassContribution() {
         return classContribution.get();
     }
 
-    public ObjectProperty<ClassContribution> classContributionProperty() {
+    public ObjectProperty<ClassRole> classContributionProperty() {
         return classContribution;
     }
 
