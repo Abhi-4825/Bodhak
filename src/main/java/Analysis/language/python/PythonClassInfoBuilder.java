@@ -1,50 +1,78 @@
 package Analysis.language.python;
 
-
-import Analysis.ClassInfoBuilder;
 import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
+import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassRole;
 import com.example.bodhakfrontend.IncrementalPart.model.Class.ConstructorInfo;
 import com.example.bodhakfrontend.IncrementalPart.model.Class.MethodInfo;
-import org.treesitter.TSNode;
-import org.treesitter.TSPoint;
-
-import java.io.File;
-import java.lang.classfile.Superclass;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import org.treesitter.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 
 public class PythonClassInfoBuilder
-{
+{   private final PythonParseCache cache;
+    private final PythonClassDependencyGraphBuilder dependencyGraphBuilder ;
+    public PythonClassInfoBuilder(PythonParseCache cache, PythonClassDependencyGraphBuilder dependencyGraphBuilder){
+        this.cache = cache;
+        this.dependencyGraphBuilder = dependencyGraphBuilder;
+    }
+
+
     List<ClassInfo> classInfos= new ArrayList<ClassInfo>();
-    public void buildClassInfo(TSNode classNode,String source)  {
-
-        if(classNode.getType().equals("class_definition")){
-            TSNode nameNode=classNode.getChildByFieldName("name");
-
-
-
+    public List<ClassInfo> buildClassInfos(Set<Path> pythonFiles) throws Exception {
+        for (Path path : pythonFiles) {
+            TSTree tree=cache.get(path);
+            if (tree == null) {continue;}
+            String source = Files.readString(path);
+            TSNode root = tree.getRootNode();
+            walk(root, source, path);
         }
 
+        return classInfos;
     }
-    private ClassInfo getClassDetails(TSNode classNode, String source, String packageName, File sourceFile) {
-        // ClassName
-        String className=source.substring(
-                classNode.getStartByte(),
-                classNode.getEndByte()
-        );
+    private void walk(TSNode node, String source, Path file) {
 
+        if (node.getType().equals("class_definition")) {
+
+            ClassInfo info = getClassDetails(node, source, file);
+
+            classInfos.add(info);
+        }
+
+        for (int i = 0; i < node.getChildCount(); i++) {
+            walk(node.getChild(i), source, file);
+        }
+    }
+
+
+
+
+
+
+            private ClassInfo getClassDetails(TSNode classNode, String source, Path sourceFile) {
+        // ClassName
+        TSNode nameNode=classNode.getChildByFieldName("name");
+        String className=source.substring(
+                nameNode.getStartByte(),
+                nameNode.getEndByte()
+        );
+        // packageName
+                String packageName = sourceFile.getParent() != null ? sourceFile.getParent().toString() : "";
 
         // extract fields
         Set<String> fields=new HashSet<String>();
         extractFields(classNode,source,fields);
 
         // methods
-        List<MethodInfo> methods=new ArrayList<MethodInfo>();
+        PythonMethodInfoBuilder methodBuilder = new PythonMethodInfoBuilder();
+        methodBuilder.build(classNode,source,sourceFile);
+        List<MethodInfo> methods= methodBuilder.getMethods();
 
         //contructor
-        List<ConstructorInfo> constructors=new ArrayList<ConstructorInfo>();
+        PythonConstructorInfoBuilder constructorBuilder = new PythonConstructorInfoBuilder();
+        constructorBuilder.build(classNode,source,sourceFile);
+        List<ConstructorInfo> constructors=constructorBuilder.getConstructors();
+
 
 
         // Annotations
@@ -57,13 +85,25 @@ public class PythonClassInfoBuilder
 
 
         // depends on
-        Set<String> depends=new HashSet<>();
+                Set<String> depends = dependencyGraphBuilder
+                        .getClassDependenciesToPath()
+                        .getOrDefault(sourceFile, new HashMap<>())
+                        .getOrDefault(className, new HashSet<>());
 
         // used by
-        Set<String> usedBy=new HashSet<>();
+                Set<String> usedBy = dependencyGraphBuilder
+                        .getReverseClassDependencies()
+                        .getOrDefault(className, new HashSet<>());
 
         //circular dependencies group
+                Set<Set<String>> allCircularDependsSets =
+                        dependencyGraphBuilder.getClassDependenciesGroups();
         Set<Set<String>> circularDependsSets=new HashSet<>();
+                for (Set<String> cycle : allCircularDependsSets) {
+                    if (cycle.contains(className)) {
+                        circularDependsSets.add(cycle);
+                    }
+                }
 
 
         // check if the class is enum, dataclass, ABC or simply class
@@ -71,7 +111,7 @@ public class PythonClassInfoBuilder
 
         //is Abstract
         boolean isAbstract=false;
-        if(inherits(parents,"ABC"))
+        if(inherits(parents,"ABC") || inherits(parents,"ABCMeta"))
             isAbstract=true;
         // add method annotation for abstraction part
 
@@ -88,17 +128,17 @@ public class PythonClassInfoBuilder
 
         int linesOfCode=end.getRow()-start.getRow()+1;
 
-        TSNode nameNode=classNode.getChildByFieldName("name");
-        int beginLine=start.getRow()+1;
-        int beginColumn=start.getColumn();
+        TSPoint nameStart=nameNode.getStartPoint();
+        int beginLine=nameStart.getRow()+1;
+        int beginColumn=nameStart.getColumn();
 
+        // ClassRole
 
+        Set<ClassRole> role =PythonClassRoleDetector.detectRoles(classNode,className,source);
 
-
-
-        return new ClassInfo(className,packageName,sourceFile,kind,fields,methods,constructors,annotations,
+        return new ClassInfo(className,packageName,sourceFile.toFile(),kind,fields,methods,constructors,annotations,
                 depends,usedBy,circularDependsSets,isAbstract,isFinal,isPublic,
-               linesOfCode,beginLine,beginColumn, )
+               linesOfCode,beginLine,beginColumn, role);
     }
 
     private ClassInfo.Kind detectPythonKind(List<String> superclasses, String source,Set<String> annotations) {
@@ -117,7 +157,7 @@ public class PythonClassInfoBuilder
     }
     private void  getParentClasses(TSNode classNode,String source,List<String> superClass) {
         TSNode argList=classNode.getChildByFieldName("superclasses");
-        if(argList==null)return;
+        if(argList==null) argList=classNode.getChildByFieldName("arguments");
         for(int i=0;i<argList.getChildCount();i++){
             TSNode child=argList.getChild(i);
             if(child.getType().equals("identifier")){
@@ -178,7 +218,7 @@ public class PythonClassInfoBuilder
                         TSNode assignment=stmt.getChild(0);
                         if(assignment.getType().equals("attribute")){
                             TSNode fieldNode=assignment.getChild(1);
-                            String fieldName=source.substring(assignment.getStartByte(),fieldNode.getEndByte());
+                            String fieldName=source.substring(fieldNode.getStartByte(),fieldNode.getEndByte());
                             fields.add(fieldName);
                         }
                     }

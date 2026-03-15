@@ -5,8 +5,11 @@ public enum ClassRole {
     CONTROLLER,
     SERVICE,
     ENTITY,
-    UI_COMPONENT,
     TEST,
     CONFIGURATION,
-    UTILITY
+    UI_COMPONENT,
+    ENUM_TYPE,
+    ABSTRACT_TYPE,
+    UTILITY,
+    DTO
 }
