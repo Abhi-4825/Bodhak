@@ -1,6 +1,6 @@
 package com.example.bodhakfrontend.projectAnalysis.fixes;
 
-import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
+import com.example.bodhakfrontend.Backend.models.Class.ClassInfo;
 import com.example.bodhakfrontend.Models.FixSuggestion;
 
 import java.util.List;

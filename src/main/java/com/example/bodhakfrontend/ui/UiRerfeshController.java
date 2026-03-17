@@ -1,7 +1,7 @@
 package com.example.bodhakfrontend.ui;
 
-import com.example.bodhakfrontend.IncrementalPart.Builder.ProjectInfoBuilder;
-import com.example.bodhakfrontend.IncrementalPart.Update.UiRefreshEvent;
+import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder.ProjectInfoBuilder;
+import com.example.bodhakfrontend.Backend.IncrementalPart.Update.UiRefreshEvent;
 
 import com.example.bodhakfrontend.ui.Front.FileTreeNodeFactory;
 import com.example.bodhakfrontend.ui.ProjectAnalysis.ProjectAnalysisUi;

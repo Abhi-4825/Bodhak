@@ -1,29 +1,18 @@
 package com.example.bodhakfrontend;
 
-import com.example.bodhakfrontend.IncrementalPart.Builder.ClassDependecygraphBuilder;
-import com.example.bodhakfrontend.IncrementalPart.Builder.ClassInfoBuilder;
-import com.example.bodhakfrontend.IncrementalPart.Builder.PackageInfoBuilder;
-import com.example.bodhakfrontend.IncrementalPart.Builder.ProjectInfoBuilder;
-import com.example.bodhakfrontend.IncrementalPart.Update.EventBus;
-import com.example.bodhakfrontend.IncrementalPart.Update.IncrementalAnalyzer;
-import com.example.bodhakfrontend.IncrementalPart.Update.ProjectFileListener;
-import com.example.bodhakfrontend.IncrementalPart.Update.ProjectFileWatcher;
-import com.example.bodhakfrontend.IncrementalPart.UpdateManager;
-import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
-import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
-import com.example.bodhakfrontend.IncrementalPart.Update.UiRefreshEvent;
-import com.example.bodhakfrontend.IncrementalPart.model.incrementalModel.ClassInfoViewModel;
-import com.example.bodhakfrontend.Nic.Builder.GenePoolBuilder;
-import com.example.bodhakfrontend.Nic.Builder.PopulationBuilder;
-import com.example.bodhakfrontend.Nic.Builder.ProjectMetricsBuilder;
-import com.example.bodhakfrontend.Nic.Crossover.UniformCrossover;
-import com.example.bodhakfrontend.Nic.GALoop;
-import com.example.bodhakfrontend.Nic.LookUpClasses;
-import com.example.bodhakfrontend.Nic.Model.Genes;
-import com.example.bodhakfrontend.Nic.Model.Metrics;
-import com.example.bodhakfrontend.Nic.Model.Population;
-import com.example.bodhakfrontend.Nic.Mutation.Mutation;
-import com.example.bodhakfrontend.Nic.Selection.TournamentSelection;
+import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder.ClassDependecygraphBuilder;
+import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder.javaClassInfoBuilder;
+import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder.PackageInfoBuilder;
+import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder.ProjectInfoBuilder;
+import com.example.bodhakfrontend.Backend.IncrementalPart.Update.EventBus;
+import com.example.bodhakfrontend.Backend.IncrementalPart.Update.IncrementalAnalyzer;
+import com.example.bodhakfrontend.Backend.IncrementalPart.Update.ProjectFileListener;
+import com.example.bodhakfrontend.Backend.IncrementalPart.Update.ProjectFileWatcher;
+import com.example.bodhakfrontend.Backend.IncrementalPart.UpdateManager;
+import com.example.bodhakfrontend.Backend.models.Class.ClassInfo;
+import com.example.bodhakfrontend.Backend.models.Project.ProjectInfo;
+import com.example.bodhakfrontend.Backend.IncrementalPart.Update.UiRefreshEvent;
+import com.example.bodhakfrontend.Backend.models.incrementalModel.ClassInfoViewModel;
 import com.example.bodhakfrontend.Parser.AstLabelProvider;
 import com.example.bodhakfrontend.Parser.javaParser.JavaFileParser;
 import com.example.bodhakfrontend.Parser.Parsermanager;
@@ -36,7 +25,7 @@ import com.example.bodhakfrontend.ui.overviewButton.*;
 import com.example.bodhakfrontend.ui.rightPanel.RightPanelTabManager;
 import com.example.bodhakfrontend.uiHelper.UiFeatures;
 import com.example.bodhakfrontend.util.MultiModuleSourceRootDetector;
-import com.example.bodhakfrontend.util.ParseCache;
+import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder.javaParseCache;
 import com.github.javaparser.ast.CompilationUnit;
 import javafx.animation.FadeTransition;
 import javafx.application.Application;
@@ -56,14 +45,13 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.stage.DirectoryChooser;
 import java.io.File;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
 public class App extends Application {
     LanguageDetector detector = new LanguageDetector();
-    ParseCache cache ;
+    javaParseCache cache ;
     JavaFileParser javaFileParser ;
     Parsermanager  parsermanager ;
     MultiModuleSourceRootDetector rootDetector = new MultiModuleSourceRootDetector();
@@ -82,7 +70,7 @@ public class App extends Application {
 
     private ProgressBar globalProgressBar;
     private ClassDependecygraphBuilder classDependecygraphBuilder;
-    private ClassInfoBuilder classInfoBuilder;
+    private javaClassInfoBuilder javaClassInfoBuilder;
     private PackageInfoBuilder packageInfoBuilder;
     private ProjectInfoBuilder projectInfoBuilder;
     private ProjectInfo projectInfo;
@@ -315,7 +303,7 @@ public class App extends Application {
             Tab selectedTab = codeTabPane.getSelectionModel().getSelectedItem();
             if(selectedTab==null){return;}
             File file=(File)selectedTab.getUserData();
-            List<ClassInfo> classes=classInfoBuilder.scanFile(file.toPath());
+            List<ClassInfo> classes= javaClassInfoBuilder.getClassInfos(file.toPath());
             OverviewContentFactory factory = classInfo -> {
 
                 if (classInfo == null) {
@@ -518,7 +506,7 @@ public class App extends Application {
         this.javaFileParser = ctx.javaFileParser;
         this.parsermanager=ctx.parsermanager;
         this.classDependecygraphBuilder=ctx.classDependecygraphBuilder;
-        this.classInfoBuilder=ctx.classInfoBuilder;
+        this.javaClassInfoBuilder =ctx.javaClassInfoBuilder;
         this.packageInfoBuilder=ctx.packageInfoBuilder;
         this.projectInfoBuilder=ctx.projectInfoBuilder;
 

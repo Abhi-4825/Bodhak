@@ -1,8 +1,7 @@
 package com.example.bodhakfrontend.Parser.javaParser;
 
-import com.example.bodhakfrontend.Models.*;
 import com.example.bodhakfrontend.util.ClassNameResolver;
-import com.example.bodhakfrontend.util.ParseCache;
+import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder.javaParseCache;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.MethodCallExpr;
@@ -17,9 +16,9 @@ import java.util.stream.Stream;
 
 public class JavaFileParser {
 
- private final ParseCache cache;
+ private final javaParseCache cache;
 
-    public JavaFileParser(ParseCache cache) {
+    public JavaFileParser(javaParseCache cache) {
         this.cache = cache;
     }
 

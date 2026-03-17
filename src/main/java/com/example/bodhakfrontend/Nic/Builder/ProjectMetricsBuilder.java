@@ -1,8 +1,8 @@
 package com.example.bodhakfrontend.Nic.Builder;
 
-import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
-import com.example.bodhakfrontend.IncrementalPart.model.Class.MethodInfo;
-import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
+import com.example.bodhakfrontend.Backend.models.Class.ClassInfo;
+import com.example.bodhakfrontend.Backend.models.Class.MethodInfo;
+import com.example.bodhakfrontend.Backend.models.Project.ProjectInfo;
 import com.example.bodhakfrontend.Nic.Model.Metrics;
 
 import java.util.HashSet;

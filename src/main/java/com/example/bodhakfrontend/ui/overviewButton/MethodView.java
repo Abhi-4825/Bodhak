@@ -1,8 +1,8 @@
 package com.example.bodhakfrontend.ui.overviewButton;
 
 
-import com.example.bodhakfrontend.IncrementalPart.model.incrementalModel.ClassInfoViewModel;
-import com.example.bodhakfrontend.IncrementalPart.model.Class.*;
+import com.example.bodhakfrontend.Backend.models.incrementalModel.ClassInfoViewModel;
+import com.example.bodhakfrontend.Backend.models.Class.*;
 import com.example.bodhakfrontend.Models.MethodFilter;
 import com.example.bodhakfrontend.uiHelper.UiFeatures;
 import javafx.application.Platform;

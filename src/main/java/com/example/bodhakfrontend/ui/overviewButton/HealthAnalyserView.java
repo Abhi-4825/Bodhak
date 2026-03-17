@@ -1,9 +1,8 @@
 package com.example.bodhakfrontend.ui.overviewButton;
 
-import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
-import com.example.bodhakfrontend.IncrementalPart.model.Class.ConstructorInfo;
-import com.example.bodhakfrontend.IncrementalPart.model.Class.MethodInfo;
-import com.example.bodhakfrontend.IncrementalPart.model.incrementalModel.ClassInfoViewModel;
+import com.example.bodhakfrontend.Backend.models.Class.ConstructorInfo;
+import com.example.bodhakfrontend.Backend.models.Class.MethodInfo;
+import com.example.bodhakfrontend.Backend.models.incrementalModel.ClassInfoViewModel;
 import com.example.bodhakfrontend.Models.FixSuggestion;
 import com.example.bodhakfrontend.Models.WarningRule;
 import com.example.bodhakfrontend.projectAnalysis.fixes.FixSuggestionEngine;

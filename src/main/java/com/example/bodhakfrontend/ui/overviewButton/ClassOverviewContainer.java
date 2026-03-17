@@ -1,6 +1,6 @@
 package com.example.bodhakfrontend.ui.overviewButton;
 
-import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
+import com.example.bodhakfrontend.Backend.models.Class.ClassInfo;
 import com.example.bodhakfrontend.ui.OverviewContentFactory;
 import javafx.scene.Node;
 import javafx.scene.control.ComboBox;

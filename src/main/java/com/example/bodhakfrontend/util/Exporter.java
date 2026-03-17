@@ -1,10 +1,9 @@
 package com.example.bodhakfrontend.util;
 
-import com.example.bodhakfrontend.IncrementalPart.model.Project.EntryPointInfo;
-import com.example.bodhakfrontend.IncrementalPart.model.Project.Hotspots;
-import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
-import com.example.bodhakfrontend.IncrementalPart.model.Project.UnusedClassInfo;
-import com.example.bodhakfrontend.Models.*;
+import com.example.bodhakfrontend.Backend.models.Project.EntryPointInfo;
+import com.example.bodhakfrontend.Backend.models.Project.Hotspots;
+import com.example.bodhakfrontend.Backend.models.Project.ProjectInfo;
+import com.example.bodhakfrontend.Backend.models.Project.UnusedClassInfo;
 
 import javafx.stage.FileChooser;
 

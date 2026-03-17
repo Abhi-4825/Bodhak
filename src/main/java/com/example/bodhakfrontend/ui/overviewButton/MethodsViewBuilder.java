@@ -1,7 +1,7 @@
 package com.example.bodhakfrontend.ui.overviewButton;
 
-import com.example.bodhakfrontend.IncrementalPart.model.Class.*;
-import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
+import com.example.bodhakfrontend.Backend.models.Class.*;
+import com.example.bodhakfrontend.Backend.models.Project.ProjectInfo;
 import com.example.bodhakfrontend.Models.*;
 import com.example.bodhakfrontend.uiHelper.UiFeatures;
 import javafx.geometry.Insets;
