@@ -12,7 +12,6 @@ import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.resolution.types.ResolvedReferenceType;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -31,8 +30,6 @@ public class ClassDependecygraphBuilder {
         this.cache = cache;
 
     }
-
-
     public Map<Path,Map<String, Set<String>>> buildDependsOnGraph (Path projectPath,Set<String> sourceClasses){
         classDependencies.clear();
         try {
@@ -105,8 +102,20 @@ public class ClassDependecygraphBuilder {
                             .resolve()
                             .asReferenceType()
                             .getQualifiedName();
-                    if(sourceClasses.contains(dep))dependencies.add(dep);
-                } catch (Exception ignored) {
+
+                    if (sourceClasses.contains(dep)) {
+                        dependencies.add(dep);
+                    }
+
+                } catch (Exception e) {
+                    String simpleName = expr.getType().asString();
+
+                    for (String cls : sourceClasses) {
+                        if (cls.endsWith("." + simpleName)) {
+                            dependencies.add(cls);
+                            break;
+                        }
+                    }
                 }
             });
             //generics
@@ -270,10 +279,6 @@ public class ClassDependecygraphBuilder {
 
         return reverseClassDependencies;
     }
-
-
-
-
 
     public Path normalize(Path filePath) {
         return filePath.toAbsolutePath().normalize();
