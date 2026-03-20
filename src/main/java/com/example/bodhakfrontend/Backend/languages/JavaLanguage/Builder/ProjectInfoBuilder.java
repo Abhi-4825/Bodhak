@@ -41,27 +41,23 @@ public class ProjectInfoBuilder {
     int circularClasses=0;
     int highlyCoupledClasses=0;
 
-    private final javaClassInfoBuilder classInfoToPathMapBuilder;
-    private final PackageInfoBuilder packageInfoBuilder;
 
-    public ProjectInfoBuilder(javaClassInfoBuilder classInfoToPathMapBuilder, PackageInfoBuilder packageInfoBuilder) {
-        this.classInfoToPathMapBuilder = classInfoToPathMapBuilder;
-        this.packageInfoBuilder = packageInfoBuilder;
-    }
 
-    public ProjectInfo buildAll(Path projectPath) {
+
+
+    public ProjectInfo buildAll(Path projectPath,List<ClassInfo> classInfoList,Map<String,PackageInfo> packageInfo) {
         largestFiles.clear();
         laguageCountMap.clear();
         knownFolders.clear();
         knownFiles.clear();
 
         //Classinfos
-        classInfoToPathMapBuilder.buildAll(projectPath);
-        classInfos=classInfoToPathMapBuilder.getListOfClassInfo();
+
+        classInfos=classInfoList;
 
         //package info
-        packageInfoBuilder.buildAll(classInfos);
-        packageInfoMap=packageInfoBuilder.getPackageInfoMap();
+
+        packageInfoMap=packageInfo;
 
 
         // get List of Hotspot
@@ -185,27 +181,6 @@ public class ProjectInfoBuilder {
     }
 
 }
-// get map<ClassName, Set<Depends on>>
-//    public Map<ClassInfo,Set<ClassInfo>> getClassDependsOnMap(){
-//        Map<ClassInfo,Set<ClassInfo>> map=new HashMap<>();
-//        Map<String, ClassInfo> map2=classInfoToPathMapBuilder.getClassMap(classInfos);
-//        for(ClassInfo classInfo : classInfos){
-//            Set<ClassInfo> set=new HashSet<>();
-//             for(String dep:classInfo.getDependsOn()){
-//                 ClassInfo depClassInfo=map2.get(dep);
-//                 set.add(depClassInfo);
-//             }
-//             map.put(classInfo,set);
-//        }
-//
-//
-//
-//        return map;
-//
-//    }
-//
-
-
 
 
 // get projectINfo
@@ -220,10 +195,7 @@ public class ProjectInfoBuilder {
 // on File Create
     public void onFileCreated(Path path,List<ClassInfo> newClassInfos) {
        updateProjectInfo(path);
-       //update classes
-        classInfos=classInfoToPathMapBuilder.getListOfClassInfo();
-        //update packageinfoMap
-        packageInfoMap=packageInfoBuilder.getPackageInfoMap();
+
         recomputeClassMetrics();
 
         // update Hotspot
@@ -244,9 +216,7 @@ public class ProjectInfoBuilder {
         Path normalizedPath=path.toAbsolutePath().normalize();
         knownFiles.remove(normalizedPath);
 
-        //update classinfo
-        classInfos=classInfoToPathMapBuilder.getListOfClassInfo();
-        packageInfoMap=packageInfoBuilder.getPackageInfoMap();
+    
         recomputeClassMetrics();
 
         // remove from largestFiles

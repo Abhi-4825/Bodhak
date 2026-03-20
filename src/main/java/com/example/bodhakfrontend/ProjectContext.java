@@ -1,4 +1,8 @@
 package com.example.bodhakfrontend;
+import com.example.bodhakfrontend.Backend.Analysis.Engine.AnalysisEngine;
+
+import com.example.bodhakfrontend.Backend.ClassGraphBuilder;
+import com.example.bodhakfrontend.Backend.Factory.ParserFactory;
 import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder.*;
 import com.example.bodhakfrontend.Backend.IncrementalPart.UpdateManager;
 import com.example.bodhakfrontend.Backend.models.Class.ClassInfo;
@@ -8,7 +12,7 @@ import com.example.bodhakfrontend.Parser.Parsermanager;
 import com.example.bodhakfrontend.Parser.javaParser.JavaFileParser;
 import com.example.bodhakfrontend.util.ClassNameResolver;
 import com.example.bodhakfrontend.util.MultiModuleSourceRootDetector;
-import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder.javaParseCache;
+import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Parser.javaParseCache;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
@@ -19,10 +23,6 @@ public class ProjectContext {
     public final JavaFileParser javaFileParser;
     public final Parsermanager parsermanager;
     public final ClassNameResolver  classNameResolver;
-    public final javaClassInfoBuilder javaClassInfoBuilder;
-    public final ClassDependecygraphBuilder classDependecygraphBuilder;
-    public final PackageInfoBuilder  packageInfoBuilder;
-    public final ProjectInfoBuilder  projectInfoBuilder;
     public final UpdateManager updateManager;
     public final List<Path> sourceRoots;
     public final Set<String> sourceClasses;
@@ -30,6 +30,9 @@ public class ProjectContext {
     public final ClassInfoViewModelBuilder classInfoViewModelBuilder;
     public final ProjectInfo projectInfo;
     public final Map<String, ClassInfoViewModel> vmMap;
+    public final AnalysisEngine analysisEngine;
+    public final ParserFactory parserFactory;
+    public final ClassGraphBuilder classGraphBuilder;
     public ProjectContext(File projectFolder,
                           LanguageDetector detector) {
       this. multiModuleSourceRootDetector = new MultiModuleSourceRootDetector();
@@ -37,18 +40,23 @@ public class ProjectContext {
         this.cache = new javaParseCache(sourceRoots);
         this.javaFileParser = new JavaFileParser(cache);
         this.classNameResolver = new ClassNameResolver();
-        this.classDependecygraphBuilder=new ClassDependecygraphBuilder(cache);
-        this.javaClassInfoBuilder =new javaClassInfoBuilder(cache,classDependecygraphBuilder);
-        this.packageInfoBuilder=new PackageInfoBuilder(javaClassInfoBuilder);
-        this.projectInfoBuilder=new ProjectInfoBuilder(javaClassInfoBuilder,packageInfoBuilder);
+
+        this.parserFactory=new ParserFactory(sourceRoots);
+        this.classGraphBuilder=new ClassGraphBuilder(parserFactory);
+
+
         this.parsermanager = new Parsermanager(detector, javaFileParser);
 
-        this.sourceClasses = javaFileParser.getClassesfromSource(sourceRoots);
-        this.classInfoViewModelBuilder=new ClassInfoViewModelBuilder(classDependecygraphBuilder);
-        this.updateManager=new UpdateManager(javaClassInfoBuilder,packageInfoBuilder,projectInfoBuilder,classDependecygraphBuilder,projectFolder.toPath(),classInfoViewModelBuilder);
 
-        projectInfoBuilder.buildAll(projectFolder.toPath());
-        this.projectInfo=projectInfoBuilder.getProjectInfo();
+
+        this.analysisEngine=new AnalysisEngine(parserFactory,classGraphBuilder);
+
+        this.sourceClasses = javaFileParser.getClassesfromSource(sourceRoots);
+        this.classInfoViewModelBuilder=new ClassInfoViewModelBuilder(classGraphBuilder);
+        this.updateManager=new UpdateManager(analysisEngine);
+
+         analysisEngine.analyse(projectFolder.toPath());
+        this.projectInfo=analysisEngine.getProjectInfo();
         List<ClassInfo> c=projectInfo.getClassInfos();
         this.vmMap=classInfoViewModelBuilder.initialBuild(projectInfo.getClassInfos());
 

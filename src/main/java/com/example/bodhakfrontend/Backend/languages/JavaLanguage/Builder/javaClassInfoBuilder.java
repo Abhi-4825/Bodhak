@@ -1,6 +1,9 @@
 package com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder;
 
+import com.example.bodhakfrontend.Backend.ClassGraphBuilder;
+import com.example.bodhakfrontend.Backend.Factory.ParserFactory;
 import com.example.bodhakfrontend.Backend.interfaces.ClassInfoBuilder;
+import com.example.bodhakfrontend.Backend.interfaces.Parser;
 import com.example.bodhakfrontend.Backend.models.Class.*;
 import com.example.bodhakfrontend.projectAnalysis.warning.WarningBuilder;
 import com.example.bodhakfrontend.util.ClassNameResolver;
@@ -35,9 +38,11 @@ public class javaClassInfoBuilder implements ClassInfoBuilder {
     );
 
     private final WarningBuilder warningBuilder = new WarningBuilder();
+    private final ParserFactory parserFactory;
 
-    private final javaParseCache cache;
-    private final ClassDependecygraphBuilder classDependecygraphBuilder;
+    private final Parser<CompilationUnit> cache;
+    private final ClassGraphBuilder classGraphBuilder;
+
 
 
     private Map<Path, List<ClassInfo>> classInfoMap = new ConcurrentHashMap<>();
@@ -48,43 +53,16 @@ public class javaClassInfoBuilder implements ClassInfoBuilder {
         return path.toAbsolutePath().normalize();
     }
 
-    public javaClassInfoBuilder(javaParseCache cache, ClassDependecygraphBuilder classDependecygraphBuilder) {
-        this.cache = cache;
-        this.classDependecygraphBuilder = classDependecygraphBuilder;
+    public javaClassInfoBuilder(ParserFactory parserFactory, ClassGraphBuilder classGraphBuilder) {
+        this.parserFactory = parserFactory;
+        this.cache =parserFactory.getParser("java");
+        this.classGraphBuilder = classGraphBuilder;
 
     }
-    private Set<String> getSourceClasses(Path projectPath) {
-        Set<String> classes = new HashSet<>();
-        try(Stream<Path> paths= Files.walk(projectPath) ) {
-            paths.filter(p-> p.toString().endsWith(".java"))
-                    .forEach(javaFile->{
-                        try {
-                            CompilationUnit cu=cache.get(javaFile);
-                            cu.findAll(ClassOrInterfaceDeclaration.class)
-                                    .forEach(classOrI -> {
-                                        String className = ClassNameResolver.resolveFqn(cu,classOrI);
-                                        classes.add(className);
-                                    });
-                            cu.findAll(EnumDeclaration.class).forEach(enumDeclaration -> {
-                                String  enumName = ClassNameResolver.resolveFqn(cu,enumDeclaration);
-                                classes.add(enumName);
-                            });
-                            cu.findAll(RecordDeclaration.class).forEach(recordDeclaration -> {
-                                String  recordName = ClassNameResolver.resolveFqn(cu,recordDeclaration);
-                                classes.add(recordName);
-                            });
-                        }catch (Exception ignored){}
-
-                    });
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return classes;
-    }
-    public Map<Path, List<ClassInfo>> buildAll(Path projectPath) {
+    public Map<Path, List<ClassInfo>> buildAll(Path projectPath,Set<String> sourceClasses) {
         classInfoMap.clear();
-        srcClasses = getSourceClasses(projectPath);
-        classDependecygraphBuilder.buildDependsOnGraph(projectPath,srcClasses);
+        srcClasses = sourceClasses;
+        classGraphBuilder.buildDependsOnGraph(projectPath,srcClasses);
         try {
             Files.walk(projectPath)
                     .filter(p -> p.toString().endsWith(".java"))
@@ -109,12 +87,12 @@ public class javaClassInfoBuilder implements ClassInfoBuilder {
     public List<ClassInfo> getClassInfos(Path path) {
         Path normalizedPath = normalize(path);
         List<ClassInfo> classInfoList = new ArrayList<>();
-        Set<Set<String>> AllCircularGroups = classDependecygraphBuilder.getClassDependenciesGroups();
+        Set<Set<String>> AllCircularGroups = classGraphBuilder.getClassDependenciesGroups();
 
         if(!normalizedPath.toString().endsWith(".java")) {return classInfoList;}
         try {
             File sourceFile = path.toFile();
-            CompilationUnit cu = cache.get(normalizedPath);
+            CompilationUnit cu = cache.parse(normalizedPath);
             cu.findAll(TypeDeclaration.class).forEach(clazz -> {
                 // Package
                 String packageName = cu.getPackageDeclaration()
@@ -214,13 +192,13 @@ public class javaClassInfoBuilder implements ClassInfoBuilder {
 
                 //Set<String> Class depends on
                 Set<String> dependsOn =
-                        classDependecygraphBuilder
+                        classGraphBuilder
                                 .getClassDependenciesToPath()
                                 .getOrDefault(normalizedPath, Map.of())
                                 .getOrDefault(className, Set.of());
 
                 Set<String> usedBy =
-                        classDependecygraphBuilder
+                        classGraphBuilder
                                 .getReverseClassDependencies()
                                 .getOrDefault(className, Set.of());
 
@@ -511,7 +489,7 @@ public class javaClassInfoBuilder implements ClassInfoBuilder {
             Files.walk(projectPath)
                     .filter(p -> p.toString().endsWith(".java"))
                     .forEach(p -> {
-                        CompilationUnit cu = cache.get(p);
+                        CompilationUnit cu = cache.parse(p);
                         cu.findAll(TypeDeclaration.class)
                                 .forEach(td ->
                                         result.add(ClassNameResolver.resolveFqn(cu, td))
@@ -527,11 +505,11 @@ public class javaClassInfoBuilder implements ClassInfoBuilder {
     //for file create
     public void onFileCreate(Path filePath) {
         Path p = normalize(filePath);
-        CompilationUnit cu = cache.get(p);
+        CompilationUnit cu = cache.parse(p);
         cu.findAll(TypeDeclaration.class).forEach(td ->
                 srcClasses.add(ClassNameResolver.resolveFqn(cu, td))
         );
-        classDependecygraphBuilder.onFileCreate(filePath, srcClasses);
+        classGraphBuilder.onFileCreate(filePath, srcClasses);
         List<ClassInfo> classes = getClassInfos(filePath);
         classInfoMap.put(normalize(filePath), classes);
     }
@@ -543,7 +521,7 @@ public class javaClassInfoBuilder implements ClassInfoBuilder {
         for (ClassInfo classInfo : classes) {
             srcClasses.remove(classInfo.getClassName());
         }
-        classDependecygraphBuilder.onFileDelete(filePath);
+        classGraphBuilder.onFileDelete(filePath);
         classInfoMap.remove(normalize(filePath));
     }
 
@@ -558,12 +536,12 @@ public class javaClassInfoBuilder implements ClassInfoBuilder {
             srcClasses.remove(ci.getClassName());
         }
 // just finding new class names
-        CompilationUnit cu = cache.get(p);
+        CompilationUnit cu = cache.parse(p);
         cu.findAll(TypeDeclaration.class).forEach(td ->
                 srcClasses.add(ClassNameResolver.resolveFqn(cu, td))
         );
         // update dependency graph
-        classDependecygraphBuilder.onFileModify(filePath, srcClasses);
+        classGraphBuilder.onFileModify(filePath, srcClasses);
 
         //  re-scan file
         List<ClassInfo> newClasses = getClassInfos(filePath);

@@ -1,5 +1,6 @@
 package com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder;
 
+import com.example.bodhakfrontend.Backend.ClassGraphBuilder;
 import com.example.bodhakfrontend.Backend.models.Class.ClassInfo;
 import com.example.bodhakfrontend.Backend.models.incrementalModel.ClassInfoViewModel;
 
@@ -10,12 +11,12 @@ import java.util.Set;
 
 public class ClassInfoViewModelBuilder {
 
-    private final ClassDependecygraphBuilder dependencyGraphBuilder;
+    private final ClassGraphBuilder dependencyGraphBuilder;
 
     private final Map<String, ClassInfoViewModel> vmMap = new HashMap<>();
 
     public ClassInfoViewModelBuilder(
-            ClassDependecygraphBuilder dependencyGraphBuilder
+            ClassGraphBuilder dependencyGraphBuilder
     ) {
         this.dependencyGraphBuilder = dependencyGraphBuilder;
     }

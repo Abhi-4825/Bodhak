@@ -1,4 +1,5 @@
-package com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder;
+package com.example.bodhakfrontend.Backend.languages.JavaLanguage.Parser;
+import com.example.bodhakfrontend.Backend.interfaces.Parser;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ast.CompilationUnit;
@@ -11,12 +12,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-public class javaParseCache {
+public class javaParseCache implements Parser<CompilationUnit> {
 
     private final Map<Path, CompilationUnit> cache = new ConcurrentHashMap<>();
+    private final CombinedTypeSolver typeSolver = new CombinedTypeSolver();
     private final JavaParser parser;
     public javaParseCache(List<Path> sourceRoot) {
-        CombinedTypeSolver typeSolver = new CombinedTypeSolver();
+
         // Project source code
         for(Path src : sourceRoot){
         typeSolver.add(new JavaParserTypeSolver(src));}
@@ -28,7 +30,8 @@ public class javaParseCache {
                 .setSymbolResolver(symbolSolver);
         this.parser = new JavaParser(config);
     }
-    public CompilationUnit get(Path path) {
+    @Override
+    public CompilationUnit parse(Path path) {
         Path normalized = path.toAbsolutePath().normalize();
         return cache.computeIfAbsent(normalized, p -> {
             try {
@@ -38,11 +41,17 @@ public class javaParseCache {
             }
         });
     }
+    @Override
     public void invalidate(Path path){
         Path normalized = path.toAbsolutePath().normalize();
-        cache.remove(normalized);
+        if(cache.containsKey(normalized)){cache.remove(normalized);}
+        else return;
+
     }
     public Collection<CompilationUnit> getAll() {
         return cache.values();
     }
+
+
+
 }

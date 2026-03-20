@@ -10,7 +10,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PackageInfoBuilder {
-    private final javaClassInfoBuilder classInfoToPathMapBuilder;
     private final CircularDependency circularDependency=new CircularDependency();
     //List<PackageInfo>
     private final Map<String,PackageInfo> packageInfoMap =new ConcurrentHashMap<>();
@@ -22,18 +21,25 @@ public class PackageInfoBuilder {
     // circular depends
     Set<Set<String>> allCircularDependencies=new HashSet<>();
 
-    public PackageInfoBuilder(javaClassInfoBuilder classInfoToPathMapBuilder) {
-        this.classInfoToPathMapBuilder = classInfoToPathMapBuilder;
-    }
 
-    private List<ClassInfo> getClassInfos(){
-        return classInfoToPathMapBuilder.getListOfClassInfo();
-    }
+
+
+
     private Map<String,ClassInfo> getClassInfoMap(List<ClassInfo> classInfos){
-        return classInfoToPathMapBuilder.getClassMap(classInfos);
+        Map<String,ClassInfo> result = new HashMap<>();
+        for (ClassInfo classInfo : classInfos) {
+            result.put(classInfo.getClassName(), classInfo);
+        }
+        return result;
+
     }
-    private Map<String,Set<ClassInfo>> getPackageInfoMap(List<ClassInfo> classInfos){
-        return classInfoToPathMapBuilder.getPkgToClassInfo(classInfos);
+    private Map<String,Set<ClassInfo>> getPackageMap(List<ClassInfo> classInfos){
+        Map<String,Set<ClassInfo>> result = new HashMap<>();
+        for (ClassInfo classInfo : classInfos) {
+            String packageName = classInfo.getPackageName();
+            result.computeIfAbsent(packageName, k -> new HashSet<>()).add(classInfo);
+        }
+        return result;
     }
 
     //map classname--classinfo
@@ -51,7 +57,7 @@ public class PackageInfoBuilder {
             List<ClassInfo> classInfos
     ) {
 
-        Map<String,Set<ClassInfo>> pkgToClasses=getPackageInfoMap(classInfos);
+        Map<String,Set<ClassInfo>> pkgToClasses= getPackageMap(classInfos);
         classInfoMap=getClassInfoMap(classInfos);
         computePackageDependencies(classInfos);
         updateCircularDependenciesGroups();
@@ -192,7 +198,7 @@ public class PackageInfoBuilder {
     }
 
     // get PackageMap
-    public Map<String,PackageInfo> getPackageInfoMap(){
+    public Map<String,PackageInfo> getPackageMap(){
         return packageInfoMap;
     }
 
@@ -251,7 +257,7 @@ public class PackageInfoBuilder {
 
 
     // on File Delete
-    public void onFileDelete(List<ClassInfo> removedClasses) {
+    public void onFileDelete(List<ClassInfo> removedClasses,List<ClassInfo> newClassInfo) {
         if(removedClasses==null || removedClasses.isEmpty()) return;
         String packageName=removedClasses.get(0).getPackageName();
         PackageInfo packageInfo= packageInfoMap.get(packageName);
@@ -268,7 +274,7 @@ public class PackageInfoBuilder {
 
 
         //rebuild pkg dependencies
-        computePackageDependencies(getClassInfos());
+        computePackageDependencies(newClassInfo);
         Set<String> dependsOn =
                 pkgdependencies.getOrDefault(packageName, Set.of());
         packageInfo.getDependsOn().clear();
@@ -288,9 +294,9 @@ public class PackageInfoBuilder {
 
 
     // on File Modify
-          public void onFileUpdate(List<ClassInfo>oldClasses,List<ClassInfo> updatedClasses) {
+          public void onFileUpdate(List<ClassInfo>oldClasses,List<ClassInfo> updatedClasses,List<ClassInfo> newClassInfo) {
             if(updatedClasses==null || updatedClasses.isEmpty()) return;
-            onFileDelete(oldClasses);
+            onFileDelete(oldClasses,newClassInfo);
             onFileCreate(updatedClasses);
           }
 

@@ -1,9 +1,7 @@
 package com.example.bodhakfrontend;
 
-import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder.ClassDependecygraphBuilder;
-import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder.javaClassInfoBuilder;
-import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder.PackageInfoBuilder;
-import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder.ProjectInfoBuilder;
+import com.example.bodhakfrontend.Backend.Analysis.Engine.AnalysisEngine;
+import com.example.bodhakfrontend.Backend.ClassGraphBuilder;
 import com.example.bodhakfrontend.Backend.IncrementalPart.Update.EventBus;
 import com.example.bodhakfrontend.Backend.IncrementalPart.Update.IncrementalAnalyzer;
 import com.example.bodhakfrontend.Backend.IncrementalPart.Update.ProjectFileListener;
@@ -25,7 +23,7 @@ import com.example.bodhakfrontend.ui.overviewButton.*;
 import com.example.bodhakfrontend.ui.rightPanel.RightPanelTabManager;
 import com.example.bodhakfrontend.uiHelper.UiFeatures;
 import com.example.bodhakfrontend.util.MultiModuleSourceRootDetector;
-import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder.javaParseCache;
+import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Parser.javaParseCache;
 import com.github.javaparser.ast.CompilationUnit;
 import javafx.animation.FadeTransition;
 import javafx.application.Application;
@@ -69,10 +67,7 @@ public class App extends Application {
     private TreeItem<File> selected;
 
     private ProgressBar globalProgressBar;
-    private ClassDependecygraphBuilder classDependecygraphBuilder;
-    private javaClassInfoBuilder javaClassInfoBuilder;
-    private PackageInfoBuilder packageInfoBuilder;
-    private ProjectInfoBuilder projectInfoBuilder;
+    private AnalysisEngine analysisEngine;
     private ProjectInfo projectInfo;
     private Button analyzeBtn;
     private Button optimizeBtn;
@@ -88,6 +83,7 @@ public class App extends Application {
     private boolean isDarkMode = false;
     /** UI-only: main scene for theme switching. */
     private Scene mainScene;
+    private ClassGraphBuilder classGraphBuilder;
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -303,7 +299,7 @@ public class App extends Application {
             Tab selectedTab = codeTabPane.getSelectionModel().getSelectedItem();
             if(selectedTab==null){return;}
             File file=(File)selectedTab.getUserData();
-            List<ClassInfo> classes= javaClassInfoBuilder.getClassInfos(file.toPath());
+            List<ClassInfo> classes= analysisEngine.getClassInfoToPathMap().get(file.toPath().toAbsolutePath().normalize());
             OverviewContentFactory factory = classInfo -> {
 
                 if (classInfo == null) {
@@ -334,7 +330,7 @@ public class App extends Application {
         File file = (File)selectedTab.getUserData();
         try {
             // Parse AST
-            CompilationUnit cu =cache.get(file.toPath());
+            CompilationUnit cu =cache.parse(file.toPath());
             // Get correct label provider
             @SuppressWarnings("unchecked")
             AstLabelProvider<com.github.javaparser.ast.Node> labelProvider =
@@ -505,10 +501,9 @@ public class App extends Application {
         this.cache = ctx.cache;
         this.javaFileParser = ctx.javaFileParser;
         this.parsermanager=ctx.parsermanager;
-        this.classDependecygraphBuilder=ctx.classDependecygraphBuilder;
-        this.javaClassInfoBuilder =ctx.javaClassInfoBuilder;
-        this.packageInfoBuilder=ctx.packageInfoBuilder;
-        this.projectInfoBuilder=ctx.projectInfoBuilder;
+        this.classGraphBuilder =ctx.classGraphBuilder;
+        this.analysisEngine=ctx.analysisEngine;
+
 
         this.updateManager=ctx.updateManager;
         this.projectInfo=ctx.projectInfo;
@@ -526,7 +521,7 @@ public class App extends Application {
         }catch (Exception e){
             e.printStackTrace();
         }
-        UiRerfeshController uiRerfeshController=new UiRerfeshController(FileTreeView,fileTreeNodeFactory,codeTabPane,rightPanelTabManager,projectAnalysisUi,projectInfoBuilder);
+        UiRerfeshController uiRerfeshController=new UiRerfeshController(FileTreeView,fileTreeNodeFactory,codeTabPane,rightPanelTabManager,projectAnalysisUi,analysisEngine);
         eventBus.subscribe(UiRefreshEvent.class, uiRerfeshController::onUiRefresh);
 
 

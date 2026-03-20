@@ -17,6 +17,7 @@ module com.example.bodhakfrontend {
     requires org.checkerframework.checker.qual;
 
 
+
     opens com.example.bodhakfrontend.ui.Optimization to javafx.base;
 
     opens com.example.bodhakfrontend to javafx.fxml;

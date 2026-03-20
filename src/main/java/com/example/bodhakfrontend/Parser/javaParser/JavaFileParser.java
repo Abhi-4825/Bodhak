@@ -1,7 +1,7 @@
 package com.example.bodhakfrontend.Parser.javaParser;
 
 import com.example.bodhakfrontend.util.ClassNameResolver;
-import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder.javaParseCache;
+import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Parser.javaParseCache;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.MethodCallExpr;
@@ -15,7 +15,6 @@ import java.util.*;
 import java.util.stream.Stream;
 
 public class JavaFileParser {
-
  private final javaParseCache cache;
 
     public JavaFileParser(javaParseCache cache) {
@@ -35,7 +34,7 @@ public class JavaFileParser {
             paths.filter(p-> p.toString().endsWith(".java"))
                     .forEach(javaFile->{
                         try {
-                            CompilationUnit cu=cache.get(javaFile);
+                            CompilationUnit cu=cache.parse(javaFile);
                             cu.findAll(ClassOrInterfaceDeclaration.class)
                                     .forEach(classOrI -> {
                                         String className = ClassNameResolver.resolveFqn(cu,classOrI);
@@ -59,7 +58,7 @@ public class JavaFileParser {
 
     // get dependencies from every class in the java file
     public Map<String,Set<String>> extractClassWiseDependencies(File file, Set<String> sourceClasses) throws FileNotFoundException {
-        CompilationUnit cu=cache.get(file.toPath());
+        CompilationUnit cu=cache.parse(file.toPath());
         Map<String,Set<String>> classDeps=new HashMap<>();
         // find all class in the file
        for(ClassOrInterfaceDeclaration classOrI: cu.findAll(ClassOrInterfaceDeclaration.class)) {
@@ -94,7 +93,7 @@ public class JavaFileParser {
                         .filter(p -> p.toString().endsWith(".java"))
                         .forEach(p -> {
                             try {
-                                CompilationUnit cu = cache.get(p);
+                                CompilationUnit cu = cache.parse(p);
 
                                 for (ClassOrInterfaceDeclaration cls :
                                         cu.findAll(ClassOrInterfaceDeclaration.class)) {
@@ -137,7 +136,7 @@ public class JavaFileParser {
     public List<String > getFileClasses(File file){
         List<String> classes=new ArrayList<>();
         try{
-            CompilationUnit cu = cache.get(file.toPath());
+            CompilationUnit cu = cache.parse(file.toPath());
             for(ClassOrInterfaceDeclaration clazz:cu.findAll(ClassOrInterfaceDeclaration.class)){
                 classes.add(clazz.getNameAsString());
             }

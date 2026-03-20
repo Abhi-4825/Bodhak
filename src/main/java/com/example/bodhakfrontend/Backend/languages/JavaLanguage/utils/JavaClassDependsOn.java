@@ -1,6 +1,8 @@
-package com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder;
+package com.example.bodhakfrontend.Backend.languages.JavaLanguage.utils;
 
-import com.example.bodhakfrontend.Backend.dependency.CircularDependency;
+import com.example.bodhakfrontend.Backend.Factory.ParserFactory;
+import com.example.bodhakfrontend.Backend.interfaces.ClassDependenciesBuilder;
+import com.example.bodhakfrontend.Backend.interfaces.Parser;
 import com.example.bodhakfrontend.util.ClassNameResolver;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
@@ -12,53 +14,27 @@ import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.resolution.types.ResolvedReferenceType;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
-public class ClassDependecygraphBuilder {
-    private final javaParseCache cache;
-    private final Map<String,Set<String>> reverseClassDependencies =new ConcurrentHashMap<>();
-    private final Map<Path,Map<String,Set<String>>> classDependencies=new HashMap<>();
-    Map<String,Set<String>> classDependenciesGroups =new ConcurrentHashMap<>();
+public class JavaClassDependsOn implements ClassDependenciesBuilder {
+    private final ParserFactory parserFactory;
+    private final Parser<CompilationUnit> parser;
 
-    public ClassDependecygraphBuilder(javaParseCache cache) {
-        this.cache = cache;
-
+    public JavaClassDependsOn(ParserFactory  parserFactory) {
+        this.parserFactory = parserFactory;
+        this.parser = parserFactory.getParser("java");
     }
 
-
-    public Map<Path,Map<String, Set<String>>> buildDependsOnGraph (Path projectPath,Set<String> sourceClasses){
-        classDependencies.clear();
-        try {
-            Files.walk(projectPath).
-                    filter(path -> path.toString().endsWith(".java")).forEach(path -> {
-
-                        buildDependencyGraph(path, sourceClasses);
-
-
-                    });
-
-        }catch (Exception e){
-            System.out.println("Error reading project path"+e.getMessage());;
-        }
-
-        getAffectedClassDependencies(classDependencies);
-        return classDependencies;
-
-    }
-
-    // for finding dependencies for class in a file
-    public void buildDependencyGraph(Path filePath, Set<String> sourceClasses) {
+    @Override
+    public Map<String,Set<String>> getDependencies(Path filePath, Set<String> sourceClasses) {
+        Map<String,Set<String>> dependencyGraph = new HashMap<>();
 
         Path normalizedPath = filePath.toAbsolutePath().normalize();
-        CompilationUnit cu = cache.get(normalizedPath);
-        if (cu == null) return;
-
+        CompilationUnit cu = parser.parse(normalizedPath);
         // 1> first for classes or interfaces
         cu.findAll(ClassOrInterfaceDeclaration.class).forEach(clazz -> {
             Set<String> dependencies=new HashSet<>();
@@ -136,9 +112,8 @@ public class ClassDependecygraphBuilder {
 
             });
             dependencies.remove(className);
-            classDependencies
-                    .computeIfAbsent(filePath, k -> new HashMap<>())
-                    .put(className, dependencies);
+            dependencyGraph
+                    .computeIfAbsent(className, k -> new HashSet<>()).addAll(dependencies);
         });
         cu.findAll(RecordDeclaration.class).forEach(record -> {
 
@@ -168,7 +143,7 @@ public class ClassDependecygraphBuilder {
             /* 4 Remove self */
             dependencies.remove(recordName);
 
-            classDependencies.computeIfAbsent(normalizedPath, k -> new HashMap<>()).put(recordName, dependencies);
+            dependencyGraph.computeIfAbsent(recordName, k -> new HashSet<>()).addAll(dependencies);
         });
 
         // for Enums
@@ -242,104 +217,14 @@ public class ClassDependecygraphBuilder {
             /* 8 Remove self */
             dependencies.remove(enumName);
 
-            classDependencies.computeIfAbsent(normalizedPath, k -> new HashMap<>()).put(enumName, dependencies);
+            dependencyGraph.computeIfAbsent(enumName, k -> new HashSet<>()).addAll(dependencies);
         });
+        return dependencyGraph;
 
 
     }
 
-
-    public Map<String, Set<String>> getAffectedClassDependencies(
-            Map<Path, Map<String, Set<String>>> classDependenciesToPath) {
-
-        reverseClassDependencies.clear();
-
-        classDependenciesToPath.forEach((path, classMap) -> {
-
-            classMap.forEach((fromClass, dependsOnSet) -> {
-
-                for (String toClass : dependsOnSet) {
-
-                    reverseClassDependencies
-                            .computeIfAbsent(toClass, k -> ConcurrentHashMap.newKeySet())
-                            .add(fromClass);
-                }
-            });
-        });
-
-        return reverseClassDependencies;
-    }
-
-
-
-
-
-    public Path normalize(Path filePath) {
-        return filePath.toAbsolutePath().normalize();
-    }
-    // update the classDependency on File create
-    public void onFileCreate(Path filePath,Set<String> sourceClasses){
-        buildDependencyGraph(normalize(filePath),sourceClasses);
-        getAffectedClassDependencies(classDependencies);
-    }
-
-    // update classDependency on File modify
-    public void onFileModify(Path filePath,Set<String> sourceClasses){
-        Path normalizedPath = normalize(filePath);
-        buildDependencyGraph(normalizedPath,sourceClasses);
-        getAffectedClassDependencies(classDependencies);
-    }
-
-    // update on file Delete
-    public void onFileDelete(Path filePath){
-        Path normalizedPath = normalize(filePath);
-        classDependencies.remove(normalizedPath);
-        getAffectedClassDependencies(classDependencies);
-    }
-    // get the maps
-    public Map<Path,Map<String, Set<String>>> getClassDependenciesToPath() {
-        return classDependencies;
-    }
-    public Map<String, Set<String>> getReverseClassDependencies() {
-        return reverseClassDependencies;
-    }
-
-    public Map<String, Set<String>> getDependsOn() {
-        Map<String, Set<String>> dependsOn = new HashMap<>();
-        for (Map<String, Set<String>> perFileDeps : classDependencies.values()) {
-            for (Map.Entry<String, Set<String>> entry : perFileDeps.entrySet()) {
-                String className = entry.getKey();
-                Set<String> deps = entry.getValue();
-                dependsOn
-                        .computeIfAbsent(className, k -> new HashSet<>())
-                        .addAll(deps);
-            }
-        }
-        return dependsOn;
-    }
-
-
-    // Circular - dependency group
-    CircularDependency circularDependency=new CircularDependency();
-    // first get the required Map
-
-    private Set<Set<String>> updateClassDependencies(){
-        classDependenciesGroups.clear();
-        Map<Path,Map<String, Set<String>>>perFileDeps = getClassDependenciesToPath();
-        for(Map.Entry<Path,Map<String, Set<String>>> entry:perFileDeps.entrySet()){
-            for (Map.Entry<String, Set<String>> e : entry.getValue().entrySet()) {
-                classDependenciesGroups
-                        .computeIfAbsent(e.getKey(), k -> new HashSet<>())
-                        .addAll(e.getValue());
-            }}
-        return circularDependency.findCircularDependency(classDependenciesGroups);
-    }
-    // get Cirulardependencies graph
-    public Set<Set<String>> getClassDependenciesGroups() {
-        return updateClassDependencies();
-    }
     private static void resolveType(Type type, Set<String> deps, Set<String> sourceClasses) {
-
         if (type.isPrimitiveType() || type.isVoidType()) return;
 
         try {
@@ -353,4 +238,6 @@ public class ClassDependecygraphBuilder {
 
         }
     }
+
+
 }
