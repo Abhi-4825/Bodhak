@@ -62,7 +62,7 @@ public class AnalysisEngine {
         try {
             Files.walk(projectPath).filter(Files::isRegularFile).forEach(path -> {
                 String fileLanguage= languageDetector.detectFileType(path.toFile()).toLowerCase();
-                if(!fileLanguage.equals("java")) return;
+                if(!classInfoBuilderFactory.support(fileLanguage)) return;
                 classInfoBuilder=classInfoBuilderFactory.getBuilder(fileLanguage);
                 List<ClassInfo> classes=classInfoBuilder.getClassInfos(path);
                 classInfos.addAll(classes);
@@ -91,6 +91,7 @@ public class AnalysisEngine {
 
         private void getClassName(Path path){
             String lang=languageDetector.detectFileType(path.toFile()).toLowerCase();
+            if(!classNameExtractorFactory.support(lang)) return;
             classNameExtractor=classNameExtractorFactory.getClassNameExtractor(lang);
             Set<String> className=classNameExtractor.getClassNames(path);
             sourceClasses.computeIfAbsent(getNormalizedPath(path),newPath-> new HashSet<>()).addAll(className);
@@ -111,7 +112,7 @@ public class AnalysisEngine {
 
         public void onFileCreate(Path filePath){
         String lang=languageDetector.detectFileType(filePath.toFile()).toLowerCase();
-        if(lang.equals("unknown")) return;
+        if(!classInfoBuilderFactory.support(lang)) return;
         classInfoBuilder=classInfoBuilderFactory.getBuilder(lang);
          getClassName(filePath);
          classGraphBuilder.onFileCreate(filePath,getClassNameList());
@@ -123,9 +124,21 @@ public class AnalysisEngine {
         }
 
         public void onFileDelete(Path filePath){
+
+            String lang=languageDetector.detectFileType(filePath.toFile()).toLowerCase();
+            if(!classInfoBuilderFactory.support(lang)) return;
+            classInfoBuilder=classInfoBuilderFactory.getBuilder(lang);
+            classInfoBuilder.invalidateFile(filePath);
         sourceClasses.remove(getNormalizedPath(filePath));
         List<ClassInfo> removedClasses=classInfoToPathMap.get(getNormalizedPath(filePath));
-        classInfos.removeAll(removedClasses);
+            if (removedClasses != null) {
+                for (ClassInfo ci : removedClasses) {
+                    sourceClasses.getOrDefault(getNormalizedPath(filePath), new HashSet<>())
+                            .remove(ci.getClassName());
+                }
+                classInfos.removeAll(removedClasses);
+            }
+
         classInfoToPathMap.remove(getNormalizedPath(filePath));
         packageInfoBuilder.onFileDelete(removedClasses, classInfos);
         projectInfoBuilder.onFileDelete(filePath);

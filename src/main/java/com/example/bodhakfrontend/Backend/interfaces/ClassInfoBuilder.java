@@ -9,9 +9,8 @@ import java.util.Set;
 
 public interface ClassInfoBuilder {
     List<ClassInfo> getClassInfos(Path filePath);
-    void onFileCreate(Path filePath);
-    void onFileModify(Path filePath);
-    void onFileDelete(Path filePath);
+
+    void invalidateFile(Path filePath);
 
 
 }

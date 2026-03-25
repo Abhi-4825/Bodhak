@@ -25,8 +25,13 @@ public class JavaClassNameExtractor implements ClassNameExtractor {
     }
     @Override
     public Set<String> getClassNames(Path filePath) {
+        Path normalizedPath = filePath.toAbsolutePath().normalize();
         Set<String> classNames = new HashSet<>();
-        CompilationUnit cu=parser.parse(filePath);
+        CompilationUnit cu=parser.parse(normalizedPath);
+        if(cu==null){
+            System.out.println("CompilationUnit not found "+filePath);
+            return classNames;
+        }
         cu.findAll(ClassOrInterfaceDeclaration.class)
                 .forEach(classOrI -> {
                     String className = ClassNameResolver.resolveFqn(cu,classOrI);

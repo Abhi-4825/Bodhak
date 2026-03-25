@@ -554,6 +554,11 @@ public class javaClassInfoBuilder implements ClassInfoBuilder {
     }
 
 
+    public void invalidateFile(Path filePath) {
+        cache.invalidate(filePath.toAbsolutePath().normalize());
+    }
+
+
 
 
 

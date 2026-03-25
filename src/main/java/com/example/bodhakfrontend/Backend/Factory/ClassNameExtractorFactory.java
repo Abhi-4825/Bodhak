@@ -28,6 +28,9 @@ public class ClassNameExtractorFactory {
         return extractor;
 
     }
+    public boolean support(String language){
+        return classNameExtractors.containsKey(language.toLowerCase());
+    }
 
 
 

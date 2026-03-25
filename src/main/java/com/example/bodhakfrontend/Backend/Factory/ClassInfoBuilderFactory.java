@@ -28,6 +28,10 @@ public class ClassInfoBuilderFactory {
 
     }
 
+    public boolean support(String language){
+        return classInfoBuilders.containsKey(language.toLowerCase());
+    }
+
 
 
 
