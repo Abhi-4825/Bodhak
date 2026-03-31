@@ -81,7 +81,15 @@ public class JavaClassDependsOn implements ClassDependenciesBuilder {
                             .asReferenceType()
                             .getQualifiedName();
                     if(sourceClasses.contains(dep))dependencies.add(dep);
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    String simpleName = expr.getType().asString();
+
+                    for (String cls : sourceClasses) {
+                        if (cls.endsWith("." + simpleName)) {
+                            dependencies.add(cls);
+                            break;
+                        }
+                    }
                 }
             });
             //generics
@@ -234,8 +242,15 @@ public class JavaClassDependsOn implements ClassDependenciesBuilder {
             if (sourceClasses.contains(name)) {
                 deps.add(name);
             }
-        } catch (Exception e) {
+        }catch (Exception e) {
+            String simpleName = type.asString();
 
+            for (String cls : sourceClasses) {
+                if (cls.endsWith("." + simpleName)) {
+                    deps.add(cls);
+                    break;
+                }
+            }
         }
     }
 

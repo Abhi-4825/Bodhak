@@ -6,6 +6,7 @@ import com.example.bodhakfrontend.Backend.Factory.ParserFactory;
 import com.example.bodhakfrontend.Backend.interfaces.ClassInfoBuilder;
 import com.example.bodhakfrontend.Backend.interfaces.ClassNameExtractor;
 import com.example.bodhakfrontend.Backend.ClassGraphBuilder;
+import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder.ClassInfoViewModelBuilder;
 import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder.PackageInfoBuilder;
 import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder.ProjectInfoBuilder;
 import com.example.bodhakfrontend.Backend.models.Class.ClassInfo;
@@ -18,6 +19,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class AnalysisEngine {
+    private final ClassInfoViewModelBuilder classInfoViewModelBuilder;
     ProjectInfoBuilder projectInfoBuilder= new ProjectInfoBuilder();
     private final LanguageDetector languageDetector=new LanguageDetector();
     private final PackageInfoBuilder packageInfoBuilder=new PackageInfoBuilder();
@@ -35,7 +37,8 @@ public class AnalysisEngine {
     private final ClassInfoBuilderFactory classInfoBuilderFactory;
     private ClassInfoBuilder classInfoBuilder;
 
-    public AnalysisEngine(ParserFactory parserFactory,ClassGraphBuilder classGraphBuilder) {
+    public AnalysisEngine(ClassInfoViewModelBuilder classInfoViewModelBuilder, ParserFactory parserFactory, ClassGraphBuilder classGraphBuilder) {
+        this.classInfoViewModelBuilder = classInfoViewModelBuilder;
         this.parserFactory=parserFactory;
         this.classGraphBuilder=classGraphBuilder;
         this.classNameExtractorFactory=new ClassNameExtractorFactory(parserFactory);
@@ -119,6 +122,7 @@ public class AnalysisEngine {
          List<ClassInfo> createdClasses=classInfoBuilder.getClassInfos(filePath);
          classInfos.addAll(createdClasses);
          classInfoToPathMap.computeIfAbsent(getNormalizedPath(filePath),newPath -> new ArrayList<>()).addAll(createdClasses);
+         classInfoViewModelBuilder.onFileCreate(createdClasses);
          packageInfoBuilder.onFileCreate(classInfos);
          projectInfoBuilder.onFileCreated(filePath,createdClasses);
         }
@@ -140,14 +144,46 @@ public class AnalysisEngine {
             }
 
         classInfoToPathMap.remove(getNormalizedPath(filePath));
+            classInfoViewModelBuilder.onFileDelete(removedClasses);
         packageInfoBuilder.onFileDelete(removedClasses, classInfos);
         projectInfoBuilder.onFileDelete(filePath);
         }
 
-        public void onFileModify(Path filePath){
-        onFileDelete(filePath);
-        onFileCreate(filePath);
+    public void onFileModify(Path filePath){
+        String lang = languageDetector.detectFileType(filePath.toFile()).toLowerCase();
+        if(!classInfoBuilderFactory.support(lang)) return;
+        classInfoBuilder = classInfoBuilderFactory.getBuilder(lang);
+
+        // 1. Capture old state
+        List<ClassInfo> oldClasses = classInfoToPathMap.getOrDefault(getNormalizedPath(filePath), new ArrayList<>());
+        List<ClassInfo> oldClassesCopy = new ArrayList<>(oldClasses);
+
+        // 2. Invalidate cache
+        classInfoBuilder.invalidateFile(filePath);
+        sourceClasses.remove(getNormalizedPath(filePath));
+        if (!oldClasses.isEmpty()) {
+            classInfos.removeAll(oldClasses);
         }
+        classInfoToPathMap.remove(getNormalizedPath(filePath));
+
+        // 3. Scan & build new classes
+        getClassName(filePath);
+        classGraphBuilder.onFileCreate(filePath, getClassNameList());
+        List<ClassInfo> createdClasses = classInfoBuilder.getClassInfos(filePath);
+
+        // 4. Update Engine State
+        classInfos.addAll(createdClasses);
+        classInfoToPathMap.computeIfAbsent(getNormalizedPath(filePath), newPath -> new ArrayList<>()).addAll(createdClasses);
+
+        // 5. Notify Builders properly (Crucial for preserving UI binding!)
+        classInfoViewModelBuilder.onFileModify(oldClassesCopy, createdClasses);
+
+        // Update remaining project metadata logically
+        packageInfoBuilder.onFileDelete(oldClassesCopy, classInfos);
+        packageInfoBuilder.onFileCreate(classInfos);
+        projectInfoBuilder.onFileDelete(filePath);
+        projectInfoBuilder.onFileCreated(filePath, createdClasses);
+    }
 
         public void onFolderCreate(Path folderPath){
         projectInfoBuilder.onFolderCreated(folderPath);

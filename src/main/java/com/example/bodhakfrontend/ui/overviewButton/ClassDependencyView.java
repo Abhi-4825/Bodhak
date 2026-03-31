@@ -1,10 +1,18 @@
 package com.example.bodhakfrontend.ui.overviewButton;
 
+import com.example.bodhakfrontend.Backend.GraphBuilder;
 import com.example.bodhakfrontend.Backend.models.incrementalModel.ClassInfoViewModel;
+import com.example.bodhakfrontend.ui.DependencyGraphWindow;
 import com.example.bodhakfrontend.uiHelper.UiFeatures;
 import javafx.application.Platform;
 import javafx.collections.SetChangeListener;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
 import java.util.*;
@@ -16,7 +24,8 @@ public class ClassDependencyView {
 
     private final TreeView<Object> treeView = new TreeView<>();
     private ClassInfoViewModel currentVm;
-    private ClassInfoViewModel vm;
+
+
 
     public ClassDependencyView(
             UiFeatures uiFeatures,
@@ -28,25 +37,38 @@ public class ClassDependencyView {
         treeView.setShowRoot(false);
         configureCells();
         configureClicks();
+
+
     }
 
 
-
-    public TreeView<Object> show(String className) {
+    public VBox show(String className) {
 
         ClassInfoViewModel vm = vmMap.get(className);
         if (vm == null) {
             treeView.setRoot(
                     new TreeItem<>("Class not found: " + className)
             );
-            return treeView;
+        } else {
+            bindTo(vm);
+            rebuild();
         }
 
-        bindTo(vm);
-        rebuild();
+
+        Button visualizeBtn = new Button("Visualize");
+        visualizeBtn.setOnAction(e -> {
+            DependencyGraphWindow.show(className,vmMap);
+        });
+
+        HBox bottomBar = new HBox(visualizeBtn);
+        bottomBar.setAlignment(Pos.CENTER_RIGHT);
+        bottomBar.setPadding(new Insets(10));
+
+        VBox vBox = new VBox();
+        vBox.getChildren().addAll(treeView,bottomBar);
+        return vBox;
 
 
-        return treeView;
     }
 
 

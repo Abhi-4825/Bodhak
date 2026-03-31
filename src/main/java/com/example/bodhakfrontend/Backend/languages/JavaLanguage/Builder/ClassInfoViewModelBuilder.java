@@ -21,10 +21,6 @@ public class ClassInfoViewModelBuilder {
         this.dependencyGraphBuilder = dependencyGraphBuilder;
     }
 
-    /* ==========================================================
-       INITIAL BUILD
-       ========================================================== */
-
     public Map<String, ClassInfoViewModel> initialBuild(List<ClassInfo> classes) {
         for (ClassInfo info : classes) {
             vmMap.computeIfAbsent(

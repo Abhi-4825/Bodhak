@@ -15,7 +15,8 @@ module com.example.bodhakfrontend {
     requires org.apache.commons.io;
 
     requires org.checkerframework.checker.qual;
-
+    requires gs.core;
+    requires gs.ui.javafx;
 
 
     opens com.example.bodhakfrontend.ui.Optimization to javafx.base;

@@ -49,10 +49,11 @@ public class ProjectContext {
 
 
 
-        this.analysisEngine=new AnalysisEngine(parserFactory,classGraphBuilder);
+
 
         this.sourceClasses = javaFileParser.getClassesfromSource(sourceRoots);
         this.classInfoViewModelBuilder=new ClassInfoViewModelBuilder(classGraphBuilder);
+        this.analysisEngine=new AnalysisEngine(classInfoViewModelBuilder,parserFactory,classGraphBuilder);
         this.updateManager=new UpdateManager(analysisEngine);
 
          analysisEngine.analyse(projectFolder.toPath());
