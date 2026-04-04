@@ -17,6 +17,7 @@ import com.example.bodhakfrontend.Parser.Parsermanager;
 import com.example.bodhakfrontend.ui.Front.FileTreeNodeFactory;
 import com.example.bodhakfrontend.ui.Optimization.OptimizationController;
 import com.example.bodhakfrontend.ui.OverviewContentFactory;
+import com.example.bodhakfrontend.ui.PlaceHolderUi;
 import com.example.bodhakfrontend.ui.ProjectAnalysis.ProjectAnalysisUi;
 import com.example.bodhakfrontend.ui.UiRerfeshController;
 import com.example.bodhakfrontend.ui.overviewButton.*;
@@ -39,6 +40,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.stage.DirectoryChooser;
@@ -67,6 +69,7 @@ public class App extends Application {
     private TreeItem<File> selected;
 
     private ProgressBar globalProgressBar;
+    private Label progressLabel;
     private AnalysisEngine analysisEngine;
     private ProjectInfo projectInfo;
     private Button analyzeBtn;
@@ -92,13 +95,15 @@ public class App extends Application {
         mainScene = new Scene(root);
         applyTheme(mainScene);
         stage.setScene(mainScene);
-        stage.setTitle("Bodhak");
+        stage.setTitle("Project Analyser");
         stage.setMaximized(true);
         stage.show();
         globalProgressBar=new ProgressBar();
         globalProgressBar.setPrefWidth(Region.USE_COMPUTED_SIZE);
         globalProgressBar.setVisible(false);
 
+        progressLabel = new Label();
+        progressLabel.setStyle("-fx-padding: 0 10 0 10;");
 
         // for upper buttons
         ToolBar toolBar = new ToolBar();
@@ -135,7 +140,7 @@ public class App extends Application {
         bottomButtons.getChildren().addAll(optimizeBtn, analyzeBtn);
         BorderPane bottomBar = new BorderPane();
         bottomBar.setPadding(new Insets(8));
-        bottomBar.setLeft(globalProgressBar);
+        bottomBar.setLeft(new HBox(10, globalProgressBar, progressLabel));
         bottomBar.setRight(bottomButtons);
         root.setBottom(bottomBar);
         // for code view
@@ -166,7 +171,9 @@ public class App extends Application {
         editorBottom.setPadding(new Insets(6));
         editorBottom.setAlignment(Pos.CENTER_RIGHT);
         BorderPane codeEditorPane=new BorderPane();
-        codeEditorPane.setCenter(codeTabPane);
+        PlaceHolderUi placeHolderUi=new PlaceHolderUi();
+        VBox emptyState=placeHolderUi.createEmptyState();
+        codeEditorPane.setCenter(emptyState);
         codeEditorPane.setBottom(editorBottom);
 
 
@@ -220,8 +227,9 @@ public class App extends Application {
 
             DirectoryChooser directoryChooser=new DirectoryChooser();
             directoryChooser.setTitle("Select Project Folder");
-            projectFolder=directoryChooser.showDialog(stage);
-            if(projectFolder==null)return;
+            File selectedFolder=directoryChooser.showDialog(stage);
+            if(selectedFolder==null){return;}
+            projectFolder=selectedFolder;
             codeTabPane.getTabs().clear();
             rightTabPane.getTabs().clear();
             rightPanelTabManager.clear();
@@ -231,6 +239,7 @@ public class App extends Application {
             FileTreeView.setShowRoot(true);
 
             startBackgroundProjectLoad(projectFolder,globalProgressBar);
+            codeEditorPane.setCenter(codeTabPane);
 
 
 
@@ -467,17 +476,36 @@ public class App extends Application {
             protected ProjectContext call() {
                 return new ProjectContext(
                         projectFolder,
-                        detector
+                        detector,
+                        (current,total)->{
+                            updateProgress(current, total);
+                            switch (current) {
+                                case 1 -> updateMessage("Detecting source roots...");
+                                case 2 -> updateMessage("Initializing parser...");
+                                case 3 -> updateMessage("Setting up graph...");
+                                case 4 -> updateMessage("Extracting classes...");
+                                case 5 -> updateMessage("Running analysis...");
+                                case 6 -> updateMessage("Building view models...");
+                            }
+                        }
 
                 );
             }
         };
 
+        // Unbind old bindings
+        progressBar.progressProperty().unbind();
+        progressLabel.textProperty().unbind();
+
+       // Bind new task
         progressBar.progressProperty().bind(loadTask.progressProperty());
+        progressLabel.textProperty().bind(loadTask.messageProperty());
         progressBar.setVisible(true);
+        progressLabel.setVisible(true);
 
         loadTask.setOnSucceeded(e -> {
             progressBar.setVisible(false);
+            progressLabel.setVisible(false);
 
             ProjectContext ctx = loadTask.getValue();
 
@@ -488,6 +516,7 @@ public class App extends Application {
 
         loadTask.setOnFailed(e -> {
             progressBar.setVisible(false);
+            progressLabel.setVisible(false);
             loadTask.getException().printStackTrace();
         });
 

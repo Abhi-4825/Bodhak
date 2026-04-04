@@ -38,7 +38,7 @@ public class DependencyGraphWindow {
         dynamicNodes.clear();
         dynamicEdges.clear();
 
-        ROOT_ID = rootClass; // ✅ FIX
+        ROOT_ID = rootClass; // FIX
 
         Stage stage = new Stage();
         Graph graph = new SingleGraph("Dependencies");

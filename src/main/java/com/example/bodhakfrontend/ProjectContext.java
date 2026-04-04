@@ -18,6 +18,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
+
 public class ProjectContext {
     public final javaParseCache cache;
     public final JavaFileParser javaFileParser;
@@ -34,35 +36,40 @@ public class ProjectContext {
     public final ParserFactory parserFactory;
     public final ClassGraphBuilder classGraphBuilder;
     public ProjectContext(File projectFolder,
-                          LanguageDetector detector) {
-      this. multiModuleSourceRootDetector = new MultiModuleSourceRootDetector();
+                          LanguageDetector detector, BiConsumer<Integer,Integer> progressCall) {
+
+        int totalSteps=6;
+        int current =0;
+        // first detect source root
+        this. multiModuleSourceRootDetector = new MultiModuleSourceRootDetector();
         this.sourceRoots = multiModuleSourceRootDetector.detectSourceRoots(projectFolder.toPath());
+        progressCall.accept(++current, totalSteps);
+
+        // we will change this part as we are making it support multi lang
         this.cache = new javaParseCache(sourceRoots);
         this.javaFileParser = new JavaFileParser(cache);
         this.classNameResolver = new ClassNameResolver();
+        progressCall.accept(++current, totalSteps);
 
         this.parserFactory=new ParserFactory(sourceRoots);
         this.classGraphBuilder=new ClassGraphBuilder(parserFactory);
-
-
         this.parsermanager = new Parsermanager(detector, javaFileParser);
-
-
-
+        progressCall.accept(++current, totalSteps);
 
 
         this.sourceClasses = javaFileParser.getClassesfromSource(sourceRoots);
+        progressCall.accept(++current, totalSteps);
         this.classInfoViewModelBuilder=new ClassInfoViewModelBuilder(classGraphBuilder);
         this.analysisEngine=new AnalysisEngine(classInfoViewModelBuilder,parserFactory,classGraphBuilder);
         this.updateManager=new UpdateManager(analysisEngine);
+        progressCall.accept(++current, totalSteps);
 
          analysisEngine.analyse(projectFolder.toPath());
         this.projectInfo=analysisEngine.getProjectInfo();
+        progressCall.accept(++current, totalSteps);
         List<ClassInfo> c=projectInfo.getClassInfos();
         this.vmMap=classInfoViewModelBuilder.initialBuild(projectInfo.getClassInfos());
-
-
-
+        progressCall.accept(++current, totalSteps);
     }
 }
 
