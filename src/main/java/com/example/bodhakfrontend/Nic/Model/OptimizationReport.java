@@ -1,6 +1,6 @@
 package com.example.bodhakfrontend.Nic.Model;
 
-import com.example.bodhakfrontend.IncrementalPart.model.Project.Hotspots;
+import com.example.bodhakfrontend.Backend.models.Project.Hotspots;
 
 import java.util.List;
 

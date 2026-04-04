@@ -503,16 +503,6 @@
 /* =========================
    PROGRESS BAR
    ========================= */
-.progress-bar {
-    -fx-background-color: #E5E7EB;
-    -fx-background-radius: 4;
-    -fx-pref-height: 8;
-}
-
-.progress-bar .bar {
-    -fx-background-color: #1976D2;
-    -fx-background-radius: 4;
-}
 
 /* =========================
    TOOLBAR

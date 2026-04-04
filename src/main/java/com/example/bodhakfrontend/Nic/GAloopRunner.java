@@ -1,7 +1,7 @@
 package com.example.bodhakfrontend.Nic;
 
-import com.example.bodhakfrontend.IncrementalPart.model.Project.Hotspots;
-import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
+import com.example.bodhakfrontend.Backend.models.Project.Hotspots;
+import com.example.bodhakfrontend.Backend.models.Project.ProjectInfo;
 import com.example.bodhakfrontend.Nic.Builder.*;
 import com.example.bodhakfrontend.Nic.Crossover.UniformCrossover;
 import com.example.bodhakfrontend.Nic.Model.*;

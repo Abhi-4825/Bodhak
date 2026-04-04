@@ -1,6 +1,6 @@
 package com.example.bodhakfrontend.projectAnalysis.warning;
 
-import com.example.bodhakfrontend.IncrementalPart.model.Class.IssueType;
+import com.example.bodhakfrontend.Backend.models.Class.IssueType;
 import com.example.bodhakfrontend.Models.WarningRule;
 import java.util.Set;
 public class WarningMatcher {

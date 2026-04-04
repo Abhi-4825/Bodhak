@@ -1,8 +1,8 @@
 package com.example.bodhakfrontend.projectAnalysis.ui;
 
-import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassContribution;
-import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
-import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
+import com.example.bodhakfrontend.Backend.models.Class.ClassContribution;
+import com.example.bodhakfrontend.Backend.models.Class.ClassInfo;
+import com.example.bodhakfrontend.Backend.models.Project.ProjectInfo;
 import com.example.bodhakfrontend.Models.Severity;
 import com.example.bodhakfrontend.projectAnalysis.warning.WarningBuilder;
 import com.example.bodhakfrontend.uiHelper.UiFeatures;

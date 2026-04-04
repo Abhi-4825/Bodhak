@@ -1,8 +1,8 @@
 package com.example.bodhakfrontend.Nic.Suggestions;
 
-import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
-import com.example.bodhakfrontend.IncrementalPart.model.Class.MethodInfo;
-import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
+import com.example.bodhakfrontend.Backend.models.Class.ClassInfo;
+import com.example.bodhakfrontend.Backend.models.Class.MethodInfo;
+import com.example.bodhakfrontend.Backend.models.Project.ProjectInfo;
 import com.example.bodhakfrontend.Nic.Model.GAResult;
 import com.example.bodhakfrontend.Nic.Model.Genes;
 import com.example.bodhakfrontend.Nic.Model.Metrics;

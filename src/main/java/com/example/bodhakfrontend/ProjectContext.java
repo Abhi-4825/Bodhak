@@ -1,28 +1,30 @@
 package com.example.bodhakfrontend;
-import com.example.bodhakfrontend.IncrementalPart.Builder.*;
-import com.example.bodhakfrontend.IncrementalPart.UpdateManager;
-import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
-import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
-import com.example.bodhakfrontend.IncrementalPart.model.incrementalModel.ClassInfoViewModel;
+import com.example.bodhakfrontend.Backend.Analysis.Engine.AnalysisEngine;
+
+import com.example.bodhakfrontend.Backend.ClassGraphBuilder;
+import com.example.bodhakfrontend.Backend.Factory.ParserFactory;
+import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder.*;
+import com.example.bodhakfrontend.Backend.IncrementalPart.UpdateManager;
+import com.example.bodhakfrontend.Backend.models.Class.ClassInfo;
+import com.example.bodhakfrontend.Backend.models.Project.ProjectInfo;
+import com.example.bodhakfrontend.Backend.models.incrementalModel.ClassInfoViewModel;
 import com.example.bodhakfrontend.Parser.Parsermanager;
 import com.example.bodhakfrontend.Parser.javaParser.JavaFileParser;
 import com.example.bodhakfrontend.util.ClassNameResolver;
 import com.example.bodhakfrontend.util.MultiModuleSourceRootDetector;
-import com.example.bodhakfrontend.util.ParseCache;
+import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Parser.javaParseCache;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
+
 public class ProjectContext {
-    public final ParseCache cache;
+    public final javaParseCache cache;
     public final JavaFileParser javaFileParser;
     public final Parsermanager parsermanager;
     public final ClassNameResolver  classNameResolver;
-    public final ClassInfoBuilder classInfoBuilder;
-    public final ClassDependecygraphBuilder classDependecygraphBuilder;
-    public final PackageInfoBuilder  packageInfoBuilder;
-    public final ProjectInfoBuilder  projectInfoBuilder;
     public final UpdateManager updateManager;
     public final List<Path> sourceRoots;
     public final Set<String> sourceClasses;
@@ -30,30 +32,44 @@ public class ProjectContext {
     public final ClassInfoViewModelBuilder classInfoViewModelBuilder;
     public final ProjectInfo projectInfo;
     public final Map<String, ClassInfoViewModel> vmMap;
+    public final AnalysisEngine analysisEngine;
+    public final ParserFactory parserFactory;
+    public final ClassGraphBuilder classGraphBuilder;
     public ProjectContext(File projectFolder,
-                          LanguageDetector detector) {
-      this. multiModuleSourceRootDetector = new MultiModuleSourceRootDetector();
+                          LanguageDetector detector, BiConsumer<Integer,Integer> progressCall) {
+
+        int totalSteps=6;
+        int current =0;
+        // first detect source root
+        this. multiModuleSourceRootDetector = new MultiModuleSourceRootDetector();
         this.sourceRoots = multiModuleSourceRootDetector.detectSourceRoots(projectFolder.toPath());
-        this.cache = new ParseCache(sourceRoots);
+        progressCall.accept(++current, totalSteps);
+
+        // we will change this part as we are making it support multi lang
+        this.cache = new javaParseCache(sourceRoots);
         this.javaFileParser = new JavaFileParser(cache);
         this.classNameResolver = new ClassNameResolver();
-        this.classDependecygraphBuilder=new ClassDependecygraphBuilder(cache);
-        this.classInfoBuilder=new ClassInfoBuilder(cache,classDependecygraphBuilder);
-        this.packageInfoBuilder=new PackageInfoBuilder(classInfoBuilder);
-        this.projectInfoBuilder=new ProjectInfoBuilder(classInfoBuilder,packageInfoBuilder);
+        progressCall.accept(++current, totalSteps);
+
+        this.parserFactory=new ParserFactory(sourceRoots);
+        this.classGraphBuilder=new ClassGraphBuilder(parserFactory);
         this.parsermanager = new Parsermanager(detector, javaFileParser);
+        progressCall.accept(++current, totalSteps);
+
 
         this.sourceClasses = javaFileParser.getClassesfromSource(sourceRoots);
-        this.classInfoViewModelBuilder=new ClassInfoViewModelBuilder(classDependecygraphBuilder);
-        this.updateManager=new UpdateManager(classInfoBuilder,packageInfoBuilder,projectInfoBuilder,classDependecygraphBuilder,projectFolder.toPath(),classInfoViewModelBuilder);
+        progressCall.accept(++current, totalSteps);
+        this.classInfoViewModelBuilder=new ClassInfoViewModelBuilder(classGraphBuilder);
+        this.analysisEngine=new AnalysisEngine(classInfoViewModelBuilder,parserFactory,classGraphBuilder);
+        this.updateManager=new UpdateManager(analysisEngine);
+        progressCall.accept(++current, totalSteps);
 
-        projectInfoBuilder.buildAll(projectFolder.toPath());
-        this.projectInfo=projectInfoBuilder.getProjectInfo();
+         analysisEngine.analyse(projectFolder.toPath());
+        this.projectInfo=analysisEngine.getProjectInfo();
+        progressCall.accept(++current, totalSteps);
         List<ClassInfo> c=projectInfo.getClassInfos();
         this.vmMap=classInfoViewModelBuilder.initialBuild(projectInfo.getClassInfos());
-
-
-
+        progressCall.accept(++current, totalSteps);
     }
 }
 

@@ -15,6 +15,8 @@ module com.example.bodhakfrontend {
     requires org.apache.commons.io;
 
     requires org.checkerframework.checker.qual;
+    requires gs.core;
+    requires gs.ui.javafx;
 
 
     opens com.example.bodhakfrontend.ui.Optimization to javafx.base;
@@ -26,12 +28,10 @@ module com.example.bodhakfrontend {
     exports com.example.bodhakfrontend.Parser.javaParser;
     opens com.example.bodhakfrontend.Parser.javaParser to javafx.fxml;
     opens com.example.bodhakfrontend.Models to com.fasterxml.jackson.databind;
-    exports com.example.bodhakfrontend.Builder;
-    opens com.example.bodhakfrontend.Builder to javafx.fxml;
-    opens com.example.bodhakfrontend.IncrementalPart.model.Class to com.fasterxml.jackson.databind;
-    opens com.example.bodhakfrontend.IncrementalPart.model.Package to com.fasterxml.jackson.databind;
-    opens com.example.bodhakfrontend.IncrementalPart.model.Project to com.fasterxml.jackson.databind;
-    opens com.example.bodhakfrontend.IncrementalPart.Update to com.fasterxml.jackson.databind;
+    opens com.example.bodhakfrontend.Backend.models.Class to com.fasterxml.jackson.databind;
+    opens com.example.bodhakfrontend.Backend.models.Package to com.fasterxml.jackson.databind;
+    opens com.example.bodhakfrontend.Backend.models.Project to com.fasterxml.jackson.databind;
+    opens com.example.bodhakfrontend.Backend.IncrementalPart.Update to com.fasterxml.jackson.databind;
     exports com.example.bodhakfrontend.Nic;
     opens com.example.bodhakfrontend.Nic to javafx.fxml;
     exports com.example.bodhakfrontend.Nic.Model;

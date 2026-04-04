@@ -1,12 +1,12 @@
 package com.example.bodhakfrontend.ui.ProjectAnalysis;
 
-import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
-import com.example.bodhakfrontend.IncrementalPart.model.Package.PackageInfo;
-import com.example.bodhakfrontend.IncrementalPart.model.Project.EntryPointInfo;
-import com.example.bodhakfrontend.IncrementalPart.model.Project.Hotspots;
-import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
+import com.example.bodhakfrontend.Backend.models.Class.ClassInfo;
+import com.example.bodhakfrontend.Backend.models.Package.PackageInfo;
+import com.example.bodhakfrontend.Backend.models.Project.EntryPointInfo;
+import com.example.bodhakfrontend.Backend.models.Project.Hotspots;
+import com.example.bodhakfrontend.Backend.models.Project.ProjectInfo;
 
-import com.example.bodhakfrontend.IncrementalPart.model.Project.UnusedClassInfo;
+import com.example.bodhakfrontend.Backend.models.Project.UnusedClassInfo;
 import com.example.bodhakfrontend.uiHelper.UiFeatures;
 import com.example.bodhakfrontend.util.Exporter;
 import javafx.geometry.Insets;

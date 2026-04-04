@@ -1,7 +1,7 @@
 package com.example.bodhakfrontend.Models;
 
 
-import com.example.bodhakfrontend.IncrementalPart.model.Class.IssueType;
+import com.example.bodhakfrontend.Backend.models.Class.IssueType;
 
 import java.util.Set;
 

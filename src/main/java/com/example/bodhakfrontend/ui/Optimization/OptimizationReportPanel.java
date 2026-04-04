@@ -1,8 +1,8 @@
 package com.example.bodhakfrontend.ui.Optimization;
 
-import com.example.bodhakfrontend.IncrementalPart.model.Class.ClassInfo;
-import com.example.bodhakfrontend.IncrementalPart.model.Class.MethodInfo;
-import com.example.bodhakfrontend.IncrementalPart.model.Project.Hotspots;
+import com.example.bodhakfrontend.Backend.models.Class.ClassInfo;
+import com.example.bodhakfrontend.Backend.models.Class.MethodInfo;
+import com.example.bodhakfrontend.Backend.models.Project.Hotspots;
 import com.example.bodhakfrontend.Nic.Model.*;
 import com.example.bodhakfrontend.uiHelper.UiFeatures;
 import javafx.animation.FadeTransition;
@@ -20,7 +20,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;

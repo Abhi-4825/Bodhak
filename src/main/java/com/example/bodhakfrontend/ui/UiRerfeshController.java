@@ -1,7 +1,8 @@
 package com.example.bodhakfrontend.ui;
 
-import com.example.bodhakfrontend.IncrementalPart.Builder.ProjectInfoBuilder;
-import com.example.bodhakfrontend.IncrementalPart.Update.UiRefreshEvent;
+import com.example.bodhakfrontend.Backend.Analysis.Engine.AnalysisEngine;
+import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder.ProjectInfoBuilder;
+import com.example.bodhakfrontend.Backend.IncrementalPart.Update.UiRefreshEvent;
 
 import com.example.bodhakfrontend.ui.Front.FileTreeNodeFactory;
 import com.example.bodhakfrontend.ui.ProjectAnalysis.ProjectAnalysisUi;
@@ -24,16 +25,17 @@ public class UiRerfeshController {
     private final TabPane tabPane;
 
     private  final RightPanelTabManager  rightPanelTabManager;
-    private  final ProjectAnalysisUi projectAnalysisUi;
-    private final ProjectInfoBuilder projectInfoBuilder;
+    private  final AnalysisEngine analysisEngine;
+    private final ProjectAnalysisUi projectAnalysisUi;
 
-    public UiRerfeshController(TreeView<File> treeView, FileTreeNodeFactory factory, TabPane tabPane, RightPanelTabManager rightPanelTabManager, ProjectAnalysisUi projectAnalysisUi, ProjectInfoBuilder projectInfoBuilder) {
+    public UiRerfeshController(TreeView<File> treeView, FileTreeNodeFactory factory, TabPane tabPane, RightPanelTabManager rightPanelTabManager, ProjectAnalysisUi projectAnalysisUi, AnalysisEngine analysisEngine) {
         this.treeView = treeView;
         this.factory = factory;
         this.tabPane = tabPane;
         this.rightPanelTabManager = rightPanelTabManager;
         this.projectAnalysisUi = projectAnalysisUi;
-        this.projectInfoBuilder = projectInfoBuilder;
+        this.analysisEngine = analysisEngine;
+
     }
 
 
@@ -165,7 +167,7 @@ public class UiRerfeshController {
 
 
     private void refreshAnalysis() {
-        rightPanelTabManager.refreshAnalyzeTabIfOpen(()->projectAnalysisUi.build(projectInfoBuilder.getProjectInfo()));
+        rightPanelTabManager.refreshAnalyzeTabIfOpen(()->projectAnalysisUi.build(analysisEngine.getProjectInfo()));
     }
 
     private void refreshDependency() {

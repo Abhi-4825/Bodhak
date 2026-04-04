@@ -1,7 +1,6 @@
 package com.example.bodhakfrontend.ui.Optimization;
 
-import com.example.bodhakfrontend.IncrementalPart.model.Project.ProjectInfo;
-import com.example.bodhakfrontend.Nic.Model.GAResult;
+import com.example.bodhakfrontend.Backend.models.Project.ProjectInfo;
 import com.example.bodhakfrontend.Nic.GAloopRunner;
 import com.example.bodhakfrontend.Nic.Model.OptimizationReport;
 import com.example.bodhakfrontend.ui.rightPanel.RightPanelTabManager;

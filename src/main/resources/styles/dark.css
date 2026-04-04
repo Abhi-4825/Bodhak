@@ -578,14 +578,22 @@
    PROGRESS BAR
    ========================= */
 .progress-bar {
-    -fx-background-color: #2d2d2d;
-    -fx-background-radius: 6;
-    -fx-pref-height: 8;
+    -fx-background-color: #2A2A2A; /* works for dark */
+    -fx-background-radius: 10;
+    -fx-pref-height: 14; /* thicker */
+    -fx-padding: 2;
 }
 
-.progress-bar .bar {
-    -fx-background-color: #5a7ab8;
-    -fx-background-radius: 6;
+/* Track (empty area) */
+.progress-bar > .track {
+    -fx-background-color: #E5E7EB; /* light gray */
+    -fx-background-radius: 10;
+}
+
+/* Progress fill */
+.progress-bar > .bar {
+    -fx-background-color: linear-gradient(to right, #4CAF50, #2196F3);
+    -fx-background-radius: 10;
 }
 
 /* =========================

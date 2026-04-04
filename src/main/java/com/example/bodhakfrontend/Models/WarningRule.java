@@ -1,29 +1,29 @@
 package com.example.bodhakfrontend.Models;
 
 
-import com.example.bodhakfrontend.IncrementalPart.model.Class.IssueType;
+import com.example.bodhakfrontend.Backend.models.Class.IssueType;
 
 import java.util.Set;
 public class WarningRule {
 
 
 
-    private Set<com.example.bodhakfrontend.IncrementalPart.model.Class.IssueType> requiredIssues;
-    private Set<com.example.bodhakfrontend.IncrementalPart.model.Class.IssueType> forbiddenIssues;
+    private Set<com.example.bodhakfrontend.Backend.models.Class.IssueType> requiredIssues;
+    private Set<com.example.bodhakfrontend.Backend.models.Class.IssueType> forbiddenIssues;
     private Severity severity;
     private String message;
 
     public WarningRule() {}
 
-    public Set<com.example.bodhakfrontend.IncrementalPart.model.Class.IssueType> getRequiredIssues() {
+    public Set<com.example.bodhakfrontend.Backend.models.Class.IssueType> getRequiredIssues() {
         return requiredIssues;
     }
 
-    public void setRequiredIssues(Set<com.example.bodhakfrontend.IncrementalPart.model.Class.IssueType> requiredIssues) {
+    public void setRequiredIssues(Set<com.example.bodhakfrontend.Backend.models.Class.IssueType> requiredIssues) {
         this.requiredIssues = requiredIssues;
     }
 
-    public Set<com.example.bodhakfrontend.IncrementalPart.model.Class.IssueType> getForbiddenIssues() {
+    public Set<com.example.bodhakfrontend.Backend.models.Class.IssueType> getForbiddenIssues() {
         return forbiddenIssues;
     }
 
