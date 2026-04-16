@@ -11,6 +11,7 @@ import com.example.bodhakfrontend.Backend.models.Class.ClassInfo;
 import com.example.bodhakfrontend.Backend.models.Project.ProjectInfo;
 import com.example.bodhakfrontend.Backend.IncrementalPart.Update.UiRefreshEvent;
 import com.example.bodhakfrontend.Backend.models.incrementalModel.ClassInfoViewModel;
+import com.example.bodhakfrontend.FrontEnd.MainScreen.HomeScreen;
 import com.example.bodhakfrontend.Parser.AstLabelProvider;
 import com.example.bodhakfrontend.Parser.javaParser.JavaFileParser;
 import com.example.bodhakfrontend.Parser.Parsermanager;
@@ -26,23 +27,21 @@ import com.example.bodhakfrontend.uiHelper.UiFeatures;
 import com.example.bodhakfrontend.util.MultiModuleSourceRootDetector;
 import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Parser.javaParseCache;
 import com.github.javaparser.ast.CompilationUnit;
-import javafx.animation.FadeTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import javafx.util.Duration;
+
 import javafx.stage.DirectoryChooser;
 import java.io.File;
 import java.nio.file.Files;
@@ -79,6 +78,8 @@ public class App extends Application {
     private Map<String, ClassInfoViewModel> vmMap;
     private ProjectFileWatcher watcher;
 
+    private HomeScreen homeScreen=new  HomeScreen();
+
 
     private FileTreeNodeFactory fileTreeNodeFactory;
 
@@ -90,6 +91,7 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
+        PlaceHolderUi placeHolderUi=new PlaceHolderUi();
 
         BorderPane root = new BorderPane();
         mainScene = new Scene(root);
@@ -99,32 +101,37 @@ public class App extends Application {
         stage.setMaximized(true);
         stage.show();
         globalProgressBar=new ProgressBar();
-        globalProgressBar.setPrefWidth(Region.USE_COMPUTED_SIZE);
+
         globalProgressBar.setVisible(false);
 
         progressLabel = new Label();
-        progressLabel.setStyle("-fx-padding: 0 10 0 10;");
 
-        // for upper buttons
-        ToolBar toolBar = new ToolBar();
-        Button SelectBtn = new Button("Select Folder");
-        ToggleButton darkModeToggle = new ToggleButton("Dark");
-        darkModeToggle.setSelected(false);
-        darkModeToggle.getStyleClass().add("dark-mode-toggle");
-        darkModeToggle.setTooltip(new Tooltip("Toggle dark mode"));
-        darkModeToggle.setOnAction(e -> {
-            isDarkMode = darkModeToggle.isSelected();
-            applyTheme(mainScene);
-            darkModeToggle.setText(isDarkMode ? "Light" : "Dark");
-            FadeTransition ft = new FadeTransition(Duration.millis(150), root);
-            ft.setFromValue(0.97);
-            ft.setToValue(1);
-            ft.play();
-        });
+
+
+
         HBox toolbarSpacer = new HBox();
+        BorderPane codeEditorPane=new BorderPane();
         HBox.setHgrow(toolbarSpacer, javafx.scene.layout.Priority.ALWAYS);
-        toolBar.getItems().addAll(SelectBtn, toolbarSpacer, darkModeToggle);
-        root.setTop(toolBar);
+
+        root.setTop(homeScreen.createTopBar(button -> {
+            button.setOnAction(e -> {
+                DirectoryChooser directoryChooser=new DirectoryChooser();
+                directoryChooser.setTitle("Select Project Folder");
+                File selectedFolder=directoryChooser.showDialog(stage);
+                if(selectedFolder==null){return;}
+                projectFolder=selectedFolder;
+                codeTabPane.getTabs().clear();
+                rightTabPane.getTabs().clear();
+                rightPanelTabManager.clear();
+                fileTreeNodeFactory=new FileTreeNodeFactory();
+                TreeItem<File> rootNode=fileTreeNodeFactory.createNode(projectFolder);
+                FileTreeView.setRoot(rootNode);
+                FileTreeView.setShowRoot(true);
+
+                startBackgroundProjectLoad(projectFolder,globalProgressBar);
+
+            });
+        }));
 
         // for bottom
 
@@ -135,14 +142,24 @@ public class App extends Application {
         optimizeBtn=new Button("Optimize");
         optimizeBtn.setVisible(false);
 
+        optimizeBtn.getStyleClass().add("action-btn-secondary");
+        analyzeBtn.getStyleClass().add("action-btn-primary");
 
-        HBox bottomButtons=new HBox(15);
-        bottomButtons.getChildren().addAll(optimizeBtn, analyzeBtn);
+
+        HBox actionBar=new HBox(15);
+        actionBar.getStyleClass().add("action-bar");
+        actionBar.setPadding(new Insets(8, 12, 8, 12));
+        actionBar.setAlignment(Pos.CENTER);
+        HBox.setHgrow(optimizeBtn, Priority.ALWAYS);
+        HBox.setHgrow(analyzeBtn, Priority.ALWAYS);
+        optimizeBtn.setMaxWidth(Double.MAX_VALUE);
+        analyzeBtn.setMaxWidth(Double.MAX_VALUE);
+        actionBar.getChildren().addAll(optimizeBtn, analyzeBtn);
         BorderPane bottomBar = new BorderPane();
         bottomBar.setPadding(new Insets(8));
         bottomBar.setLeft(new HBox(10, globalProgressBar, progressLabel));
-        bottomBar.setRight(bottomButtons);
-        root.setBottom(bottomBar);
+        bottomBar.setRight(actionBar);
+        root.setBottom(homeScreen.createBottomBar(globalProgressBar,progressLabel));
         // for code view
         codeTabPane=new TabPane();
         uiFeatures=new UiFeatures(codeTabPane);
@@ -152,39 +169,70 @@ public class App extends Application {
         // for output
         rightTabPane=new TabPane();
         rightPanelTabManager=new RightPanelTabManager(rightTabPane);
-        outputPanel=new TextArea();
-        outputPanel.setPrefWidth(Region.USE_COMPUTED_SIZE);
-        outputPanel.setEditable(false);
         dependencyTreeView=new TreeView<>();
         dependencyTreeView.setShowRoot(false);
         dependencyTreeView.setPrefWidth(Region.USE_COMPUTED_SIZE);
         // default rightpanel
-        rightPanel=new BorderPane();
-        rightPanel.setCenter(outputPanel);
+        StackPane rightStack = new StackPane();
+
+        VBox rightPlaceholder = placeHolderUi.createRightPlaceholder();
+
+        rightStack.getChildren().addAll(rightPlaceholder, rightTabPane);
+
+//
+        rightPlaceholder.visibleProperty().bind(Bindings.isEmpty(rightTabPane.getTabs()));
+        rightPlaceholder.managedProperty().bind(rightPlaceholder.visibleProperty());
+
+        rightTabPane.visibleProperty().bind(Bindings.isNotEmpty(rightTabPane.getTabs()));
+        rightTabPane.managedProperty().bind(rightTabPane.visibleProperty());
+
+        rightPanel = new BorderPane();
+        rightPanel.setCenter(rightStack);
+        rightPanel.setBottom(actionBar);
         // for files
         FileTreeView =new TreeView<>();
         //EditorPane buttons
-        Button Ast=new Button("AST");
-        Button overviewBtn=new Button("Overview");
-        HBox editorBottom=new HBox(8);
+        Button Ast = new Button("AST");
+        Ast.getStyleClass().addAll("btn-secondary", "editor-bottom-btn");
+
+        Button overviewBtn = new Button("OVERVIEW");
+        overviewBtn.getStyleClass().addAll("btn-primary", "editor-bottom-btn");
+
+        HBox editorBottom = new HBox(8);
+        editorBottom.getStyleClass().add("editor-bottom-bar");
         editorBottom.getChildren().addAll(Ast,overviewBtn);
         editorBottom.setPadding(new Insets(6));
         editorBottom.setAlignment(Pos.CENTER_RIGHT);
-        BorderPane codeEditorPane=new BorderPane();
-        PlaceHolderUi placeHolderUi=new PlaceHolderUi();
-        VBox emptyState=placeHolderUi.createEmptyState();
-        codeEditorPane.setCenter(emptyState);
+
+
+        StackPane centerStack = new StackPane();
+        Node emptyState = placeHolderUi.createCenterPlaceholder();
+        centerStack.getChildren().addAll(emptyState, codeTabPane);
+//
+        emptyState.visibleProperty().bind(
+                Bindings.isEmpty(codeTabPane.getTabs())
+        );
+
+        emptyState.managedProperty().bind(emptyState.visibleProperty());
+
+        codeTabPane.visibleProperty().bind(
+                Bindings.isNotEmpty(codeTabPane.getTabs())
+        );
+
+        codeTabPane.managedProperty().bind(codeTabPane.visibleProperty());
+
+        codeEditorPane.setCenter(centerStack);
         codeEditorPane.setBottom(editorBottom);
 
 
         // we will make Split Pane for resizable part of centre
         SplitPane splitPane=new SplitPane();
-        splitPane.getItems().addAll(FileTreeView,codeEditorPane,rightTabPane);
+        splitPane.getItems().addAll(homeScreen.createSidebar(FileTreeView),codeEditorPane,rightPanel);
         splitPane.setDividerPositions(0.18,0.58);
         root.setCenter(splitPane);
         root.getStyleClass().add("app-root");
         FileTreeView.getStyleClass().add("sidebar");
-        codeTabPane.getStyleClass().add("editor-area");
+        codeTabPane.getStyleClass().add("editor");
         rightPanel.getStyleClass().add("right-panel");
         //for showing and disabling overview,ast btn
         BooleanBinding hasTab =
@@ -223,28 +271,6 @@ public class App extends Application {
 
 //        root.setLeft(treeView);
 
-        SelectBtn.setOnAction(e -> {
-
-            DirectoryChooser directoryChooser=new DirectoryChooser();
-            directoryChooser.setTitle("Select Project Folder");
-            File selectedFolder=directoryChooser.showDialog(stage);
-            if(selectedFolder==null){return;}
-            projectFolder=selectedFolder;
-            codeTabPane.getTabs().clear();
-            rightTabPane.getTabs().clear();
-            rightPanelTabManager.clear();
-            fileTreeNodeFactory=new FileTreeNodeFactory();
-            TreeItem<File> rootNode=fileTreeNodeFactory.createNode(projectFolder);
-            FileTreeView.setRoot(rootNode);
-            FileTreeView.setShowRoot(true);
-
-            startBackgroundProjectLoad(projectFolder,globalProgressBar);
-            codeEditorPane.setCenter(codeTabPane);
-
-
-
-
-        });
 
         optimizeBtn.setOnAction(e -> {
 
@@ -376,7 +402,7 @@ public class App extends Application {
         Stage astStage = new Stage();
         Scene astScene = new Scene(split);
         astScene.getStylesheets().clear();
-        String css = isDarkMode ? "/styles/dark.css" : "/styles/light.css";
+        String css = "/styles.styles.css";
         astScene.getStylesheets().add(getClass().getResource(css).toExternalForm());
         astStage.setScene(astScene);
         astStage.setTitle("AST Viewer - " + file.getName());
@@ -459,9 +485,7 @@ public class App extends Application {
     private void applyTheme(Scene scene) {
         if (scene == null) return;
         scene.getStylesheets().clear();
-        String css = isDarkMode
-                ? "/styles/dark.css"
-                : "/styles/light.css";
+        String css = "/styles/styles.css";
         scene.getStylesheets().add(getClass().getResource(css).toExternalForm());
     }
 
@@ -555,6 +579,9 @@ public class App extends Application {
 
 
     }
+
+
+
     @Override
     public void stop() throws Exception {
         System.out.println(" Shutting down application...");
@@ -564,4 +591,8 @@ public class App extends Application {
         }
         super.stop();
     }
+
+
+
+
 }

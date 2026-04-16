@@ -1,5 +1,6 @@
 package com.example.bodhakfrontend.uiHelper;
 
+import com.example.bodhakfrontend.FrontEnd.uiHelper.JavaSyntaxHighlighter;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import org.fxmisc.richtext.CodeArea;
@@ -29,11 +30,24 @@ public class UiFeatures {
         CodeArea codeArea = new CodeArea();
         codeArea.getStyleClass().add("code-area");
         codeArea.setEditable(true);
+        codeArea.textProperty().addListener((obs, oldText, newText) -> {
+            try {
+                codeArea.setStyleSpans(0,
+                        JavaSyntaxHighlighter.computeHighlighting(newText)
+                );
+            } catch (Exception e) {
+                System.out.println("Highlight error: " + e.getMessage());
+            }
+        });
 
         try {
-            codeArea.replaceText(Files.readString(file.toPath()));
+            String text = Files.readString(file.toPath());
+            codeArea.replaceText(text);
+            codeArea.setStyleSpans(0,
+                    JavaSyntaxHighlighter.computeHighlighting(text)
+            );
         } catch (Exception e) {
-            codeArea.replaceText("Failed to load file: " + e.getMessage());
+            codeArea.replaceText("Failed to load file:  " + e.getMessage());
         }
 
         codeArea.setParagraphGraphicFactory(
@@ -63,8 +77,7 @@ public class UiFeatures {
 
         int lineIndex = beginLine - 1;
 
-        int totalLines =
-                ((javafx.collections.ObservableList<?>) codeArea.getParagraphs()).size();
+        int totalLines = codeArea.getParagraphs().size();
 
         if (lineIndex < 0 || lineIndex >= totalLines) {
             return;
@@ -76,16 +89,27 @@ public class UiFeatures {
         }
 
         int nameIndex = lineText.indexOf(name);
+
+        // fallback: just scroll if name not found
         if (nameIndex < 0) {
             codeArea.showParagraphAtTop(Math.max(0, lineIndex - 3));
             return;
         }
 
         int start = codeArea.getAbsolutePosition(lineIndex, nameIndex);
-        int end   = start + name.length();
+        int end = start + name.length();
 
+        //  CRITICAL FIX → clamp range
+        int textLength = codeArea.getLength();
+
+        start = Math.max(0, Math.min(start, textLength));
+        end   = Math.max(0, Math.min(end, textLength));
+
+        if (start >= end) return;
+
+        // scroll + highlight
         codeArea.showParagraphAtTop(Math.max(0, lineIndex - 3));
-        codeArea.moveTo(start);
+        codeArea.requestFocus();
         codeArea.selectRange(start, end);
     }
 

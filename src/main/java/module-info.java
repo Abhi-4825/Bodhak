@@ -18,8 +18,11 @@ module com.example.bodhakfrontend {
     requires gs.core;
     requires gs.ui.javafx;
 
+    exports com.example.bodhakfrontend.FrontEnd.MainScreen;
+    opens com.example.bodhakfrontend.FrontEnd.MainScreen to javafx.fxml;
 
     opens com.example.bodhakfrontend.ui.Optimization to javafx.base;
+
 
     opens com.example.bodhakfrontend to javafx.fxml;
     exports com.example.bodhakfrontend;
@@ -36,6 +39,8 @@ module com.example.bodhakfrontend {
     opens com.example.bodhakfrontend.Nic to javafx.fxml;
     exports com.example.bodhakfrontend.Nic.Model;
     opens com.example.bodhakfrontend.Nic.Model to javafx.fxml;
+    exports com.example.bodhakfrontend.FrontEnd.uiHelper;
+    opens com.example.bodhakfrontend.FrontEnd.uiHelper to javafx.fxml;
 
 
 }

@@ -32,8 +32,6 @@ public class LookUpClasses {
                     forSuggestion.add(Genes.INLINE_METHOD);
                 }
 
-
-
             }
             int depsCount=classInfo.getDependsOn().size()+classInfo.getUsedBy().size();
             if(depsCount>depsThreshold) {
@@ -50,22 +48,10 @@ public class LookUpClasses {
             if(!classInfo.getCircularDependencyGroups().isEmpty()){
                 forSuggestion.add(Genes.REDUCE_CIRCULAR_DEPENDENCY);
             }
-
-
             if (!forSuggestion.isEmpty()) {
                 suggestions.add(new ClasseSuggestion(classInfo, forSuggestion));
             }
-
-
-
-
         }
-
-
          return suggestions;
-
     }
-
-
-
 }

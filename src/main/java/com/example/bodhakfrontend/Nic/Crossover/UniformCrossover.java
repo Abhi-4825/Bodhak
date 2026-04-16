@@ -27,11 +27,6 @@ public class UniformCrossover {
             }
 
         }
-
         return new Chromosome(childGenes);
-
     }
-
-
-
 }

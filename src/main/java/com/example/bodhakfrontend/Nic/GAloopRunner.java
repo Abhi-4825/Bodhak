@@ -64,7 +64,7 @@ public class GAloopRunner {
                 Population population =
                         populationBuilder
                                 .createInitialPopulation(
-                                        genePoolMap, 5, 30
+                                        genePoolMap, 5, 50
                                 );
 
                 GALoop ga =

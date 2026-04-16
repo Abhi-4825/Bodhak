@@ -20,6 +20,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
@@ -82,122 +83,181 @@ public class OptimizationReportPanel {
         return scrollPane;
     }
 
-
     private VBox createHealthScoreSection(OptimizationReport report) {
+
         double beforeScore = report.getBeforeScore();
         double afterScore = report.getAfterScore();
         double improvement = afterScore - beforeScore;
+
+        Metrics before = report.getGAResult().beforeMetrics();
+        Metrics after = report.getGAResult().afterMetrics();
+
         VBox sectionBox = new VBox(15);
 
-        VBox card = new VBox(25);
-        card.setStyle("-fx-background-color: #1e1e1e; -fx-background-radius: 12; -fx-padding: 30; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 12;");
+        VBox card = new VBox(18);
+        card.setStyle("""
+        -fx-background-color: #090f10;
+        -fx-background-radius: 12;
+        -fx-padding: 20;
+        -fx-border-color: #1a2122;
+        -fx-border-radius: 12;
+        -fx-border-width: 1;
+    """);
 
-        // Top Part - Title & Improvement
-        VBox topBox = new VBox(5);
+        // ================= TOP =================
+        VBox topBox = new VBox(4);
+
         Label titleLabel = new Label("Architecture Health");
-        titleLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: #9aa0a6; -fx-font-weight: bold;");
+        titleLabel.setStyle("""
+        -fx-font-size: 16px;
+        -fx-text-fill: #94a3b8;
+        -fx-font-weight: bold;
+    """);
 
         Label improvementLabel = new Label(String.format("%+.2f", improvement));
-        improvementLabel.setStyle("-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #81c995;");
-        Label improve=new Label("Improvement");
-        improve.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #81c995;");
+        improvementLabel.setStyle("""
+        -fx-font-size: 28px;
+        -fx-font-weight: bold;
+        -fx-text-fill: #4bf6ff;
+    """);
+
+        Label improve = new Label("Improvement");
+        improve.setStyle("""
+        -fx-font-size: 11px;
+        -fx-text-fill: #4bf6ff;
+    """);
+
         topBox.getChildren().addAll(titleLabel, improvementLabel, improve);
 
-        // Bottom Part - Progress Bars
-        VBox barsBox = new VBox(20);
+        // ================= BARS =================
+        VBox barsBox = new VBox(15);
 
-        // Before Optimization
-        VBox beforeBox = new VBox(8);
+        // ---------- BEFORE ----------
+        VBox beforeBox = new VBox(6);
+
         Label beforeLabel = new Label("Before Optimization");
-        beforeLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #e8eaed;");
+        beforeLabel.setStyle("-fx-text-fill: #dde4e5; -fx-font-size: 12px;");
 
-        // Stackpane lets us put text over the progressbar
-        javafx.scene.layout.StackPane beforeStack = new javafx.scene.layout.StackPane();
-        ProgressBar beforeBar = new ProgressBar(beforeScore/100);
-        beforeBar.setPrefWidth(Double.MAX_VALUE);
-        beforeBar.setPrefHeight(25);
-        beforeBar.setStyle("-fx-accent: #f28b82; -fx-control-inner-background: #2b2b2b; -fx-background-color: #2b2b2b; -fx-background-radius: 8;");
+        StackPane beforeStack = new StackPane();
+
+        ProgressBar beforeBar = new ProgressBar(beforeScore / 100);
+        beforeBar.setPrefHeight(8);
+        beforeBar.setMaxWidth(Double.MAX_VALUE);
+        beforeBar.setStyle("""
+        -fx-accent: #ff6b6b;
+        -fx-control-inner-background: #1a2122;
+        -fx-background-radius: 6;
+    """);
 
         Label beforeScoreFormat = new Label(String.format("%.2f", beforeScore));
-        beforeScoreFormat.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px;");
+        beforeScoreFormat.setStyle("""
+        -fx-text-fill: #dde4e5;
+        -fx-font-size: 10px;
+        -fx-font-weight: bold;
+    """);
+
         beforeStack.getChildren().addAll(beforeBar, beforeScoreFormat);
         beforeBox.getChildren().addAll(beforeLabel, beforeStack);
 
-        // After Optimization
-        VBox afterBox = new VBox(8);
-        Label afterLabel = new Label("After Optimization");
-        afterLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #e8eaed;");
+        // ---------- AFTER ----------
+        VBox afterBox = new VBox(6);
 
-        javafx.scene.layout.StackPane afterStack = new javafx.scene.layout.StackPane();
-        ProgressBar afterBar = new ProgressBar(afterScore/100);
-        afterBar.setPrefWidth(Double.MAX_VALUE);
-        afterBar.setPrefHeight(25);
-        afterBar.setStyle("-fx-accent: #81c995; -fx-control-inner-background: #2b2b2b; -fx-background-color: #2b2b2b; -fx-background-radius: 8;");
+        Label afterLabel = new Label("After Optimization");
+        afterLabel.setStyle("-fx-text-fill: #dde4e5; -fx-font-size: 12px;");
+
+        StackPane afterStack = new StackPane();
+
+        ProgressBar afterBar = new ProgressBar(afterScore / 100);
+        afterBar.setPrefHeight(8);
+        afterBar.setMaxWidth(Double.MAX_VALUE);
+        afterBar.setStyle("""
+        -fx-accent: #4bf6ff;
+        -fx-control-inner-background: #1a2122;
+        -fx-background-radius: 6;
+    """);
 
         Label afterScoreFormat = new Label(String.format("%.2f", afterScore));
-        afterScoreFormat.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px;");
+        afterScoreFormat.setStyle("""
+        -fx-text-fill: #dde4e5;
+        -fx-font-size: 10px;
+        -fx-font-weight: bold;
+    """);
+
         afterStack.getChildren().addAll(afterBar, afterScoreFormat);
         afterBox.getChildren().addAll(afterLabel, afterStack);
 
         barsBox.getChildren().addAll(beforeBox, afterBox);
-        card.getChildren().addAll(topBox, barsBox);
 
-        DropShadow shadow = new DropShadow(15, Color.rgb(0,0,0, 0.4));
+        // ================= BASED ON SECTION =================
+        VBox basedOnBox = new VBox(6);
+
+        Label basedOnTitle = new Label("Score is based on:");
+        basedOnTitle.setStyle("""
+        -fx-text-fill: #94a3b8;
+        -fx-font-size: 11px;
+        -fx-font-weight: bold;
+    """);
+
+        Label factors = new Label("""
+        • Method Complexity
+        • Code Size (LOC)
+        • Dependency Structure
+    """);
+
+        factors.setStyle("""
+        -fx-text-fill: #dde4e5;
+        -fx-font-size: 11px;
+    """);
+
+        basedOnBox.getChildren().addAll(basedOnTitle, factors);
+
+        // ================= DYNAMIC EXPLANATION =================
+        VBox explanationBox = new VBox(6);
+
+        Label explanationTitle = new Label("Insight:");
+        explanationTitle.setStyle("""
+        -fx-text-fill: #94a3b8;
+        -fx-font-size: 11px;
+        -fx-font-weight: bold;
+    """);
+
+        StringBuilder explanationText = new StringBuilder();
+
+        if (after.getAverageMethodLoc() < before.getAverageMethodLoc()) {
+            explanationText.append("• Method size reduced\n");
+        }
+        if (after.getAverageDeps() < before.getAverageDeps()) {
+            explanationText.append("• Dependencies reduced\n");
+        }
+        if (after.getAverageLoc() < before.getAverageLoc()) {
+            explanationText.append("• Code became more balanced\n");
+        }
+
+        if (explanationText.isEmpty()) {
+            explanationText.append("• No significant structural improvements detected");
+        }
+
+        Label explanation = new Label(explanationText.toString());
+        explanation.setStyle("""
+        -fx-text-fill: #4bf6ff;
+        -fx-font-size: 11px;
+    """);
+
+        explanationBox.getChildren().addAll(explanationTitle, explanation);
+
+        // ================= FINAL LAYOUT =================
+        card.getChildren().addAll(topBox, barsBox, basedOnBox, explanationBox);
+
+        // shadow
+        DropShadow shadow = new DropShadow();
+        shadow.setRadius(12);
+        shadow.setColor(Color.rgb(0, 0, 0, 0.5));
         card.setEffect(shadow);
 
-        sectionBox.getChildren().addAll(card);
+        sectionBox.getChildren().add(card);
+
         return sectionBox;
-    }
-
-
-    private VBox createQuickSummarySection(GAResult result) {
-        VBox sectionBox = new VBox(15);
-        Label sectionTitle = new Label("⚡ Quick Optimization Summary");
-        sectionTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e8eaed;");
-
-        FlowPane cardsContainer = new FlowPane(20, 20);
-        cardsContainer.setAlignment(Pos.CENTER_LEFT);
-
-        Metrics before = result.beforeMetrics();
-        Metrics after = result.afterMetrics();
-
-        cardsContainer.getChildren().addAll(
-                createSummaryCard("Total LOC", formatDouble(before.getTotalLoc()), formatDouble(after.getTotalLoc()), calculateImprovement(before.getTotalLoc(), after.getTotalLoc())),
-                createSummaryCard("Avg Method Length", formatDouble(before.getAverageMethodLoc()), formatDouble(after.getAverageMethodLoc()), calculateImprovement(before.getAverageMethodLoc(), after.getAverageMethodLoc())),
-                createSummaryCard("Dependencies", formatDouble(before.getTotalDependency()), formatDouble(after.getTotalDependency()), calculateImprovement(before.getTotalDependency(), after.getTotalDependency()))
-        );
-
-        sectionBox.getChildren().addAll(sectionTitle, cardsContainer);
-        return sectionBox;
-    }
-
-    private VBox createSummaryCard(String title, String before, String after, String improvement) {
-        VBox card = new VBox(10);
-        card.setStyle("-fx-background-color: #1e1e1e; -fx-background-radius: 10; -fx-padding: 20; -fx-border-color: #333333; -fx-border-width: 1; -fx-border-radius: 10;");
-        card.setPrefWidth(220);
-
-        Label titleLabel = new Label(title);
-        titleLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #9aa0a6; -fx-font-weight: bold;");
-
-        HBox valuesBox = new HBox(10);
-        valuesBox.setAlignment(Pos.CENTER_LEFT);
-        Label beforeLabel = new Label(before);
-        beforeLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: #e8eaed; -fx-strikethrough: true;");
-        Label arrowLabel = new Label("→");
-        arrowLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: #9aa0a6;");
-        Label afterLabel = new Label(after);
-        afterLabel.setStyle("-fx-font-size: 22px; -fx-text-fill: #81c995; -fx-font-weight: bold;");
-        valuesBox.getChildren().addAll(beforeLabel, arrowLabel, afterLabel);
-
-        Label impLabel = new Label((improvement.startsWith("-") || improvement.equals("0.00%") ? "" : "+") + improvement + " Improvement");
-        impLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: " + (improvement.startsWith("-") ? "#f28b82" : "#8ab4f8") + "; -fx-font-weight: bold;");
-
-        card.getChildren().addAll(titleLabel, valuesBox, impLabel);
-        addHoverEffect(card);
-        return card;
-    }
-
-    private VBox createStrategySection(GAResult result) {
+    }private VBox createStrategySection(GAResult result) {
         VBox sectionBox = new VBox(15);
 
         HBox sectionTitle=loadLabelWithIcon("suggestion.png"," Recommended Refactoring Strategies");
@@ -379,13 +439,23 @@ public class OptimizationReportPanel {
 
 
     private TableView<Row> buildTable(GAResult result) {
+
         Metrics before = result.beforeMetrics();
         Metrics after = result.afterMetrics();
 
         TableView<Row> table = new TableView<>();
-        table.setStyle("-fx-background-color: #1e1e1e; -fx-control-inner-background: #1e1e1e; -fx-border-color: #2d2d2d;");
-        table.setPrefHeight(150); // Give it enough height for 3 rows + header
 
+        table.setStyle("""
+        -fx-background-color: #090f10;
+        -fx-control-inner-background: #090f10;
+        -fx-border-color: #1a2122;
+        -fx-border-radius: 8;
+        -fx-background-radius: 8;
+    """);
+
+        table.setPrefHeight(140);
+
+        // ================= COLUMNS =================
         TableColumn<Row, String> metric = new TableColumn<>("Metric");
         TableColumn<Row, String> beforeCol = new TableColumn<>("Before");
         TableColumn<Row, String> afterCol = new TableColumn<>("After");
@@ -396,22 +466,52 @@ public class OptimizationReportPanel {
         afterCol.setCellValueFactory(new PropertyValueFactory<>("after"));
         improvement.setCellValueFactory(new PropertyValueFactory<>("improvement"));
 
-        // Modern flat table styling logic applies globally via application CSS,
-        // but adding local styles to match dark theme cleanly.
+        // ================= ALIGNMENT =================
         metric.setStyle("-fx-alignment: CENTER-LEFT;");
         beforeCol.setStyle("-fx-alignment: CENTER;");
         afterCol.setStyle("-fx-alignment: CENTER;");
         improvement.setStyle("-fx-alignment: CENTER; -fx-font-weight: bold;");
 
-        table.getColumns().addAll(metric, beforeCol, afterCol, improvement);
+        // ================= ROW STYLE =================
+        table.setRowFactory(tv -> new TableRow<>() {
+            @Override
+            protected void updateItem(Row item, boolean empty) {
+                super.updateItem(item, empty);
 
+                if (empty || item == null) {
+                    setStyle("");
+                } else {
+                    setStyle("""
+                    -fx-background-color: transparent;
+                    -fx-border-color: #1a2122;
+                    -fx-border-width: 0 0 1 0;
+                """);
+                }
+            }
+        });
+
+        // ================= HEADER STYLE =================
+        table.skinProperty().addListener((obs, oldSkin, newSkin) -> {
+            table.lookupAll(".column-header").forEach(node -> {
+                node.setStyle("""
+                -fx-background-color: #090f10;
+                -fx-border-color: #1a2122;
+                -fx-border-width: 0 0 1 0;
+            """);
+            });
+        });
+
+        // ================= DATA =================
         table.getItems().addAll(
                 new Row("Total LOC", before.getTotalLoc(), after.getTotalLoc()),
                 new Row("Avg Method Length", before.getAverageMethodLoc(), after.getAverageMethodLoc()),
                 new Row("Dependencies", before.getTotalDependency(), after.getTotalDependency())
         );
 
+        table.getColumns().addAll(metric, beforeCol, afterCol, improvement);
+
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
         return table;
     }
 

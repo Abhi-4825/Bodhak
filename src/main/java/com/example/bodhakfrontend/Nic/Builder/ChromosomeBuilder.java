@@ -20,7 +20,6 @@ public class ChromosomeBuilder {
             }
         }
         return genesToWeight.keySet().iterator().next();
-
     }
 
 

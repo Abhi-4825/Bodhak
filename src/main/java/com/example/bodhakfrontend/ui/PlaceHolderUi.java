@@ -2,56 +2,50 @@ package com.example.bodhakfrontend.ui;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.HBox;
 
+
 public class PlaceHolderUi {
-    public VBox createEmptyState() {
-        Label title = new Label("Project Analyser");
-        title.getStyleClass().addAll("label", "empty-state-title");
-        title.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-padding: 0 0 10 0;");
+    public Node createCenterPlaceholder() {
 
-        Label subtitle = new Label("Java Architecture & Dependency Analysis Tool");
-        subtitle.getStyleClass().addAll("label", "empty-state-subtitle");
-        subtitle.setStyle("-fx-font-size: 14px; -fx-opacity: 0.7; -fx-padding: 0 0 24 0;");
+        VBox root = new VBox(10);
+        root.setAlignment(Pos.CENTER);
+        root.getStyleClass().add("placeholder-center");
 
-        VBox startSection = createSection("Start", new String[]{
-                "Select a Java project folder from the top bar",
-                "Click 'Analyze' to scan the project files",
-                "Explore architecture and optimizations in the right panel"
-        });
+        Label icon = new Label("</>");
+        icon.getStyleClass().add("placeholder-icon");
 
-        VBox recentSection = createSection("Tips", new String[]{
-                "Double-click files in the explorer to open them",
-                "Use the 'AST' button to view file syntax trees",
-                "Checkout 'Overview' for class complexities and dependencies"
-        });
+        Label title = new Label("No file open");
+        title.getStyleClass().add("placeholder-title");
 
-        HBox columns = new HBox(40, startSection, recentSection);
-        columns.setAlignment(Pos.CENTER);
+        Label subtitle = new Label("Select a file from explorer to start");
+        subtitle.getStyleClass().add("placeholder-subtitle");
 
-        VBox container = new VBox(0, title, subtitle, columns);
-        container.setAlignment(Pos.CENTER);
-        container.setPadding(new Insets(40));
+        root.getChildren().addAll(icon, title, subtitle);
 
-        return container;
+        return root;
     }
 
-    private VBox createSection(String headerText, String[] items) {
-        Label header = new Label(headerText);
-        header.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-padding: 0 0 12 0;");
+    public VBox createRightPlaceholder() {
 
-        VBox section = new VBox(8);
-        section.getChildren().add(header);
+        VBox root = new VBox(12);
+        root.setAlignment(Pos.CENTER);
+        root.getStyleClass().add("placeholder-right");
 
-        for (String itemText : items) {
-            Label item = new Label("• " + itemText);
-            item.setStyle("-fx-font-size: 13.5px; -fx-opacity: 0.85;");
-            section.getChildren().add(item);
-        }
+        Label icon = new Label("📊");
+        icon.getStyleClass().add("placeholder-icon");
 
-        section.setAlignment(Pos.TOP_LEFT);
-        return section;
+        Label title = new Label("No analysis yet");
+        title.getStyleClass().add("placeholder-title");
+
+        Label subtitle = new Label("Click 'Analyze' to view insights");
+        subtitle.getStyleClass().add("placeholder-subtitle");
+
+        root.getChildren().addAll(icon, title, subtitle);
+
+        return root;
     }
 }
