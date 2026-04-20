@@ -11,6 +11,7 @@ import com.example.bodhakfrontend.Backend.models.Class.ClassInfo;
 import com.example.bodhakfrontend.Backend.models.Project.ProjectInfo;
 import com.example.bodhakfrontend.Backend.IncrementalPart.Update.UiRefreshEvent;
 import com.example.bodhakfrontend.Backend.models.incrementalModel.ClassInfoViewModel;
+import com.example.bodhakfrontend.FrontEnd.MainScreen.ASTViewer;
 import com.example.bodhakfrontend.FrontEnd.MainScreen.HomeScreen;
 import com.example.bodhakfrontend.Parser.AstLabelProvider;
 import com.example.bodhakfrontend.Parser.javaParser.JavaFileParser;
@@ -372,11 +373,15 @@ public class App extends Application {
                     (AstLabelProvider<com.github.javaparser.ast.Node>)
                             parsermanager.getLabelProvider(file);
 
-            // 3 Build AST tree USING provider
-            TreeItem<String> astRoot = buildASTTree(cu, labelProvider);
+//            // 3 Build AST tree USING provider
+//            TreeItem<String> astRoot = buildASTTree(cu, labelProvider);
+//
+//            // 4 Show window
+//            showASTStage(file, astRoot);
 
-            // 4 Show window
-            showASTStage(file, astRoot);
+            ASTViewer astViewer=new ASTViewer(labelProvider);
+            astViewer.show(file,cu);
+
 
         } catch (Exception e) {
             outputPanel.setText("AST Error: " + e.getMessage());
