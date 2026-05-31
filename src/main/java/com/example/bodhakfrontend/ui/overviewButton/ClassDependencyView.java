@@ -1,9 +1,9 @@
 package com.example.bodhakfrontend.ui.overviewButton;
 
-import com.example.bodhakfrontend.Backend.GraphBuilder;
-import com.example.bodhakfrontend.Backend.models.incrementalModel.ClassInfoViewModel;
+
+import com.example.bodhakfrontend.core.model.incremental.EntityViewModel;
 import com.example.bodhakfrontend.ui.DependencyGraphWindow;
-import com.example.bodhakfrontend.uiHelper.UiFeatures;
+import com.example.bodhakfrontend.ui.helper.UiFeatures;
 import javafx.application.Platform;
 import javafx.collections.SetChangeListener;
 import javafx.geometry.Insets;
@@ -19,17 +19,17 @@ import java.util.*;
 
 public class ClassDependencyView {
 
-    private final Map<String, ClassInfoViewModel> vmMap;
+    private final Map<String, EntityViewModel> vmMap;
     private final UiFeatures uiFeatures;
 
     private final TreeView<Object> treeView = new TreeView<>();
-    private ClassInfoViewModel currentVm;
+    private EntityViewModel currentVm;
 
 
 
     public ClassDependencyView(
             UiFeatures uiFeatures,
-            Map<String, ClassInfoViewModel> vmMap
+            Map<String, EntityViewModel> vmMap
     ) {
         this.uiFeatures = uiFeatures;
         this.vmMap = vmMap;
@@ -42,12 +42,12 @@ public class ClassDependencyView {
     }
 
 
-    public VBox show(String className) {
+    public VBox show(String entityName) {
 
-        ClassInfoViewModel vm = vmMap.get(className);
+        EntityViewModel vm = vmMap.get(entityName);
         if (vm == null) {
             treeView.setRoot(
-                    new TreeItem<>("Class not found: " + className)
+                    new TreeItem<>("Entity not found: " + entityName)
             );
         } else {
             bindTo(vm);
@@ -57,7 +57,7 @@ public class ClassDependencyView {
 
         Button visualizeBtn = new Button("Visualize");
         visualizeBtn.setOnAction(e -> {
-            DependencyGraphWindow.show(className,vmMap);
+            DependencyGraphWindow.show(entityName,vmMap);
         });
 
         HBox bottomBar = new HBox(visualizeBtn);
@@ -72,7 +72,7 @@ public class ClassDependencyView {
     }
 
 
-    private void bindTo(ClassInfoViewModel vm) {
+    private void bindTo(EntityViewModel vm) {
         if (currentVm != null) {
             currentVm.getDependsOn().removeListener(depListener);
             currentVm.getUsedBy().removeListener(depListener);
@@ -101,7 +101,7 @@ public class ClassDependencyView {
                 new ArrayList<>(currentVm.getDependsOn());
 
         for (String dep : depsSnapshot) {
-            ClassInfoViewModel depVm = vmMap.get(dep);
+            EntityViewModel depVm = vmMap.get(dep);
             if (depVm != null) {
                 TreeItem<Object> depItem = new TreeItem<>(depVm);
                 dependsOnNode.getChildren().add(depItem);
@@ -120,7 +120,7 @@ public class ClassDependencyView {
         List<String> usedBySnapshot =
                 new ArrayList<>(currentVm.getUsedBy());
         for (String user : usedBySnapshot) {
-            ClassInfoViewModel userVm = vmMap.get(user);
+            EntityViewModel userVm = vmMap.get(user);
             if (userVm != null) {
                 usedByNode.getChildren().add(
                         new TreeItem<>(userVm)
@@ -139,12 +139,12 @@ public class ClassDependencyView {
 
     private void buildTransitive(
             TreeItem<Object> parent,
-            ClassInfoViewModel vm,
+            EntityViewModel vm,
             Set<String> visited
     ) {
         if (!visited.add(vm.getName())) return;
         for (String dep : vm.getDependsOn()) {
-            ClassInfoViewModel depVm = vmMap.get(dep);
+            EntityViewModel depVm = vmMap.get(dep);
             if (depVm != null) {
                 TreeItem<Object> child = new TreeItem<>(depVm);
                 parent.getChildren().add(child);
@@ -157,7 +157,7 @@ public class ClassDependencyView {
 
         treeView.setCellFactory(tv -> new TreeCell<>() {
 
-            private ClassInfoViewModel boundVm;
+            private EntityViewModel boundVm;
 
             @Override
             protected void updateItem(Object item, boolean empty) {
@@ -174,7 +174,7 @@ public class ClassDependencyView {
                     setText(s);
                     return;
                 }
-                if (item instanceof ClassInfoViewModel vm) {
+                if (item instanceof EntityViewModel vm) {
                     boundVm = vm;
                     textProperty().bind(vm.simpleNameProperty());
 
@@ -199,7 +199,7 @@ public class ClassDependencyView {
                 if (item == null) return;
 
                 Object value = item.getValue();
-                if (value instanceof ClassInfoViewModel vm) {
+                if (value instanceof EntityViewModel vm) {
                     uiFeatures.openAndHighlight(
                             vm.getName(),
                             vm.getBeginLine(),
@@ -213,7 +213,7 @@ public class ClassDependencyView {
 
 
 
-    private String buildCycleTooltip(ClassInfoViewModel vm) {
+    private String buildCycleTooltip(EntityViewModel vm) {
         StringBuilder sb =
                 new StringBuilder("🔁 Circular Dependency\n\n");
 

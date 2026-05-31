@@ -1,9 +1,9 @@
 package com.example.bodhakfrontend.util;
 
-import com.example.bodhakfrontend.Backend.models.Project.EntryPointInfo;
-import com.example.bodhakfrontend.Backend.models.Project.Hotspots;
-import com.example.bodhakfrontend.Backend.models.Project.ProjectInfo;
-import com.example.bodhakfrontend.Backend.models.Project.UnusedClassInfo;
+import com.example.bodhakfrontend.core.model.project.EntryPointInfo;
+import com.example.bodhakfrontend.core.model.project.Hotspot;
+import com.example.bodhakfrontend.core.model.project.ProjectInfo;
+import com.example.bodhakfrontend.core.model.project.UnusedEntityInfo;
 
 import javafx.stage.FileChooser;
 
@@ -35,37 +35,37 @@ public class Exporter {
             // Entry Points
             out.println("=== ENTRY POINTS ===");
             EntryPointInfo ep = result.getEntryPointInfo();
-            out.println("Primary: " + ep.getPrimaryEntry().className());
+            out.println("Primary: " + ep.getPrimaryEntry().entityName());
             for (EntryPointInfo.Entry s : ep.getSecondaryEntries()) {
-                out.println("Secondary: " + s.className());
+                out.println("Secondary: " + s.entityName());
             }
             out.println();
 
             // Health Summary
             out.println("=== PROJECT HEALTH ===");
 
-            out.println("Total Classes: " + result.getTotalClasses());
-            out.println("Healthy: " + result.getHealthyClasses());
-            out.println("Warnings: " + result.getClassesWithWarnings());
-            out.println("God Classes: " + result.getGodClasses());
-            out.println("Circular: " + result.getCircularClasses());
+            out.println("Total Classes: " + result.getTotalEntities());
+            out.println("Healthy: " + result.getHealthyEntities());
+            out.println("Warnings: " + result.getEntitiesWithWarnings());
+            out.println("God Classes: " + result.getGodEntities());
+            out.println("Circular: " + result.getCircularEntities());
             out.println();
 
             // Hotspots
             out.println("=== HOTSPOTS ===");
-            for (Hotspots h : result.getHotspotClasses()) {
+            for (Hotspot h : result.getHotspots()) {
                 out.println(
-                        h.getClassInfo().getClassName()
+                        h.getEntity().getEntityName()
                                 + " | Score=" + h.getScore()
-                                + " | LOC=" + h.getClassInfo().getLinesOfCode()
+                                + " | LOC=" + h.getEntity().getLinesOfCode()
                 );
             }
             out.println();
 
             // Unused Classes
             out.println("=== UNUSED CLASSES ===");
-            for (UnusedClassInfo uc : result.getUnusedClassInfos()) {
-                out.println(uc.getClassInfo().getClassName() + " | LOC=" + uc.getClassInfo().getLinesOfCode());
+            for (UnusedEntityInfo uc : result.getUnusedEntities()) {
+                out.println(uc.getEntity().getEntityName() + " | LOC=" + uc.getEntity().getLinesOfCode());
             }
 
         } catch (Exception ex) {

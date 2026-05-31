@@ -1,7 +1,7 @@
 package com.example.bodhakfrontend.ui;
 
-import com.example.bodhakfrontend.Backend.GraphBuilder;
-import com.example.bodhakfrontend.Backend.models.incrementalModel.ClassInfoViewModel;
+import com.example.bodhakfrontend.ui.GraphBuilder;
+import com.example.bodhakfrontend.core.model.incremental.EntityViewModel;
 import javafx.animation.AnimationTimer;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
@@ -30,7 +30,7 @@ public class DependencyGraphWindow {
     private static String ROOT_ID;
 
     public static void show(String rootClass,
-                            Map<String, ClassInfoViewModel> vmMap) {
+                            Map<String, EntityViewModel> vmMap) {
 
         expandedNodes.clear();
         nodeDepth.clear();
@@ -138,7 +138,7 @@ public class DependencyGraphWindow {
 
     private static void onNodeClicked(String nodeId,
                                       Graph graph,
-                                      Map<String, ClassInfoViewModel> vmMap) {
+                                      Map<String, EntityViewModel> vmMap) {
 
         if (expandedNodes.contains(nodeId)) {
             collapseNode(graph, nodeId);
@@ -148,7 +148,7 @@ public class DependencyGraphWindow {
         int depth = nodeDepth.getOrDefault(nodeId, 0);
         if (depth >= MAX_DEPTH) return;
 
-        ClassInfoViewModel vm = vmMap.get(nodeId);
+        EntityViewModel vm = vmMap.get(nodeId);
         if (vm == null) return;
 
         expandedNodes.add(nodeId);
@@ -156,9 +156,9 @@ public class DependencyGraphWindow {
     }
 
     private static void expandNode(Graph graph,
-                                   ClassInfoViewModel vm,
+                                   EntityViewModel vm,
                                    int parentDepth,
-                                   Map<String, ClassInfoViewModel> vmMap) {
+                                   Map<String, EntityViewModel> vmMap) {
 
         String parentId = vm.getName();
         Node parent = graph.getNode(parentId);
@@ -193,12 +193,11 @@ public class DependencyGraphWindow {
             }
         }
     }
-
     private static void expandDirection(Graph graph,
                                         Collection<String> targets,
                                         String parentId,
                                         int parentDepth,
-                                        Map<String, ClassInfoViewModel> vmMap,
+                                        Map<String, EntityViewModel> vmMap,
                                         Set<String> children,
                                         double baseX,
                                         double baseY,
@@ -213,7 +212,7 @@ public class DependencyGraphWindow {
 
         for (int i = 0; i < list.size(); i++) {
 
-            ClassInfoViewModel targetVm = vmMap.get(list.get(i));
+            EntityViewModel targetVm = vmMap.get(list.get(i));
             if (targetVm == null) continue;
 
             String id = targetVm.getName();

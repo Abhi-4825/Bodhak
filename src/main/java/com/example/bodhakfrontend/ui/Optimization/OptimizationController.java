@@ -1,10 +1,10 @@
 package com.example.bodhakfrontend.ui.Optimization;
 
-import com.example.bodhakfrontend.Backend.models.Project.ProjectInfo;
-import com.example.bodhakfrontend.Nic.GAloopRunner;
-import com.example.bodhakfrontend.Nic.Model.OptimizationReport;
+import com.example.bodhakfrontend.core.model.project.ProjectInfo;
+import com.example.bodhakfrontend.engine.optimization.GAloopRunner;
+import com.example.bodhakfrontend.engine.optimization.Model.OptimizationReport;
 import com.example.bodhakfrontend.ui.rightPanel.RightPanelTabManager;
-import com.example.bodhakfrontend.uiHelper.UiFeatures;
+import com.example.bodhakfrontend.ui.helper.UiFeatures;
 import javafx.concurrent.Task;
 
 public class OptimizationController {

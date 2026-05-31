@@ -1,8 +1,7 @@
 package com.example.bodhakfrontend.ui;
 
-import com.example.bodhakfrontend.Backend.Analysis.Engine.AnalysisEngine;
-import com.example.bodhakfrontend.Backend.languages.JavaLanguage.Builder.ProjectInfoBuilder;
-import com.example.bodhakfrontend.Backend.IncrementalPart.Update.UiRefreshEvent;
+import com.example.bodhakfrontend.engine.AnalysisEngine;
+import com.example.bodhakfrontend.events.UiRefreshEvent;
 
 import com.example.bodhakfrontend.ui.Front.FileTreeNodeFactory;
 import com.example.bodhakfrontend.ui.ProjectAnalysis.ProjectAnalysisUi;

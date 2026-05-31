@@ -1,6 +1,6 @@
 package com.example.bodhakfrontend.ui.overviewButton;
 
-import com.example.bodhakfrontend.Backend.models.Class.ClassInfo;
+import com.example.bodhakfrontend.core.model.entity.EntityInfo;
 import com.example.bodhakfrontend.ui.OverviewContentFactory;
 import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
@@ -18,15 +18,15 @@ public class ClassOverviewContainer {
 
     public ClassOverviewContainer(
             File sourceFile,
-            List<ClassInfo> classNames,
+            List<EntityInfo> classNames,
             OverviewContentFactory factory
     ) {
-        ComboBox<ClassInfo> classSelector = new ComboBox<>();
+        ComboBox<EntityInfo> classSelector = new ComboBox<>();
         classSelector.getItems().addAll(classNames);
         classSelector.getSelectionModel().selectFirst();
 
         classSelector.setOnAction(e -> {
-            ClassInfo cls = classSelector.getValue();
+            EntityInfo cls = classSelector.getValue();
             overviewHolder.getChildren().setAll(
                     factory.build(cls)
             );

@@ -1,10 +1,10 @@
 package com.example.bodhakfrontend.ui.Optimization;
 
-import com.example.bodhakfrontend.Backend.models.Class.ClassInfo;
-import com.example.bodhakfrontend.Backend.models.Class.MethodInfo;
-import com.example.bodhakfrontend.Backend.models.Project.Hotspots;
-import com.example.bodhakfrontend.Nic.Model.*;
-import com.example.bodhakfrontend.uiHelper.UiFeatures;
+import com.example.bodhakfrontend.core.model.entity.EntityInfo;
+import com.example.bodhakfrontend.core.model.entity.MemberInfo;
+import com.example.bodhakfrontend.core.model.project.Hotspot;
+import com.example.bodhakfrontend.engine.optimization.Model.*;
+import com.example.bodhakfrontend.ui.helper.UiFeatures;
 import javafx.animation.FadeTransition;
 import javafx.animation.ParallelTransition;
 import javafx.animation.ScaleTransition;
@@ -311,7 +311,7 @@ public class OptimizationReportPanel {
         return sectionBox;
     }
 
-    private VBox createSuggestionCard(String title, ClassInfo clazz, MethodInfo method, String reason, String suggestion) {
+    private VBox createSuggestionCard(String title, EntityInfo clazz, MemberInfo method, String reason, String suggestion) {
         VBox card = new VBox(8);
         card.setStyle("-fx-background-color: #1e1e24; -fx-background-radius: 10; -fx-padding: 15; -fx-border-color: #3b3b4f; -fx-border-width: 1; -fx-border-radius: 10; -fx-pref-width: 320px;");
 
@@ -333,7 +333,7 @@ public class OptimizationReportPanel {
         actionLabel.setStyle("-fx-text-fill: #8ab4f8; -fx-font-size: 13px; -fx-wrap-text: true;");
 
        if(method!=null){
-           Text methodName=new Text("Method: " + method.getMethodName());
+           Text methodName=new Text("Member: " + method.getName());
            methodName.setStyle("-fx-fill: #e8eaed; -fx-font-size: 14px; -fx-font-family: 'Courier New';");
            card.getChildren().addAll(titleLabel, targetText,methodName, reasonLabel, actionLabel);
        }
@@ -344,7 +344,7 @@ public class OptimizationReportPanel {
        card.setCursor(Cursor.HAND);
        card.setOnMouseClicked(mouseEvent -> {
            if(method!=null){
-               uiFeatures.openAndHighlight(method.getMethodName(), method.getStartLine(), method.getStartColumn(), method.getSourceFile());
+               uiFeatures.openAndHighlight(method.getName(), method.getStartLine(), method.getStartColumn(), method.getSourceFile());
            }
            else{
                uiFeatures.openAndHighlight(clazz.toString(), clazz.getBeginLine(), clazz.getBeginColumn(), clazz.getSourceFile());
@@ -355,16 +355,16 @@ public class OptimizationReportPanel {
     }
 
     private VBox createHotspotsSection(OptimizationReport optimizationReport) {
-        List<Hotspots> hotspots = optimizationReport.getHotspots();
+        List<Hotspot> hotspots = optimizationReport.getHotspots();
         VBox sectionBox = new VBox(15);
         HBox sectionTitle = loadLabelWithIcon("hotspot.png","Code Hotspots");
         FlowPane cardsContainer = new FlowPane(15, 15);
         cardsContainer.setAlignment(Pos.CENTER_LEFT);
 
 
-        for(Hotspots hotspot:hotspots){
+        for(Hotspot hotspot:hotspots){
 
-            cardsContainer.getChildren().add(createHotspotCard(hotspot.getClassInfo(),hotspot.getReasons()));
+            cardsContainer.getChildren().add(createHotspotCard(hotspot.getEntity(), hotspot.getReasons()));
 
         }
 
@@ -375,7 +375,7 @@ public class OptimizationReportPanel {
         return sectionBox;
     }
 
-    private VBox createHotspotCard(ClassInfo clazz, Set<String> reasons) {
+    private VBox createHotspotCard(EntityInfo clazz, Iterable<String> reasons) {
         VBox card = new VBox(5);
         card.setStyle("-fx-background-color: #2b1c1c; -fx-background-radius: 8; -fx-padding: 12; -fx-border-color: #5c3a3a; -fx-border-width: 1; -fx-border-radius: 8; -fx-pref-width: 250px;");
 

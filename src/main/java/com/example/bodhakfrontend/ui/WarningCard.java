@@ -1,6 +1,6 @@
 package com.example.bodhakfrontend.ui;
 
-import com.example.bodhakfrontend.Models.WarningRule;
+import com.example.bodhakfrontend.core.model.warning.WarningRule;
 import com.example.bodhakfrontend.util.SeverityStyle;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
@@ -8,12 +8,14 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+import static com.example.bodhakfrontend.core.model.warning.Severity.*;
+
 public class WarningCard {
     public static Node create(WarningRule rule){
         Label icon =new  Label(
                 SeverityStyle.icon(rule.getSeverity())
         );
-        Label text=new  Label(rule.getMessage());
+        Label text=new  Label(rule.getTitle());
         text.setWrapText(true);
         Label level = new Label(rule.getSeverity().name());
         level.getStyleClass().add("label-bold");

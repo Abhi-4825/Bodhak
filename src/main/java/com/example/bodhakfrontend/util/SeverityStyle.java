@@ -1,6 +1,6 @@
 package com.example.bodhakfrontend.util;
 
-import com.example.bodhakfrontend.Models.Severity;
+import com.example.bodhakfrontend.core.model.warning.Severity;
 public class SeverityStyle {
 
     public static String color(Severity severity) {

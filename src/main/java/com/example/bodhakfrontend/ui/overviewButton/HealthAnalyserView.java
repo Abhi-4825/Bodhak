@@ -1,11 +1,11 @@
 package com.example.bodhakfrontend.ui.overviewButton;
 
-import com.example.bodhakfrontend.Backend.models.Class.ConstructorInfo;
-import com.example.bodhakfrontend.Backend.models.Class.MethodInfo;
-import com.example.bodhakfrontend.Backend.models.incrementalModel.ClassInfoViewModel;
-import com.example.bodhakfrontend.Models.FixSuggestion;
-import com.example.bodhakfrontend.Models.WarningRule;
-import com.example.bodhakfrontend.projectAnalysis.fixes.FixSuggestionEngine;
+import com.example.bodhakfrontend.core.model.entity.MemberInfo;
+import com.example.bodhakfrontend.core.model.entity.MemberKind;
+import com.example.bodhakfrontend.core.model.incremental.EntityViewModel;
+import com.example.bodhakfrontend.core.model.warning.FixSuggestion;
+import com.example.bodhakfrontend.core.model.warning.WarningRule;
+import com.example.bodhakfrontend.engine.analysis.fixes.FixSuggestionEngine;
 import com.example.bodhakfrontend.ui.WarningCard;
 import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
@@ -28,11 +28,11 @@ import java.util.*;
 
 public class HealthAnalyserView {
 
-    private final Map<String, ClassInfoViewModel> vmMap;
+    private final Map<String, EntityViewModel> vmMap;
     private final VBox root = new VBox(12);
-    private ClassInfoViewModel currentVm;
+    private EntityViewModel currentVm;
 
-    public HealthAnalyserView(Map<String, ClassInfoViewModel> vmMap) {
+    public HealthAnalyserView(Map<String, EntityViewModel> vmMap) {
         this.vmMap = vmMap;
         root.setPadding(new Insets(12));
     }
@@ -41,13 +41,13 @@ public class HealthAnalyserView {
     // PUBLIC API
     // ==================================================
 
-    public Node show(String className) {
+    public Node show(String entityName) {
         unbind();
-        currentVm = vmMap.get(className);
+        currentVm = vmMap.get(entityName);
 
         if (currentVm == null) {
             root.getChildren().setAll(
-                    new Label("Class not found: " + className)
+                    new Label("Entity not found: " + entityName)
             );
             return root;
         }
@@ -61,10 +61,7 @@ public class HealthAnalyserView {
     private final ChangeListener<Number> numberListener =
             (obs, oldV, newV) -> Platform.runLater(this::rebuild);
 
-    private final ListChangeListener<MethodInfo> methodListener =
-            c -> Platform.runLater(this::rebuild);
-
-    private final ListChangeListener<ConstructorInfo> constructorListener =
+    private final ListChangeListener<MemberInfo> memberListener =
             c -> Platform.runLater(this::rebuild);
 
     private final ListChangeListener<WarningRule> warningListener =
@@ -78,8 +75,7 @@ public class HealthAnalyserView {
     private void bind() {
         currentVm.linesOfCodeProperty().addListener(numberListener);
 
-        currentVm.getMethods().addListener(methodListener);
-        currentVm.getConstructors().addListener(constructorListener);
+        currentVm.getMembers().addListener(memberListener);
         currentVm.getWarnings().addListener(warningListener);
 
         currentVm.getDependsOn().addListener(dependencyListener);
@@ -91,8 +87,7 @@ public class HealthAnalyserView {
 
         currentVm.linesOfCodeProperty().removeListener(numberListener);
 
-        currentVm.getMethods().removeListener(methodListener);
-        currentVm.getConstructors().removeListener(constructorListener);
+        currentVm.getMembers().removeListener(memberListener);
         currentVm.getWarnings().removeListener(warningListener);
 
         currentVm.getDependsOn().removeListener(dependencyListener);
@@ -111,7 +106,7 @@ public class HealthAnalyserView {
     }
 
     private Node title() {
-        Label l = new Label("🫀 Class Health");
+        Label l = new Label("🫀 Entity Health");
         l.getStyleClass().add("label-title");
         return l;
     }
@@ -124,10 +119,10 @@ public class HealthAnalyserView {
                 currentVm.simpleNameProperty().concat("")
         );
 
-        Label pkg = new Label("Package: " + currentVm.getPackageName());
+        Label pkg = new Label("Namespace: " + currentVm.getNamespaceName());
 
         card.getChildren().addAll(
-                new Label("Class:"),
+                new Label("Entity:"),
                 classLabel,
                 pkg
         );
@@ -141,7 +136,7 @@ public class HealthAnalyserView {
         grid.setVgap(12);
 
         grid.add(metricCard("LOC", currentVm.getLinesOfCode(), 300), 0, 0);
-        grid.add(metricCard("Methods", currentVm.getMethods().size(), 15), 1, 0);
+        grid.add(metricCard("Methods", (int)currentVm.getMembers().stream().filter(m -> m.getKind() == MemberKind.METHOD || m.getKind() == MemberKind.FUNCTION).count(), 15), 1, 0);
         grid.add(metricCard("Fan-In", currentVm.getUsedBy().size(), 8), 0, 1);
         grid.add(metricCard("Fan-Out", currentVm.getDependsOn().size(), 10), 1, 1);
 
@@ -274,7 +269,7 @@ public class HealthAnalyserView {
 
         FixSuggestionEngine engine = new FixSuggestionEngine();
         List<FixSuggestion> allFixes =
-                engine.suggestAll(currentVm.toClassInfo());
+                engine.suggestAll(currentVm.toEntityInfo());
 
         VBox fixBox = new VBox(8);
 
