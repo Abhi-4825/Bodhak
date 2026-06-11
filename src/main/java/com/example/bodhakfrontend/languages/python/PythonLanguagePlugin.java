@@ -79,4 +79,9 @@ public class PythonLanguagePlugin implements LanguagePlugin {
     public AstProvider getAstProvider() {
         return astProvider;
     }
+
+    @Override
+    public Parser<TSTree> getParser() {
+        return parser;
+    }
 }

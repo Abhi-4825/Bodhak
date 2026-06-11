@@ -7,6 +7,7 @@ import com.example.bodhakfrontend.core.model.incremental.EntityViewModel;
 import com.example.bodhakfrontend.engine.AnalysisEngine;
 import com.example.bodhakfrontend.engine.AppController;
 import com.example.bodhakfrontend.engine.Performance.core.PerformanceAnalysisService;
+import com.example.bodhakfrontend.engine.growth.core.GrowthAnalysisService;
 import com.example.bodhakfrontend.engine.incremental.ProjectWatcherService;
 import com.example.bodhakfrontend.languages.java.JavaLanguagePlugin;
 import com.example.bodhakfrontend.languages.python.PythonLanguagePlugin;
@@ -17,11 +18,16 @@ import com.example.bodhakfrontend.sync.bus.UIEventBus;
 import com.example.bodhakfrontend.sync.bus.UpdateDispatcher;
 import com.example.bodhakfrontend.sync.handler.*;
 import com.example.bodhakfrontend.sync.store.UIStore;
-
+import  com.example.bodhakfrontend.engine.GraphSnapshot;
 import com.example.bodhakfrontend.ui.Front.FileTreeNodeFactory;
 import com.example.bodhakfrontend.ui.Optimization.OptimizationController;
 import com.example.bodhakfrontend.ui.PlaceHolderUi;
 import com.example.bodhakfrontend.ui.ProjectAnalysis.ProjectAnalysisUi;
+import com.example.bodhakfrontend.ui.nav.BodhakNavBar;
+import com.example.bodhakfrontend.ui.nav.NavTab;
+import com.example.bodhakfrontend.ui.nav.DashboardManager;
+import com.example.bodhakfrontend.ui.nav.OverviewPanel;
+import com.example.bodhakfrontend.ui.performance.PerformanceTestingPanel;
 import com.example.bodhakfrontend.ui.overviewButton.ClassDependencyView;
 import com.example.bodhakfrontend.ui.overviewButton.HealthAnalyserView;
 import com.example.bodhakfrontend.ui.overviewButton.MethodView;
@@ -62,6 +68,11 @@ public class App extends Application {
     private UpdateDispatcher dispatcher;
     private UIStore uiStore;
 
+    // Navigation
+    private BodhakNavBar navBar;
+    private DashboardManager dashboardManager;
+    private OverviewPanel overviewPanel;
+
     // UI components
     private TreeView<File> fileTreeView;
     private TabPane codeTabPane;
@@ -75,6 +86,7 @@ public class App extends Application {
     private HomeScreen homeScreen = new HomeScreen();
     private Button analyzeBtn;
     private Button optimizeBtn;
+    private Button performanceBtn;
     private Label progressLabel;
     private ProgressBar progressBar;
 
@@ -104,6 +116,9 @@ public class App extends Application {
         uiFeatures = new UiFeatures(codeTabPane);
         projectAnalysisUi = new ProjectAnalysisUi(uiFeatures);
 
+        dashboardManager = new DashboardManager();
+        overviewPanel = new OverviewPanel();
+
         // ── Right panel ───────────────────────────────────────────────────────
         rightTabPane = new TabPane();
         rightPanelTabManager = new RightPanelTabManager(rightTabPane);
@@ -120,15 +135,21 @@ public class App extends Application {
         optimizeBtn.setVisible(false);
         optimizeBtn.getStyleClass().add("action-btn-secondary");
 
+        performanceBtn = new Button("⚡ Performance");
+        performanceBtn.setVisible(false);
+        performanceBtn.getStyleClass().add("action-btn-secondary");
+
         HBox actionBar = new HBox(15);
         actionBar.getStyleClass().add("action-bar");
         actionBar.setPadding(new Insets(8, 12, 8, 12));
         actionBar.setAlignment(Pos.CENTER);
         HBox.setHgrow(optimizeBtn, Priority.ALWAYS);
         HBox.setHgrow(analyzeBtn, Priority.ALWAYS);
+        HBox.setHgrow(performanceBtn, Priority.ALWAYS);
         optimizeBtn.setMaxWidth(Double.MAX_VALUE);
         analyzeBtn.setMaxWidth(Double.MAX_VALUE);
-        actionBar.getChildren().addAll(optimizeBtn, analyzeBtn);
+        performanceBtn.setMaxWidth(Double.MAX_VALUE);
+        actionBar.getChildren().addAll(optimizeBtn, analyzeBtn, performanceBtn);
 
         // ── Right panel stack ─────────────────────────────────────────────────
         StackPane rightStack = new StackPane();
@@ -140,8 +161,19 @@ public class App extends Application {
         rightTabPane.managedProperty().bind(rightTabPane.visibleProperty());
 
         BorderPane rightPanel = new BorderPane();
-        rightPanel.setCenter(rightStack);
+        // The router drives the main right-panel view; the legacy tab pane floats on top
+        // The overview panel drives the main right-panel view in IDE mode
+        rightPanel.setCenter(overviewPanel.getRoot());
         rightPanel.setBottom(actionBar);
+
+        // Overlay the legacy right tab pane in a StackPane so both can coexist.
+        // Legacy tabs (Analyze, Optimize, file overview) open on top of router content.
+        StackPane rightOverlay = new StackPane();
+        rightTabPane.setPickOnBounds(false);
+        rightTabPane.visibleProperty().bind(Bindings.isNotEmpty(rightTabPane.getTabs()));
+        rightTabPane.managedProperty().bind(rightTabPane.visibleProperty());
+        rightOverlay.getChildren().addAll(overviewPanel.getRoot(), rightTabPane);
+        rightPanel.setCenter(rightOverlay);
 
         // ── Workspaces ────────────────────────────────────────────────────────
         Node emptyState = placeHolder.createCenterPlaceholder();
@@ -174,8 +206,21 @@ public class App extends Application {
         SplitPane splitPane = new SplitPane();
         splitPane.getItems().addAll(homeScreen.createSidebar(fileTreeView), editorWorkspace, rightPanel);
         splitPane.setDividerPositions(0.18, 0.58);
+        navBar = new BodhakNavBar(tab -> {
+            AnalysisEngine eng = (appController != null) ? appController.getEngine() : null;
+            if (tab == NavTab.OVERVIEW) {
+                root.setCenter(splitPane);
+                overviewPanel.update(eng);
+            } else {
+                root.setCenter(dashboardManager.getView(tab, eng));
+            }
+        });
+
         root.setCenter(splitPane);
-        root.setTop(homeScreen.createTopBar(button -> button.setOnAction(e -> openProject(stage))));
+        root.setTop(homeScreen.createTopBar(
+            button -> button.setOnAction(e -> openProject(stage)),
+            navBar.build()
+        ));
         root.setBottom(homeScreen.createBottomBar(progressBar, progressLabel));
         root.getStyleClass().add("app-root");
         fileTreeView.getStyleClass().add("sidebar");
@@ -240,6 +285,15 @@ public class App extends Application {
             new OptimizationController(rightPanelTabManager, uiStore.getProjectInfo(), uiFeatures)
                     .startOptimization();
             optimizeBtn.setText("Refresh");
+        });
+
+        performanceBtn.setOnAction(e -> {
+            var apiSurface = appController != null
+                    ? appController.getEngine().getApiSurface()
+                    : null;
+            rightPanelTabManager.openPerformanceTab(
+                () -> new PerformanceTestingPanel().build(apiSurface)
+            );
         });
 
         astBtn.setOnAction(e -> showASTWindow(codeTabPane));
@@ -353,6 +407,7 @@ public class App extends Application {
             progressLabel.setVisible(false);
             progressLabel.setText("");
             initAfterLoad(folder, loadTask.getValue());
+
         });
 
         loadTask.setOnFailed(e -> {
@@ -383,26 +438,24 @@ public class App extends Application {
         for (EntityInfo ei : engine.getProjectInfo().getEntities()) {
             uiStore.addEntities(List.of(new EntityViewModel(ei)));
         }
-        PerformanceAnalysisService performanceService =
-                new PerformanceAnalysisService();
 
-        AnalysisReport report =
-                performanceService.analyzeProject(
+       // Testing
+        GrowthAnalysisService growthService =
+                new GrowthAnalysisService();
+
+        List<AnalysisIssue> issues =
+                growthService.analyzeProject(
                         engine.getProjectInfo(),
-                        engine.getDependencyGraph()
-                        ,
+                        engine.getDependencyGraph(),
                         engine.getProjectInfo().getEntities()
                 );
-
         System.out.println(
-                "\n========== PERFORMANCE ANALYSIS =========="
+                "\n========== GROWTH ANALYSIS =========="
         );
 
-        for (AnalysisIssue issue : report.getIssues()) {
+        for (AnalysisIssue issue : issues) {
 
-            System.out.println(
-                    "----------------------------------------"
-            );
+            System.out.println("--------------------------------");
 
             System.out.println(
                     "Title: " + issue.getTitle()
@@ -413,16 +466,8 @@ public class App extends Application {
             );
 
             System.out.println(
-                    "Category: " + issue.getCategory()
-            );
-
-            System.out.println(
-                    "Description: " + issue.getDescription()
-            );
-
-            System.out.println(
-                    "Affected Entities: "
-                            + issue.getAffectedEntities()
+                    "Description: "
+                            + issue.getDescription()
             );
 
             System.out.println(
@@ -430,19 +475,33 @@ public class App extends Application {
                             + issue.getMetrics()
             );
 
-            System.out.println("Suggestions:");
-
-            for (String suggestion : issue.getSuggestions()) {
-
-                System.out.println(
-                        "  - " + suggestion
-                );
-            }
+            System.out.println(
+                    "Attributes: "
+                            + issue.getAttributes()
+            );
         }
 
         System.out.println(
-                "==========================================\n"
+                "===================================="
         );
+        // In App.java → initAfterLoad() — after the GROWTH ANALYSIS block
+
+         GraphSnapshot snapshot = engine.getGraphSnapshot();
+
+        System.out.println("\n========== ALL DEPENDENCIES ==========");
+
+// Every entity and what it directly depends on
+        snapshot.globalDependencies().forEach((entity, dependsOn) -> {
+            if (!dependsOn.isEmpty()) {
+                System.out.println("  " + entity + " → depends on:");
+                dependsOn.forEach(dep -> System.out.println("      " + dep));
+            }
+        });
+
+
+
+ // test code end
+
 
         // ── 2. Create UIEventBus ──────────────────────────────────────────────
         uiEventBus = new UIEventBus();
@@ -453,7 +512,19 @@ public class App extends Application {
                 new EditorHandler(codeTabPane, rightPanelTabManager),
                 new ProjectSummaryHandler(uiStore, rightPanelTabManager, projectAnalysisUi),
                 new EntityListHandler(uiStore),
-                new LogAndProgressHandler(uiStore)
+                new LogAndProgressHandler(uiStore),
+                new UiUpdateHandler() {
+                    @Override
+                    public boolean canHandle(com.example.bodhakfrontend.sync.api.UiUpdateEvent event) {
+                        return event instanceof com.example.bodhakfrontend.sync.events.ProjectSummaryChangedEvent;
+                    }
+
+                    @Override
+                    public void apply(com.example.bodhakfrontend.sync.api.UiUpdateEvent event) {
+                        dashboardManager.clearCache();
+                        overviewPanel.clearCache();
+                    }
+                }
         );
         dispatcher = new UpdateDispatcher(
                 uiEventBus,
@@ -466,6 +537,10 @@ public class App extends Application {
         Platform.runLater(() -> {
             analyzeBtn.setVisible(true);
             optimizeBtn.setVisible(true);
+            performanceBtn.setVisible(true);
+            // Refresh the active nav tab with live engine data after project load
+            overviewPanel.update(appController.getEngine());
+            navBar.select(NavTab.OVERVIEW);
         });
 
         // ── 5. Start live file watcher (uses the new UIEventBus) ─────────────

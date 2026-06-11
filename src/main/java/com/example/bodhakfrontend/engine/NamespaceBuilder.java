@@ -75,6 +75,36 @@ public class NamespaceBuilder {
                 }
             }
             ns.setWarnings(warnings);
+
+            // Compute Fan-In and Fan-Out
+            int fanIn = ns.getUsedBy().size();
+            int fanOut = ns.getDependsOn().size();
+            ns.setFanIn(fanIn);
+            ns.setFanOut(fanOut);
+
+            // Compute Instability Score (0.0 to 1.0)
+            double instability = 0.0;
+            if ((fanIn + fanOut) > 0) {
+                instability = (double) fanOut / (fanIn + fanOut);
+            }
+            ns.setInstabilityScore(instability);
+
+            // Populate Findings
+            for (NamespaceWarning warning : warnings) {
+                ns.getFindings().add(warning.name().replace("_", " "));
+            }
+            if (!ns.getCircularGroups().isEmpty()) {
+                ns.getFindings().add("PARTICIPATES IN CYCLE");
+            }
+            if (instability > 0.8 && fanOut > 5) {
+                ns.getFindings().add("HIGHLY UNSTABLE");
+            }
+
+            // Compute Risk Score
+            double risk = instability * 50.0;
+            if (!ns.getCircularGroups().isEmpty()) risk += 30.0;
+            if (fanIn + fanOut > 10) risk += 20.0;
+            ns.setRiskScore(Math.min(100.0, risk));
         }
         
         return map;

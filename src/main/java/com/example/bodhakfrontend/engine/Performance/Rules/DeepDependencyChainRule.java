@@ -7,7 +7,7 @@ import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
 import com.example.bodhakfrontend.core.Analysis.AnalysisIssue;
 import com.example.bodhakfrontend.core.Analysis.AnalysisSeverity;
 import com.example.bodhakfrontend.core.model.entity.EntityInfo;
-import com.example.bodhakfrontend.engine.Performance.Metrics.DependencyDepthMetric;
+import com.example.bodhakfrontend.core.Metrics.DependencyDepthMetric;
 
 
 import java.util.ArrayList;
@@ -58,7 +58,7 @@ public class DeepDependencyChainRule implements PerformanceRule {
                 Map.of(
                         "dependencyDepth", depth
                 ),
-                buildSuggestions()
+                buildSuggestions(),Map.of()
         );
     }
 

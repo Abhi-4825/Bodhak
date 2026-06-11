@@ -102,8 +102,8 @@ public class JavaAstProvider implements AstProvider {
         if (node instanceof ForStmt || node instanceof ForEachStmt) return "for";
         if (node instanceof WhileStmt) return "while";
         if (node instanceof TryStmt) return "try";
-        if (node instanceof com.github.javaparser.ast.expr.Name ||
-                node instanceof com.github.javaparser.ast.expr.SimpleName)
+        if (node instanceof Name ||
+                node instanceof SimpleName)
             return "Name: " + node;
         return node.getClass().getSimpleName();
     }

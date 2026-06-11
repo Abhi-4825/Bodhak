@@ -1,9 +1,11 @@
 package com.example.bodhakfrontend.engine;
+import com.example.bodhakfrontend.App;
 
 import java.util.*;
 
 public class CircularDependency {
 
+     App a=new App();
     private int index = 0;
     private final Stack<String> stack = new Stack<>();
     private final Map<String, Integer> indices = new HashMap<>();

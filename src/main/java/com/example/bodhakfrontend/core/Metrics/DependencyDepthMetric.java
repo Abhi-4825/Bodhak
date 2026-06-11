@@ -1,4 +1,4 @@
-package com.example.bodhakfrontend.engine.Performance.Metrics;
+package com.example.bodhakfrontend.core.Metrics;
 
 
 
@@ -34,7 +34,7 @@ public class DependencyDepthMetric implements Metric<EntityInfo> {
         );
     }
 
-    private int calculateDepth(
+    private double calculateDepth(
             String current,
             Map<String, Set<String>> graph,
             Set<String> visited
@@ -51,11 +51,11 @@ public class DependencyDepthMetric implements Metric<EntityInfo> {
             return 0;
         }
 
-        int maxDepth = 0;
+        double maxDepth = 0;
 
         for (String dependency : dependencies) {
 
-            int depth = calculateDepth(
+            double depth = calculateDepth(
                     dependency,
                     graph,
                     new HashSet<>(visited)

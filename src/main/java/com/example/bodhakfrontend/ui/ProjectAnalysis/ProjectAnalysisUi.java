@@ -308,7 +308,7 @@ private Node buildLargestFileView(ProjectInfo result) {
         root.getChildren().add(empty);
         return root;
     }
-    List<com.example.bodhakfrontend.core.model.project.LargestFileInfo> files=result.getLargestFiles();
+    List<LargestFileInfo> files=result.getLargestFiles();
 
     for(LargestFileInfo lf:files){
         HBox row = new HBox();
@@ -386,7 +386,7 @@ private Node buildClassMetricsView(ProjectInfo projectInfo) {
         }
     });
     listView.getItems().setAll(sorted);
-    listView.setCellFactory(lv -> new ProjectAnalysisUi.ClassMetricsCell());
+    listView.setCellFactory(lv -> new ClassMetricsCell());
 
     return listView;
 }

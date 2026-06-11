@@ -18,6 +18,7 @@ public class AnalysisIssue {
     private final Map<String, Double> metrics;
 
     private final List<String> suggestions;
+    private final Map<String, Object> attributes;
 
     public AnalysisIssue(
             String title,
@@ -26,7 +27,7 @@ public class AnalysisIssue {
             AnalysisCategory category,
             List<String> affectedEntities,
             Map<String, Double> metrics,
-            List<String> suggestions
+            List<String> suggestions, Map<String, Object> attributes
     ) {
 
         this.title = title;
@@ -36,6 +37,7 @@ public class AnalysisIssue {
         this.affectedEntities = affectedEntities;
         this.metrics = metrics;
         this.suggestions = suggestions;
+        this.attributes = attributes;
     }
 
     public String getTitle() {
@@ -64,5 +66,9 @@ public class AnalysisIssue {
 
     public List<String> getSuggestions() {
         return suggestions;
+    }
+
+    public Map<String, Object> getAttributes() {
+        return attributes;
     }
 }

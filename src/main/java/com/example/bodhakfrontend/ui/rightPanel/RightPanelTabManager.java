@@ -127,6 +127,17 @@ public class RightPanelTabManager {
         rightTabPane.getSelectionModel().select(tab);
     }
 
+    public void openPerformanceTab(Supplier<Node> contentSupplier) {
+        rightTabPane.getTabs().removeIf(t -> t.getText().equals("⚡ Performance"));
+
+        Tab tab = new Tab("⚡ Performance");
+        tab.setContent(contentSupplier.get());
+        tab.setClosable(true);
+
+        rightTabPane.getTabs().add(tab);
+        rightTabPane.getSelectionModel().select(tab);
+    }
+
 
 
 

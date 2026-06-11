@@ -1,11 +1,15 @@
 package com.example.bodhakfrontend.engine;
 
+import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
 import com.example.bodhakfrontend.core.model.entity.EntityInfo;
 import com.example.bodhakfrontend.core.model.namespace.NamespaceInfo;
 import com.example.bodhakfrontend.core.model.project.ProjectInfo;
 import com.example.bodhakfrontend.core.model.warning.WarningRule;
 import com.example.bodhakfrontend.core.plugin.LanguagePlugin;
 import com.example.bodhakfrontend.core.plugin.LanguagePluginRegistry;
+import com.example.bodhakfrontend.core.projectType.classification.ProjectClassificationResult;
+import com.example.bodhakfrontend.core.projectType.detection.FrameworkDetectorRegistry;
+import com.example.bodhakfrontend.core.projectType.engine.ProjectTypeAnalyzer;
 import com.example.bodhakfrontend.engine.analyzer.GlobalEntryPointDetector;
 import com.example.bodhakfrontend.engine.incremental.EntityViewModelBuilder;
 
@@ -23,18 +27,26 @@ public class AnalysisEngine {
     private final NamespaceBuilder namespaceBuilder;
     private final ProjectInfoBuilder projectInfoBuilder;
     private final EntityViewModelBuilder viewModelBuilder;
+    private final ProjectTypeAnalyzer projectTypeAnalyzer;
+    private final com.example.bodhakfrontend.core.api.engine.EndpointDiscoveryEngine endpointDiscoveryEngine;
 
     private final Map<Path, List<EntityInfo>> entityPathMap = new ConcurrentHashMap<>();
     private final Map<Path, Set<String>> pathNamesMap = new ConcurrentHashMap<>();
     private final List<EntityInfo> allEntities = new ArrayList<>();
+    private ProjectClassificationResult classificationResult;
+    private com.example.bodhakfrontend.core.api.model.ApiSurface apiSurface;
 
-    public AnalysisEngine(LanguagePluginRegistry registry, EntityViewModelBuilder viewModelBuilder) {
+    public AnalysisEngine(LanguagePluginRegistry registry, EntityViewModelBuilder viewModelBuilder,
+                          FrameworkDetectorRegistry detectorRegistry,
+                          com.example.bodhakfrontend.core.api.engine.EndpointDiscoveryEngine endpointDiscoveryEngine) {
         this.registry = registry;
         this.viewModelBuilder = viewModelBuilder;
         this.scanner = new ProjectScanner(registry);
         this.dependencyGraph = new DependencyGraph(registry);
         this.namespaceBuilder = new NamespaceBuilder();
         this.projectInfoBuilder = new ProjectInfoBuilder(scanner, new GlobalEntryPointDetector(registry));
+        this.projectTypeAnalyzer = new ProjectTypeAnalyzer(detectorRegistry);
+        this.endpointDiscoveryEngine = endpointDiscoveryEngine;
     }
 
     public void analyze(Path projectPath) {
@@ -78,11 +90,57 @@ public class AnalysisEngine {
         // 5. Build ViewModels
         viewModelBuilder.initialBuild(allEntities);
 
+
         // 6. Build Namespaces
         Map<String, NamespaceInfo> namespaces = namespaceBuilder.build(allEntities);
 
         // 7. Aggregate Project Info
         projectInfoBuilder.buildAll(projectPath, allEntities, namespaces);
+
+        // 8. Project Type Detection
+        AnalysisContext analysisContext = new AnalysisContext(
+                getProjectInfo(), dependencyGraph, allEntities);
+        this.classificationResult = projectTypeAnalyzer.analyze(analysisContext);
+
+        // 9. Endpoint Discovery
+        com.example.bodhakfrontend.core.projectType.detection.DetectionContext detectionContext = 
+                new com.example.bodhakfrontend.core.projectType.detection.DetectionContext(analysisContext);
+        this.apiSurface = endpointDiscoveryEngine.analyze(detectionContext, registry);
+        // --- PRINT STATEMENT TO SEE ENDPOINT OUTPUT IN CONSOLE ---
+        System.out.println("\n=== ENDPOINT DISCOVERY OUTPUT ===");
+        if (this.apiSurface == null || this.apiSurface.isEmpty()) {
+            System.out.println("  No endpoints discovered.");
+        } else {
+            System.out.println("Discovered Endpoints:");
+            for (com.example.bodhakfrontend.core.api.model.ServiceEndpoint endpoint : this.apiSurface.getEndpoints()) {
+                System.out.printf("  - [%s] %s (Source: %s)%n", 
+                        endpoint.httpMethod(), endpoint.fullPath(), endpoint.sourceEntityName());
+            }
+        }
+        System.out.println("=====================================\n");
+
+        // --- PRINT STATEMENT TO SEE OUTPUT IN CONSOLE ---
+        System.out.println("\n=== PROJECT TYPE DETECTION OUTPUT ===");
+        System.out.println("Primary Project Type: " + this.classificationResult.primaryType());
+        System.out.println("Detected Project Types with Confidence:");
+        this.classificationResult.projectTypes().forEach((type, confidence) -> {
+            System.out.printf("  - %s (Confidence: %.2f)%n", type, confidence);
+        });
+        System.out.println("Detected Frameworks:");
+        if (this.classificationResult.detectedFrameworks().isEmpty()) {
+            System.out.println("  - None");
+        } else {
+            this.classificationResult.detectedFrameworks().forEach(framework -> {
+                System.out.printf("  * %s (Confidence: %.2f, Score: %.2f)%n",
+                        framework.frameworkName(), framework.confidence(), framework.score());
+                System.out.println("    Evidence:");
+                framework.evidence().forEach(ev -> {
+                    System.out.printf("      - [%s] %s (Weight: %.2f, Source: %s)%n",
+                            ev.category(), ev.description(), ev.weight(), ev.source());
+                });
+            });
+        }
+        System.out.println("=====================================\n");
     }
 
     private void applyGraphDependencies(List<EntityInfo> entities) {
@@ -236,5 +294,15 @@ public class AnalysisEngine {
 
     public LanguagePluginRegistry getPluginRegistry() {
         return registry;
+    }
+
+    /** Returns the result of project type classification, or null if not yet analyzed. */
+    public ProjectClassificationResult getClassificationResult() {
+        return classificationResult;
+    }
+
+    /** Returns the discovered API surface, or null if not yet analyzed. */
+    public com.example.bodhakfrontend.core.api.model.ApiSurface getApiSurface() {
+        return apiSurface;
     }
 }

@@ -27,4 +27,7 @@ public interface LanguagePlugin {
     SyntaxHighlighter getSyntaxHighlighter();
     /** Returns a language-specific AST builder. Never returns null. */
     AstProvider getAstProvider();
+    
+    /** Returns the underlying parser cache. */
+    Parser<?> getParser();
 }

@@ -85,4 +85,9 @@ public class JavaLanguagePlugin implements LanguagePlugin {
     public AstProvider getAstProvider() {
         return astProvider;
     }
+
+    @Override
+    public Parser<CompilationUnit> getParser() {
+        return parser;
+    }
 }

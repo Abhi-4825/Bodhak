@@ -1,6 +1,12 @@
 package com.example.bodhakfrontend.engine;
 
 import com.example.bodhakfrontend.core.plugin.LanguagePluginRegistry;
+import com.example.bodhakfrontend.core.projectType.detection.FrameworkDetectorRegistry;
+import com.example.bodhakfrontend.core.projectType.detectors.java.SpringBootDetector;
+import com.example.bodhakfrontend.core.projectType.detectors.java.JavaDesktopDetector;
+import com.example.bodhakfrontend.core.projectType.detectors.java.JavaCliDetector;
+import com.example.bodhakfrontend.core.projectType.detectors.javascript.ReactDetector;
+import com.example.bodhakfrontend.core.projectType.detectors.python.FastAPIDetector;
 import com.example.bodhakfrontend.engine.incremental.EntityViewModelBuilder;
 
 /**
@@ -20,7 +26,26 @@ public class AppController {
         // This is the dependency graph that serves the ViewModelBuilder
         DependencyGraph graph = new DependencyGraph(this.registry);
         this.viewModelBuilder = new EntityViewModelBuilder(graph);
-        this.analysisEngine = new AnalysisEngine(this.registry, this.viewModelBuilder);
+
+        // Wire the framework detector registry with built-in detectors.
+        // To add a new framework: detectorRegistry.register(new KtorDetector()) — nothing else changes.
+        FrameworkDetectorRegistry detectorRegistry = new FrameworkDetectorRegistry();
+        detectorRegistry.registerAll(
+                new SpringBootDetector(),
+                new JavaDesktopDetector(),
+                new JavaCliDetector(),
+                new ReactDetector(),
+                new FastAPIDetector()
+        );
+
+        // Wire Endpoint Discovery
+        com.example.bodhakfrontend.core.api.engine.EndpointDiscovererRegistry endpointRegistry = new com.example.bodhakfrontend.core.api.engine.EndpointDiscovererRegistry();
+        endpointRegistry.registerAll(
+                new com.example.bodhakfrontend.core.api.detectors.java.SpringBootEndpointDiscoverer()
+        );
+        com.example.bodhakfrontend.core.api.engine.EndpointDiscoveryEngine endpointEngine = new com.example.bodhakfrontend.core.api.engine.EndpointDiscoveryEngine(endpointRegistry);
+
+        this.analysisEngine = new AnalysisEngine(this.registry, this.viewModelBuilder, detectorRegistry, endpointEngine);
     }
 
     public LanguagePluginRegistry getRegistry() {

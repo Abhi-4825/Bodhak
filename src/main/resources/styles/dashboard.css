@@ -1,0 +1,71 @@
+.root {
+    -fx-font-family: "Segoe UI";
+}
+
+.architecture-dashboard {
+    -fx-background-color: #0b1114;
+}
+
+.dashboard-card {
+    -fx-background-color: #111a1d;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-border-color: #1f2b30;
+    -fx-border-width: 1;
+}
+
+.metric-card {
+    -fx-background-color: #111a1d;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: #1f2b30;
+    -fx-padding: 18;
+}
+
+.metric-value {
+    -fx-font-size: 30;
+    -fx-font-weight: bold;
+}
+
+.metric-title {
+    -fx-font-size: 11;
+    -fx-text-fill: #8ea2a8;
+}
+
+.dashboard-title {
+    -fx-text-fill: #e6f1f3;
+    -fx-font-size: 22;
+    -fx-font-weight: bold;
+}
+
+.dashboard-subtitle {
+    -fx-text-fill: #8ea2a8;
+    -fx-font-size: 13;
+}
+
+.health-score {
+    -fx-text-fill: #00e5ff;
+    -fx-font-size: 52;
+    -fx-font-weight: bold;
+}
+
+.section-title {
+    -fx-text-fill: #e6f1f3;
+    -fx-font-size: 15;
+    -fx-font-weight: bold;
+}
+
+.finding-critical {
+    -fx-border-width: 0 0 0 4;
+    -fx-border-color: #ff5f56;
+}
+
+.finding-warning {
+    -fx-border-width: 0 0 0 4;
+    -fx-border-color: #ffc857;
+}
+
+.finding-info {
+    -fx-border-width: 0 0 0 4;
+    -fx-border-color: #00e5ff;
+}

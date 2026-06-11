@@ -11,21 +11,50 @@ import java.util.function.Consumer;
 public class HomeScreen {
 
     // ================= TOP BAR =================
+
+    /**
+     * Legacy overload — keeps existing callers compiling.
+     * Produces a top bar without a nav strip (used before project load).
+     */
     public Node createTopBar(Consumer<Button> onSelectFolder) {
-        HBox root = new HBox(20);
+        return createTopBar(onSelectFolder, null);
+    }
+
+    /**
+     * Creates the top bar with an optional navigation strip.
+     *
+     * @param onSelectFolder Action to run when "Select Folder" is clicked.
+     * @param navBar         The {@link com.example.bodhakfrontend.ui.nav.BodhakNavBar} node,
+     *                       or {@code null} to omit the navigation strip.
+     */
+    public Node createTopBar(Consumer<Button> onSelectFolder, Node navBar) {
+        HBox root = new HBox(14);
         root.getStyleClass().add("top-bar");
         root.setAlignment(Pos.CENTER_LEFT);
         root.setPadding(new Insets(8, 16, 8, 16));
+
         Label logo = new Label("Bodhak");
         logo.getStyleClass().add("logo");
+
         Button selectBtn = new Button("SELECT FOLDER");
         selectBtn.getStyleClass().add("btn-primary");
         onSelectFolder.accept(selectBtn);
+
+        // Nav strip sits right after the folder button
+        if (navBar != null) {
+            root.getChildren().addAll(logo, selectBtn, navBar);
+        } else {
+            root.getChildren().addAll(logo, selectBtn);
+        }
+
+        // Push everything to the left; spacer fills the right
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        root.getChildren().addAll(logo, selectBtn, spacer);
+        root.getChildren().add(spacer);
+
         return root;
     }
+
 
     // ================= SIDEBAR =================
     public Node createSidebar(TreeView<File> tree) {

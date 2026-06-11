@@ -1,13 +1,14 @@
-package com.example.bodhakfrontend.engine.Performance.Metrics;
+package com.example.bodhakfrontend.core.Metrics;
 
 import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+
 import com.example.bodhakfrontend.core.model.entity.EntityInfo;
 import com.example.bodhakfrontend.engine.DependencyGraph;
 import com.example.bodhakfrontend.engine.GraphSnapshot;
 
 import java.util.Set;
 
-public class FanOutMetric implements Metric<EntityInfo> {
+public class FanInMetric implements Metric<EntityInfo> {
 
     @Override
     public double calculate(
@@ -19,13 +20,13 @@ public class FanOutMetric implements Metric<EntityInfo> {
 
         GraphSnapshot snapshot = graph.snapshot();
 
-        Set<String> outgoing =
-                snapshot.globalDependencies()
+        Set<String> incoming =
+                snapshot.reverseDependencies()
                         .getOrDefault(
                                 entity.getEntityName(),
                                 Set.of()
                         );
 
-        return outgoing.size();
+        return incoming.size();
     }
 }

@@ -2,7 +2,9 @@ package com.example.bodhakfrontend.core.model.namespace;
 
 import com.example.bodhakfrontend.core.model.entity.EntityInfo;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -21,6 +23,13 @@ public class NamespaceInfo {
     private final Set<Set<String>> circularGroups = new HashSet<>();
     private boolean partOfCycle;
 
+    // Pre-computed architecture metrics
+    private int fanIn;
+    private int fanOut;
+    private double instabilityScore;
+    private double riskScore;
+    private final List<String> findings = new ArrayList<>();
+
     public NamespaceInfo(String namespaceName) {
         this.namespaceName = namespaceName;
     }
@@ -35,9 +44,20 @@ public class NamespaceInfo {
     public Set<NamespaceWarning> getWarnings()    { return warnings;      }
     public boolean isPartOfCycle()                { return partOfCycle;   }
 
+    public int getFanIn()                         { return fanIn;         }
+    public int getFanOut()                        { return fanOut;        }
+    public double getInstabilityScore()           { return instabilityScore; }
+    public double getRiskScore()                  { return riskScore;     }
+    public List<String> getFindings()             { return findings;      }
+
     // ── Mutators ──────────────────────────────────────────────────────────────
 
     public void setPartOfCycle(boolean value) { this.partOfCycle = value; }
+    
+    public void setFanIn(int fanIn) { this.fanIn = fanIn; }
+    public void setFanOut(int fanOut) { this.fanOut = fanOut; }
+    public void setInstabilityScore(double score) { this.instabilityScore = score; }
+    public void setRiskScore(double score) { this.riskScore = score; }
 
     public void setWarnings(Set<NamespaceWarning> newWarnings) {
         warnings.clear();
