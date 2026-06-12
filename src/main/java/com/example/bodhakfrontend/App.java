@@ -1,5 +1,13 @@
 package com.example.bodhakfrontend;
 
+import com.example.bodhakfrontend.ai.context.AiPromptContext;
+import com.example.bodhakfrontend.ai.context.AiPromptContextBuilder;
+import com.example.bodhakfrontend.ai.evidence.builder.ArchitectureEvidenceBuilder;
+import com.example.bodhakfrontend.ai.evidence.model.ArchitectureAnalysisEvidence;
+import com.example.bodhakfrontend.ai.model.AnalysisType;
+import com.example.bodhakfrontend.ai.prompt.ArchitecturePromptBuilder;
+import com.example.bodhakfrontend.ai.service.ArchitectureAnalysisService;
+import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
 import com.example.bodhakfrontend.core.Analysis.AnalysisIssue;
 import com.example.bodhakfrontend.core.Analysis.AnalysisReport;
 import com.example.bodhakfrontend.core.model.entity.EntityInfo;
@@ -440,67 +448,24 @@ public class App extends Application {
         }
 
        // Testing
-        GrowthAnalysisService growthService =
-                new GrowthAnalysisService();
 
-        List<AnalysisIssue> issues =
-                growthService.analyzeProject(
-                        engine.getProjectInfo(),
-                        engine.getDependencyGraph(),
-                        engine.getProjectInfo().getEntities()
-                );
-        System.out.println(
-                "\n========== GROWTH ANALYSIS =========="
-        );
+        System.out.println("Architectural analysis testing");
+        AnalysisContext analysisContext=new AnalysisContext(engine.getProjectInfo(),engine.getDependencyGraph(),engine.getProjectInfo().getEntities());
+        ArchitectureEvidenceBuilder architectureEvidenceBuilder=new ArchitectureEvidenceBuilder();
+        ArchitectureAnalysisEvidence evidence=architectureEvidenceBuilder.build(analysisContext);
 
-        for (AnalysisIssue issue : issues) {
+       String prompt=new ArchitecturePromptBuilder().build(evidence);
+        System.out.println(prompt);
 
-            System.out.println("--------------------------------");
-
-            System.out.println(
-                    "Title: " + issue.getTitle()
-            );
-
-            System.out.println(
-                    "Severity: " + issue.getSeverity()
-            );
-
-            System.out.println(
-                    "Description: "
-                            + issue.getDescription()
-            );
-
-            System.out.println(
-                    "Metrics: "
-                            + issue.getMetrics()
-            );
-
-            System.out.println(
-                    "Attributes: "
-                            + issue.getAttributes()
-            );
+        ArchitectureAnalysisService service=new ArchitectureAnalysisService();
+        try {
+            String result=service.analyze(analysisContext);
+            System.out.println(result);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
 
-        System.out.println(
-                "===================================="
-        );
-        // In App.java → initAfterLoad() — after the GROWTH ANALYSIS block
-
-         GraphSnapshot snapshot = engine.getGraphSnapshot();
-
-        System.out.println("\n========== ALL DEPENDENCIES ==========");
-
-// Every entity and what it directly depends on
-        snapshot.globalDependencies().forEach((entity, dependsOn) -> {
-            if (!dependsOn.isEmpty()) {
-                System.out.println("  " + entity + " → depends on:");
-                dependsOn.forEach(dep -> System.out.println("      " + dep));
-            }
-        });
-
-
-
- // test code end
+        // test code end
 
 
         // ── 2. Create UIEventBus ──────────────────────────────────────────────

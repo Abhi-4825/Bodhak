@@ -126,7 +126,7 @@ public class EntityInfo {
     private void detectIssues() {
         issueCache.clear();
         if (isGodEntity())                               issueCache.add(IssueType.GOD_CLASS);
-        if (dependsOn.size() + usedBy.size() > 10)      issueCache.add(IssueType.HIGH_COUPLING);
+        if (dependsOn.size() > 10)      issueCache.add(IssueType.HIGH_COUPLING);
         if (!circularGroups.isEmpty())                   issueCache.add(IssueType.CIRCULAR_DEPENDENCY);
         if (fields.size() >= 3 && members.size() <= 2)  issueCache.add(IssueType.ANEMIC_DOMAIN);
     }
