@@ -11,7 +11,8 @@ public enum NavTab {
     OVERVIEW     ("⬡  Overview"),
     ARCHITECTURE ("⬡  Architecture"),
     CODE_HEALTH  ("⬡  Code Health"),
-    PERFORMANCE  ("⬡  Performance");
+    PERFORMANCE  ("⬡  Performance"),
+    DEFECTS      ("⬡  Defects");
 
     private final String label;
 

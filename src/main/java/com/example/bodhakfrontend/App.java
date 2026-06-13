@@ -33,8 +33,8 @@ import com.example.bodhakfrontend.ui.PlaceHolderUi;
 import com.example.bodhakfrontend.ui.ProjectAnalysis.ProjectAnalysisUi;
 import com.example.bodhakfrontend.ui.nav.BodhakNavBar;
 import com.example.bodhakfrontend.ui.nav.NavTab;
-import com.example.bodhakfrontend.ui.nav.DashboardManager;
 import com.example.bodhakfrontend.ui.nav.OverviewPanel;
+import com.example.bodhakfrontend.ui.nav.workspace.WorkspaceRouter;
 import com.example.bodhakfrontend.ui.performance.PerformanceTestingPanel;
 import com.example.bodhakfrontend.ui.overviewButton.ClassDependencyView;
 import com.example.bodhakfrontend.ui.overviewButton.HealthAnalyserView;
@@ -77,9 +77,9 @@ public class App extends Application {
     private UIStore uiStore;
 
     // Navigation
-    private BodhakNavBar navBar;
-    private DashboardManager dashboardManager;
-    private OverviewPanel overviewPanel;
+    private BodhakNavBar    navBar;
+    private WorkspaceRouter workspaceRouter;
+    private OverviewPanel   overviewPanel;
 
     // UI components
     private TreeView<File> fileTreeView;
@@ -124,7 +124,6 @@ public class App extends Application {
         uiFeatures = new UiFeatures(codeTabPane);
         projectAnalysisUi = new ProjectAnalysisUi(uiFeatures);
 
-        dashboardManager = new DashboardManager();
         overviewPanel = new OverviewPanel();
 
         // ── Right panel ───────────────────────────────────────────────────────
@@ -214,17 +213,13 @@ public class App extends Application {
         SplitPane splitPane = new SplitPane();
         splitPane.getItems().addAll(homeScreen.createSidebar(fileTreeView), editorWorkspace, rightPanel);
         splitPane.setDividerPositions(0.18, 0.58);
-        navBar = new BodhakNavBar(tab -> {
-            AnalysisEngine eng = (appController != null) ? appController.getEngine() : null;
-            if (tab == NavTab.OVERVIEW) {
-                root.setCenter(splitPane);
-                overviewPanel.update(eng);
-            } else {
-                root.setCenter(dashboardManager.getView(tab, eng));
-            }
-        });
 
-        root.setCenter(splitPane);
+        // ── WorkspaceRouter — owns all workspaces, drives navigation ──────────
+        // root.setCenter() is called ONCE here and never again on tab change.
+        workspaceRouter = new WorkspaceRouter(splitPane, overviewPanel);
+        navBar = new BodhakNavBar(workspaceRouter::show);
+
+        root.setCenter(workspaceRouter.getRoot());
         root.setTop(homeScreen.createTopBar(
             button -> button.setOnAction(e -> openProject(stage)),
             navBar.build()
@@ -449,21 +444,21 @@ public class App extends Application {
 
        // Testing
 
-        System.out.println("Architectural analysis testing");
-        AnalysisContext analysisContext=new AnalysisContext(engine.getProjectInfo(),engine.getDependencyGraph(),engine.getProjectInfo().getEntities());
-        ArchitectureEvidenceBuilder architectureEvidenceBuilder=new ArchitectureEvidenceBuilder();
-        ArchitectureAnalysisEvidence evidence=architectureEvidenceBuilder.build(analysisContext);
-
-       String prompt=new ArchitecturePromptBuilder().build(evidence);
-        System.out.println(prompt);
-
-        ArchitectureAnalysisService service=new ArchitectureAnalysisService();
-        try {
-            String result=service.analyze(analysisContext);
-            System.out.println(result);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+//        System.out.println("Architectural analysis testing");
+//        AnalysisContext analysisContext=new AnalysisContext(engine.getProjectInfo(),engine.getDependencyGraph(),engine.getProjectInfo().getEntities());
+//        ArchitectureEvidenceBuilder architectureEvidenceBuilder=new ArchitectureEvidenceBuilder();
+//        ArchitectureAnalysisEvidence evidence=architectureEvidenceBuilder.build(analysisContext);
+//
+//       String prompt=new ArchitecturePromptBuilder().build(evidence);
+//        System.out.println(prompt);
+//
+//        ArchitectureAnalysisService service=new ArchitectureAnalysisService();
+//        try {
+//            String result=service.analyze(analysisContext);
+//            System.out.println(result);
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
 
         // test code end
 
@@ -486,8 +481,11 @@ public class App extends Application {
 
                     @Override
                     public void apply(com.example.bodhakfrontend.sync.api.UiUpdateEvent event) {
-                        dashboardManager.clearCache();
+                        // Incremental project changes — refresh the overview panel only.
+                        // Full workspace refresh (incl. Architecture) happens in initAfterLoad
+                        // when a new project is loaded.
                         overviewPanel.clearCache();
+                        overviewPanel.update(appController != null ? appController.getEngine() : null);
                     }
                 }
         );
@@ -503,8 +501,11 @@ public class App extends Application {
             analyzeBtn.setVisible(true);
             optimizeBtn.setVisible(true);
             performanceBtn.setVisible(true);
-            // Refresh the active nav tab with live engine data after project load
-            overviewPanel.update(appController.getEngine());
+
+            // Propagate the new engine to every workspace — each updates in-place.
+            // OverviewWorkspace wraps the splitPane and calls overviewPanel.update().
+            // ArchitectureWorkspace clears stale graph state and rebuilds once.
+            workspaceRouter.refreshAll(engine);
             navBar.select(NavTab.OVERVIEW);
         });
 
