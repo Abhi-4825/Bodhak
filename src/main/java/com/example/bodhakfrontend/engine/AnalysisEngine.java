@@ -106,18 +106,7 @@ public class AnalysisEngine {
         com.example.bodhakfrontend.core.projectType.detection.DetectionContext detectionContext = 
                 new com.example.bodhakfrontend.core.projectType.detection.DetectionContext(analysisContext);
         this.apiSurface = endpointDiscoveryEngine.analyze(detectionContext, registry);
-        // --- PRINT STATEMENT TO SEE ENDPOINT OUTPUT IN CONSOLE ---
-        System.out.println("\n=== ENDPOINT DISCOVERY OUTPUT ===");
-        if (this.apiSurface == null || this.apiSurface.isEmpty()) {
-            System.out.println("  No endpoints discovered.");
-        } else {
-            System.out.println("Discovered Endpoints:");
-            for (com.example.bodhakfrontend.core.api.model.ServiceEndpoint endpoint : this.apiSurface.getEndpoints()) {
-                System.out.printf("  - [%s] %s (Source: %s)%n", 
-                        endpoint.httpMethod(), endpoint.fullPath(), endpoint.sourceEntityName());
-            }
-        }
-        System.out.println("=====================================\n");
+
 
         // --- PRINT STATEMENT TO SEE OUTPUT IN CONSOLE ---
         System.out.println("\n=== PROJECT TYPE DETECTION OUTPUT ===");

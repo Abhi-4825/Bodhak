@@ -1,21 +1,13 @@
 package com.example.bodhakfrontend;
 
-import com.example.bodhakfrontend.ai.context.AiPromptContext;
-import com.example.bodhakfrontend.ai.context.AiPromptContextBuilder;
 import com.example.bodhakfrontend.ai.evidence.builder.ArchitectureEvidenceBuilder;
-import com.example.bodhakfrontend.ai.evidence.model.ArchitectureAnalysisEvidence;
-import com.example.bodhakfrontend.ai.model.AnalysisType;
+import com.example.bodhakfrontend.ai.evidence.model.architectur.ArchitectureAnalysisEvidence;
 import com.example.bodhakfrontend.ai.prompt.ArchitecturePromptBuilder;
-import com.example.bodhakfrontend.ai.service.ArchitectureAnalysisService;
 import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
-import com.example.bodhakfrontend.core.Analysis.AnalysisIssue;
-import com.example.bodhakfrontend.core.Analysis.AnalysisReport;
 import com.example.bodhakfrontend.core.model.entity.EntityInfo;
 import com.example.bodhakfrontend.core.model.incremental.EntityViewModel;
 import com.example.bodhakfrontend.engine.AnalysisEngine;
 import com.example.bodhakfrontend.engine.AppController;
-import com.example.bodhakfrontend.engine.Performance.core.PerformanceAnalysisService;
-import com.example.bodhakfrontend.engine.growth.core.GrowthAnalysisService;
 import com.example.bodhakfrontend.engine.incremental.ProjectWatcherService;
 import com.example.bodhakfrontend.languages.java.JavaLanguagePlugin;
 import com.example.bodhakfrontend.languages.python.PythonLanguagePlugin;
@@ -26,7 +18,6 @@ import com.example.bodhakfrontend.sync.bus.UIEventBus;
 import com.example.bodhakfrontend.sync.bus.UpdateDispatcher;
 import com.example.bodhakfrontend.sync.handler.*;
 import com.example.bodhakfrontend.sync.store.UIStore;
-import  com.example.bodhakfrontend.engine.GraphSnapshot;
 import com.example.bodhakfrontend.ui.Front.FileTreeNodeFactory;
 import com.example.bodhakfrontend.ui.Optimization.OptimizationController;
 import com.example.bodhakfrontend.ui.PlaceHolderUi;
@@ -36,7 +27,6 @@ import com.example.bodhakfrontend.ui.nav.NavTab;
 import com.example.bodhakfrontend.ui.nav.OverviewPanel;
 import com.example.bodhakfrontend.ui.nav.workspace.WorkspaceRouter;
 import com.example.bodhakfrontend.ui.performance.PerformanceTestingPanel;
-import com.example.bodhakfrontend.ui.overviewButton.ClassDependencyView;
 import com.example.bodhakfrontend.ui.overviewButton.HealthAnalyserView;
 import com.example.bodhakfrontend.ui.overviewButton.MethodView;
 import com.example.bodhakfrontend.ui.overviewButton.ModernDependencyView;
@@ -63,7 +53,6 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -444,13 +433,13 @@ public class App extends Application {
 
        // Testing
 
-//        System.out.println("Architectural analysis testing");
-//        AnalysisContext analysisContext=new AnalysisContext(engine.getProjectInfo(),engine.getDependencyGraph(),engine.getProjectInfo().getEntities());
-//        ArchitectureEvidenceBuilder architectureEvidenceBuilder=new ArchitectureEvidenceBuilder();
-//        ArchitectureAnalysisEvidence evidence=architectureEvidenceBuilder.build(analysisContext);
-//
-//       String prompt=new ArchitecturePromptBuilder().build(evidence);
-//        System.out.println(prompt);
+        System.out.println("Architectural analysis testing");
+        AnalysisContext analysisContext=new AnalysisContext(engine.getProjectInfo(),engine.getDependencyGraph(),engine.getProjectInfo().getEntities());
+        ArchitectureEvidenceBuilder architectureEvidenceBuilder=new ArchitectureEvidenceBuilder();
+        ArchitectureAnalysisEvidence evidence=architectureEvidenceBuilder.build(analysisContext, null);
+
+       String prompt=new ArchitecturePromptBuilder().build(evidence);
+        System.out.println(prompt);
 //
 //        ArchitectureAnalysisService service=new ArchitectureAnalysisService();
 //        try {

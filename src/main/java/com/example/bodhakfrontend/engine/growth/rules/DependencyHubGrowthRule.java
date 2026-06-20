@@ -6,10 +6,10 @@ import com.example.bodhakfrontend.core.Analysis.AnalysisIssue;
 import com.example.bodhakfrontend.core.Analysis.AnalysisSeverity;
 import com.example.bodhakfrontend.core.Metrics.FanInMetric;
 import com.example.bodhakfrontend.core.model.entity.EntityInfo;
-import com.example.bodhakfrontend.engine.growth.analysis.BetweennessCentralityAnalyzer;
+import com.example.bodhakfrontend.ai.evidence.builder.BetweennessCentralityEvidenceBuilder;
 import com.example.bodhakfrontend.engine.growth.metrics.GrowthRiskCalculator;
 import com.example.bodhakfrontend.engine.growth.metrics.RiskScore;
-import com.example.bodhakfrontend.engine.growth.model.CentralityNode;
+import com.example.bodhakfrontend.ai.evidence.model.BetweennessCentralityEvidence;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,11 +59,11 @@ public class DependencyHubGrowthRule
 
 
      // test
-        BetweennessCentralityAnalyzer analyzer =
-                new BetweennessCentralityAnalyzer();
+        BetweennessCentralityEvidenceBuilder analyzer =
+                new BetweennessCentralityEvidenceBuilder();
 
-        List<CentralityNode> nodes =
-                analyzer.analyze(context);
+        List<BetweennessCentralityEvidence> nodes =
+                analyzer.buildCentralityEvidence(context);
 
         System.out.println(
                 "\n========== BETWEENNESS CENTRALITY =========="

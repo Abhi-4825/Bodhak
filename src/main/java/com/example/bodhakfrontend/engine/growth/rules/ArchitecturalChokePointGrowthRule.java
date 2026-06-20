@@ -3,10 +3,10 @@ package com.example.bodhakfrontend.engine.growth.rules;
 import com.example.bodhakfrontend.core.Analysis.AnalysisCategory;
 import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
 import com.example.bodhakfrontend.core.Analysis.AnalysisIssue;
-import com.example.bodhakfrontend.engine.growth.analysis.BetweennessCentralityAnalyzer;
+import com.example.bodhakfrontend.ai.evidence.builder.BetweennessCentralityEvidenceBuilder;
 import com.example.bodhakfrontend.engine.growth.metrics.ArchitecturalChokePointRiskCalculator;
 import com.example.bodhakfrontend.engine.growth.metrics.ChokePointRisk;
-import com.example.bodhakfrontend.engine.growth.model.CentralityNode;
+import com.example.bodhakfrontend.ai.evidence.model.BetweennessCentralityEvidence;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,8 +15,8 @@ import java.util.Map;
 public class ArchitecturalChokePointGrowthRule
         implements GrowthRule {
 
-    private final BetweennessCentralityAnalyzer analyzer =
-            new BetweennessCentralityAnalyzer();
+    private final BetweennessCentralityEvidenceBuilder analyzer =
+            new BetweennessCentralityEvidenceBuilder();
 
     private final ArchitecturalChokePointRiskCalculator riskCalculator =
             new ArchitecturalChokePointRiskCalculator();
@@ -29,8 +29,8 @@ public class ArchitecturalChokePointGrowthRule
         List<AnalysisIssue> issues =
                 new ArrayList<>();
 
-        List<CentralityNode> nodes =
-                analyzer.analyze(context);
+        List<BetweennessCentralityEvidence> nodes =
+                analyzer.buildCentralityEvidence(context);
 
         if (nodes.isEmpty()) {
             return issues;
@@ -39,14 +39,14 @@ public class ArchitecturalChokePointGrowthRule
         double maxCentrality =
                 nodes.stream()
                         .mapToDouble(
-                                CentralityNode::score
+                                BetweennessCentralityEvidence::score
                         )
                         .max()
                         .orElse(1);
 
         int rank = 1;
 
-        for (CentralityNode node : nodes) {
+        for (BetweennessCentralityEvidence node : nodes) {
 
             ChokePointRisk risk =
                     riskCalculator.calculate(
@@ -74,7 +74,7 @@ public class ArchitecturalChokePointGrowthRule
 
     private AnalysisIssue createIssue(
 
-            CentralityNode node,
+            BetweennessCentralityEvidence node,
 
             ChokePointRisk risk,
 

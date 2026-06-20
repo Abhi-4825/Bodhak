@@ -1,19 +1,15 @@
 package com.example.bodhakfrontend.ai.prompt;
-import com.example.bodhakfrontend.ai.evidence.builder.ArchitectureEvidenceBuilder;
-import com.example.bodhakfrontend.ai.evidence.model.ArchitectureAnalysisEvidence;
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
-import com.example.bodhakfrontend.core.model.entity.EntityInfo;
+
+import com.example.bodhakfrontend.ai.evidence.model.architectur.ArchitectureAnalysisEvidence;
+import com.example.bodhakfrontend.ai.evidence.model.CircularDependencyEvidence;
+
 
 import java.util.List;
-import java.util.Set;
+
 
 public class ArchitecturePromptBuilder implements PromptBuilder <ArchitectureAnalysisEvidence>{
 
     private static final int MAX_ENTITIES_PER_SECTION = 10;
-
-    private final ArchitectureEvidenceBuilder evidenceBuilder =
-            new ArchitectureEvidenceBuilder();
-
     @Override
     public String build(ArchitectureAnalysisEvidence evidence) {
 
@@ -26,10 +22,56 @@ public class ArchitecturePromptBuilder implements PromptBuilder <ArchitectureAna
         appendCircularGroups(prompt, evidence);
         appendGodClasses(prompt, evidence);
         appendHighlyCoupledEntities(prompt, evidence);
-        appendAnemicEntities(prompt, evidence);
+        appendGrowthMetrics(
+                prompt,
+                evidence
+        );
+        appendBetweennessEvidence(
+                prompt,
+                evidence
+        );
         appendInstructions(prompt);
 
         return prompt.toString();
+    }
+    private void appendBetweennessEvidence(
+
+            StringBuilder prompt,
+
+            ArchitectureAnalysisEvidence evidence
+
+    ) {
+
+        prompt.append("""
+
+BETWEENNESS CENTRALITY EVIDENCE
+
+Higher centrality means the entity appears on many dependency paths between other entities.
+
+Entities with unusually high centrality may become architectural bottlenecks or change propagation hubs.
+
+""");
+
+        evidence.betweennessCentralities()
+                .stream()
+                .limit(10)
+                .forEach(node -> {
+
+                    prompt.append("\n----------------------------------\n");
+
+                    prompt.append("Entity: ")
+                            .append(node.entity())
+                            .append("\n");
+
+                    prompt.append("Centrality Score: ")
+                            .append(
+                                    String.format(
+                                            "%.2f",
+                                            node.score()
+                                    )
+                            )
+                            .append("\n");
+                });
     }
 
     private void appendHeader(StringBuilder prompt) {
@@ -64,35 +106,35 @@ public class ArchitecturePromptBuilder implements PromptBuilder <ArchitectureAna
                 """);
 
         prompt.append("Total Entities: ")
-                .append(evidence.totalEntities())
+                .append(evidence.summary().totalEntities())
                 .append("\n");
 
         prompt.append("Healthy Entities: ")
-                .append(evidence.healthyEntities())
+                .append(evidence.summary().healthyEntities())
                 .append("\n");
 
         prompt.append("Entities With Warnings: ")
-                .append(evidence.entitiesWithWarnings())
+                .append(evidence.summary().entitiesWithWarnings())
                 .append("\n");
 
         prompt.append("God Classes: ")
-                .append(evidence.godClasses().size())
+                .append(evidence.summary().godClassCount())
                 .append("\n");
 
         prompt.append("Highly Coupled Entities: ")
-                .append(evidence.highlyCoupledEntities().size())
+                .append(evidence.summary().highlyCoupledCount())
                 .append("\n");
 
         prompt.append("Circular Entities: ")
-                .append(evidence.circularEntities().size())
+                .append(evidence.summary().circularEntityCount())
                 .append("\n");
-
-        prompt.append("Anemic Entities: ")
-                .append(evidence.anemicEntities().size())
-                .append("\n");
+//
+//        prompt.append("Anemic Entities: ")
+//                .append(evidence.anemicEntities().size())
+//                .append("\n");
 
         prompt.append("Circular Dependency Groups: ")
-                .append(evidence.circularGroups().size())
+                .append(evidence.summary().circularGroupCount())
                 .append("\n");
     }
 
@@ -108,22 +150,23 @@ public class ArchitecturePromptBuilder implements PromptBuilder <ArchitectureAna
                 """);
 
         int groupIndex = 1;
+        List<CircularDependencyEvidence> circularDependencyEvidences=evidence.circularDependencies();
 
-        for (Set<String> group : evidence.circularGroups()) {
+        for (CircularDependencyEvidence group : circularDependencyEvidences) {
 
             prompt.append("\nGroup ")
                     .append(groupIndex++)
                     .append(" (")
-                    .append(group.size())
+                    .append(group.cycleSize())
                     .append(" entities)\n");
 
             int count = 0;
 
-            for (String entity : group) {
+            for (String entity : group.entities()) {
 
                 if (count++ >= 10) {
                     prompt.append("... and ")
-                            .append(group.size() - 10)
+                            .append(group.cycleSize() - 10)
                             .append(" more entities\n");
                     break;
                 }
@@ -133,7 +176,9 @@ public class ArchitecturePromptBuilder implements PromptBuilder <ArchitectureAna
                         .append("\n");
             }
         }
+
     }
+
 
     private void appendGodClasses(
             StringBuilder prompt,
@@ -142,14 +187,37 @@ public class ArchitecturePromptBuilder implements PromptBuilder <ArchitectureAna
 
         prompt.append("""
 
-                GOD CLASSES
+            GOD CLASS EVIDENCE
 
-                """);
+            """);
 
-        appendEntitySection(
-                prompt,
-                evidence.godClasses()
-        );
+        evidence.godClasses()
+                .stream()
+                .limit(MAX_ENTITIES_PER_SECTION)
+                .forEach(godClass -> {
+
+                    prompt.append("\n----------------------------------\n");
+
+                    prompt.append("Entity: ")
+                            .append(godClass.entityName())
+                            .append("\n");
+
+                    prompt.append("Lines Of Code: ")
+                            .append(godClass.linesOfCode())
+                            .append("\n");
+
+                    prompt.append("Method Count: ")
+                            .append(godClass.methodCount())
+                            .append("\n");
+
+                    prompt.append("Field Count: ")
+                            .append(godClass.fieldCount())
+                            .append("\n");
+
+                    prompt.append("Dependency Count: ")
+                            .append(godClass.dependencyCount())
+                            .append("\n");
+                });
     }
 
     private void appendHighlyCoupledEntities(
@@ -159,73 +227,38 @@ public class ArchitecturePromptBuilder implements PromptBuilder <ArchitectureAna
 
         prompt.append("""
 
-                HIGHLY COUPLED ENTITIES
+            HIGH COUPLING EVIDENCE
 
-                """);
+            """);
 
-        appendEntitySection(
-                prompt,
-                evidence.highlyCoupledEntities()
-        );
-    }
-
-    private void appendAnemicEntities(
-            StringBuilder prompt,
-            ArchitectureAnalysisEvidence evidence
-    ) {
-
-        prompt.append("""
-
-                ANEMIC DOMAIN ENTITIES
-
-                """);
-
-        appendEntitySection(
-                prompt,
-                evidence.anemicEntities()
-        );
-    }
-
-    private void appendEntitySection(
-            StringBuilder prompt,
-            List<EntityInfo> entities
-    ) {
-
-        entities.stream()
+        evidence.highCouplings()
+                .stream()
                 .limit(MAX_ENTITIES_PER_SECTION)
-                .forEach(entity -> {
+                .forEach(coupling -> {
 
                     prompt.append("\n----------------------------------\n");
 
                     prompt.append("Entity: ")
-                            .append(entity.getEntityName())
+                            .append(coupling.entityName())
                             .append("\n");
 
-                    prompt.append("Issues: ")
-                            .append(entity.getIssueType())
+                    prompt.append("Fan In: ")
+                            .append(coupling.fanIn())
                             .append("\n");
 
-                    prompt.append("Depends On: ")
-                            .append(entity.getDependsOn().size())
+                    prompt.append("Fan Out: ")
+                            .append(coupling.fanOut())
                             .append("\n");
 
-                    prompt.append("Used By: ")
-                            .append(entity.getUsedBy().size())
-                            .append("\n");
-
-                    prompt.append("Lines Of Code: ")
-                            .append(entity.getLinesOfCode())
-                            .append("\n");
-
-                    prompt.append("Methods: ")
-                            .append(entity.getMethodCount())
-                            .append("\n");
-
-                    prompt.append("Fields: ")
-                            .append(entity.getFields().size())
+                    prompt.append("Coupling Score: ")
+                            .append(coupling.couplingScore())
                             .append("\n");
                 });
     }
+
+
+
+
 
     private void appendInstructions(StringBuilder prompt) {
 
@@ -258,5 +291,62 @@ public class ArchitecturePromptBuilder implements PromptBuilder <ArchitectureAna
                   ]
                 }
                 """);
+    }
+    private void appendGrowthMetrics(
+            StringBuilder prompt,
+            ArchitectureAnalysisEvidence evidence
+    ) {
+
+        prompt.append("""
+
+            GROWTH METRICS EVIDENCE
+
+            """);
+
+        evidence.growthRisks()
+                .forEach(metric -> {
+
+                    prompt.append("\n----------------------------------\n");
+
+                    prompt.append("Entity: ")
+                            .append(metric.entityName())
+                            .append("\n");
+
+                    prompt.append("Dependency Depth: ")
+                            .append(
+                                    String.format(
+                                            "%.2f",
+                                            metric.dependencyDepth()
+                                    )
+                            )
+                            .append("\n");
+
+                    prompt.append("Propagation Depth: ")
+                            .append(
+                                    String.format(
+                                            "%.2f",
+                                            metric.propagationDepth()
+                                    )
+                            )
+                            .append("\n");
+
+                    prompt.append("Normalized Depth: ")
+                            .append(
+                                    String.format(
+                                            "%.2f",
+                                            metric.normalizedDepth()
+                                    )
+                            )
+                            .append("\n");
+
+                    prompt.append("Normalized Propagation: ")
+                            .append(
+                                    String.format(
+                                            "%.2f",
+                                            metric.normalizedPropagation()
+                                    )
+                            )
+                            .append("\n");
+                });
     }
 }
