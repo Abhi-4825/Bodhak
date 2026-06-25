@@ -1,6 +1,8 @@
 package com.example.bodhakfrontend.core.projectType.engine;
 
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.model.entity.EntityInfo;
+import com.example.bodhakfrontend.core.model.project.ProjectInfo;
 import com.example.bodhakfrontend.core.projectType.capability.CapabilityAggregator;
 import com.example.bodhakfrontend.core.projectType.capability.CapabilityProfile;
 import com.example.bodhakfrontend.core.projectType.classification.CapabilityBasedClassifier;
@@ -52,18 +54,15 @@ public final class ProjectTypeAnalyzer {
     /**
      * Execute the full pipeline.
      */
-    public ProjectClassificationResult analyze(AnalysisContext analysisContext) {
+    public ProjectClassificationResult analyze(ProjectInfo projectInfo, List<EntityInfo> entityInfos) {
         // Stage 1: Build enriched context
-        DetectionContext detectionContext = new DetectionContext(analysisContext);
-
+        DetectionContext detectionContext = new DetectionContext(entityInfos,projectInfo);
         // Stage 2: Run all framework detectors
         List<FrameworkDetectionResult> detectedFrameworks =
                 detectorRegistry.detectAll(detectionContext);
-
         // Stage 3: Aggregate capabilities
         CapabilityProfile profile =
                 capabilityAggregator.aggregate(detectedFrameworks);
-
         // Stage 4: Classify project types
         return classifier.classify(profile, detectedFrameworks);
     }

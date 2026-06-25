@@ -43,10 +43,10 @@ public final class ProjectSummaryHandler implements UiUpdateHandler {
     public void apply(UiUpdateEvent event) {
         ProjectSummaryChangedEvent e = (ProjectSummaryChangedEvent) event;
         // 1. Push to store → any bound UI component updates automatically
-        store.setProjectInfo(e.projectInfo());
+        store.setProjectInfo(e.context().getProjectInfo());
         // 2. Refresh the analysis tab only if it's already open (lazy update)
         rightPanel.refreshAnalyzeTabIfOpen(
-                () -> analysisUi.build(e.projectInfo())
+                () -> analysisUi.build(e.context())
         );
     }
 }

@@ -1,6 +1,6 @@
 package com.example.bodhakfrontend.engine.growth.metrics;
 
-import com.example.bodhakfrontend.core.Analysis.AnalysisSeverity;
+import com.example.bodhakfrontend.core.analysis.AnalysisSeverity;
 
 /** we are considering 20+ fanIn as a risky in any project , above that we will fully trust the score*/
 

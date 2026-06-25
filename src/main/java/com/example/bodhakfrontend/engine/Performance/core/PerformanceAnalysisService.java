@@ -2,16 +2,10 @@ package com.example.bodhakfrontend.engine.Performance.core;
 
 
 
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
-import com.example.bodhakfrontend.core.Analysis.AnalysisReport;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisReport;
 
-import com.example.bodhakfrontend.core.model.entity.EntityInfo;
-import com.example.bodhakfrontend.core.model.project.ProjectInfo;
-import com.example.bodhakfrontend.engine.DependencyGraph;
 import com.example.bodhakfrontend.engine.Performance.Rules.DeepDependencyChainRule;
-
-
-import java.util.List;
 
 public class PerformanceAnalysisService {
 
@@ -30,18 +24,7 @@ public class PerformanceAnalysisService {
         );
     }
 
-    public AnalysisReport analyzeProject(
-            ProjectInfo projectInfo,
-            DependencyGraph dependencyGraph,
-            List<EntityInfo> entities
-    ) {
-
-        AnalysisContext context =
-                new AnalysisContext(
-                        projectInfo,
-                        dependencyGraph,
-                        entities
-                );
+    public AnalysisReport analyzeProject(AnalysisContext context) {
 
         return engine.analyze(context);
     }

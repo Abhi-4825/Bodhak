@@ -166,7 +166,7 @@ public class UiRerfeshController {
 
 
     private void refreshAnalysis() {
-        rightPanelTabManager.refreshAnalyzeTabIfOpen(()->projectAnalysisUi.build(analysisEngine.getProjectInfo()));
+        rightPanelTabManager.refreshAnalyzeTabIfOpen(()->projectAnalysisUi.build(analysisEngine.getAnalysisContext()));
     }
 
     private void refreshDependency() {

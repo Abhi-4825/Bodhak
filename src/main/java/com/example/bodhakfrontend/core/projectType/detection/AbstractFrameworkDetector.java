@@ -74,12 +74,10 @@ public abstract class AbstractFrameworkDetector implements FrameworkDetector {
     protected boolean pomContains(DetectionContext ctx, String text) {
         return ctx.fileContains("pom.xml", text);
     }
-
     protected boolean buildGradleContains(DetectionContext ctx, String text) {
         return ctx.fileContains("build.gradle", text)
                 || ctx.fileContains("build.gradle.kts", text);
     }
-
     protected boolean packageJsonContains(DetectionContext ctx, String text) {
         return ctx.fileContains("package.json", text);
     }

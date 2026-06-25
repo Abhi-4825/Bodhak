@@ -3,7 +3,7 @@ package com.example.bodhakfrontend;
 import com.example.bodhakfrontend.ai.evidence.builder.ArchitectureEvidenceBuilder;
 import com.example.bodhakfrontend.ai.evidence.model.architectur.ArchitectureAnalysisEvidence;
 import com.example.bodhakfrontend.ai.prompt.ArchitecturePromptBuilder;
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 import com.example.bodhakfrontend.core.model.entity.EntityInfo;
 import com.example.bodhakfrontend.core.model.incremental.EntityViewModel;
 import com.example.bodhakfrontend.engine.AnalysisEngine;
@@ -268,13 +268,12 @@ public class App extends Application {
             }
             // Always uses the live projectInfo from the store — never a stale snapshot
             rightPanelTabManager.openAnalyzeTab(
-                    () -> projectAnalysisUi.build(uiStore.getProjectInfo())
+                    () -> projectAnalysisUi.build(appController.getEngine().getAnalysisContext())
             );
         });
 
         optimizeBtn.setOnAction(e -> {
-            if (uiStore == null || uiStore.getProjectInfo() == null) return;
-            new OptimizationController(rightPanelTabManager, uiStore.getProjectInfo(), uiFeatures)
+            new OptimizationController(rightPanelTabManager, appController.getEngine().getAnalysisContext(), uiFeatures)
                     .startOptimization();
             optimizeBtn.setText("Refresh");
         });
@@ -303,7 +302,8 @@ public class App extends Application {
             if (selectedTab == null) return;
             File file = (File) selectedTab.getUserData();
             List<EntityInfo> classes = uiStore != null
-                    ? uiStore.getProjectInfo().getEntities().stream()
+                    ? uiStore.getEntities().stream()
+                    .map(com.example.bodhakfrontend.core.model.incremental.EntityViewModel::getEntity)
                     .filter(ei -> ei.getSourceFile().toPath().toAbsolutePath().normalize()
                             .equals(file.toPath().toAbsolutePath().normalize()))
                     .toList()
@@ -427,14 +427,14 @@ public class App extends Application {
         // from loadTask.setOnSucceeded which runs on FX thread)
         uiStore.setProjectInfo(engine.getProjectInfo());
         uiStore.setGraphSnapshot(engine.getGraphSnapshot());
-        for (EntityInfo ei : engine.getProjectInfo().getEntities()) {
+        for (EntityInfo ei : engine.getAnalysisContext().getEntities()) {
             uiStore.addEntities(List.of(new EntityViewModel(ei)));
         }
 
        // Testing
 
         System.out.println("Architectural analysis testing");
-        AnalysisContext analysisContext=new AnalysisContext(engine.getProjectInfo(),engine.getDependencyGraph(),engine.getProjectInfo().getEntities());
+        AnalysisContext analysisContext = engine.getAnalysisContext();
         ArchitectureEvidenceBuilder architectureEvidenceBuilder=new ArchitectureEvidenceBuilder();
         ArchitectureAnalysisEvidence evidence=architectureEvidenceBuilder.build(analysisContext, null);
 

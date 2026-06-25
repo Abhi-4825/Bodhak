@@ -1,6 +1,7 @@
 package com.example.bodhakfrontend.core.model.entity;
 
 import com.example.bodhakfrontend.core.model.warning.WarningRule;
+import com.example.bodhakfrontend.core.model.entity.IssueType;
 
 import java.io.File;
 import java.util.*;
@@ -54,11 +55,6 @@ public class EntityInfo {
 
     // ── Plugin-provided contribution ──────────────────────────────────────────
     private final EntityContribution contribution;
-
-    // ── Mutable post-build state ──────────────────────────────────────────────
-    private final Set<IssueType> issueCache   = new HashSet<>();
-    private final List<WarningRule> warnings  = new ArrayList<>();
-
     // ─────────────────────────────────────────────────────────────────────────
 
     public EntityInfo(String entityName, String namespaceName, File sourceFile,
@@ -121,33 +117,6 @@ public class EntityInfo {
         return members.stream().filter(m -> m.getKind() == MemberKind.CONSTRUCTOR).count();
     }
 
-    // ── Issue detection ───────────────────────────────────────────────────────
-
-    private void detectIssues() {
-        issueCache.clear();
-        if (isGodEntity())                               issueCache.add(IssueType.GOD_CLASS);
-        if (dependsOn.size() > 10)      issueCache.add(IssueType.HIGH_COUPLING);
-        if (!circularGroups.isEmpty())                   issueCache.add(IssueType.CIRCULAR_DEPENDENCY);
-        if (fields.size() >= 3 && members.size() <= 2)  issueCache.add(IssueType.ANEMIC_DOMAIN);
-    }
-
-    private boolean isGodEntity() {
-        return linesOfCode > 500 || members.size() > 20 || fields.size() > 15;
-    }
-
-    public Set<IssueType> getIssueType() {
-        detectIssues();
-        return Collections.unmodifiableSet(issueCache);
-    }
-
-    // ── Warning management ────────────────────────────────────────────────────
-
-    public void setWarnings(List<WarningRule> rules) {
-        warnings.clear();
-        warnings.addAll(rules);
-    }
-
-    public List<WarningRule> getWarnings() { return warnings; }
 
     // ── Display ───────────────────────────────────────────────────────────────
 

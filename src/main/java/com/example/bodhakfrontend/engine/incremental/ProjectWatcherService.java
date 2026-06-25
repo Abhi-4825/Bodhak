@@ -141,7 +141,7 @@ public class ProjectWatcherService {
         if (kind == ENTRY_CREATE) {
             engine.onFileCreate(fullPath);
             bus.publish(new FileTreeChangedEvent(containingDir));
-            bus.publish(new ProjectSummaryChangedEvent(engine.getProjectInfo()));
+            bus.publish(new ProjectSummaryChangedEvent(engine.getAnalysisContext()));
             bus.publish(new EntityListChangedEvent(
                     engine.getEntitiesForFile(fullPath), java.util.List.of(), java.util.List.of()
             ));
@@ -154,7 +154,7 @@ public class ProjectWatcherService {
             bus.publish(new EntityListChangedEvent(
                     java.util.List.of(), java.util.List.of(), after
             ));
-            bus.publish(new ProjectSummaryChangedEvent(engine.getProjectInfo()));
+            bus.publish(new ProjectSummaryChangedEvent(engine.getAnalysisContext()));
             bus.publish(new DependencyGraphChangedEvent(engine.getGraphSnapshot()));
 
         } else if (kind == ENTRY_DELETE) {
@@ -165,7 +165,7 @@ public class ProjectWatcherService {
             bus.publish(new EntityListChangedEvent(
                     java.util.List.of(), removed, java.util.List.of()
             ));
-            bus.publish(new ProjectSummaryChangedEvent(engine.getProjectInfo()));
+            bus.publish(new ProjectSummaryChangedEvent(engine.getAnalysisContext()));
         }
     }
 }

@@ -1,6 +1,6 @@
 package com.example.bodhakfrontend.core.projectType;
 
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 import com.example.bodhakfrontend.core.model.entity.EntityContribution;
 import com.example.bodhakfrontend.core.model.entity.EntityInfo;
 import com.example.bodhakfrontend.core.model.entity.EntityKind;

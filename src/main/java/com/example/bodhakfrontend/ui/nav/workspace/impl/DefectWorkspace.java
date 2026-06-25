@@ -5,7 +5,7 @@ import com.example.bodhakfrontend.ai.event.AnalysisEventType;
 import com.example.bodhakfrontend.ai.model.AnalysisType;
 import com.example.bodhakfrontend.ai.service.AiAnalysisService;
 import com.example.bodhakfrontend.ai.service.AnalysisServiceRegistry;
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 import com.example.bodhakfrontend.engine.AnalysisEngine;
 import com.example.bodhakfrontend.ui.nav.workspace.Workspace;
 
@@ -15,7 +15,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
-import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -450,11 +449,7 @@ public class DefectWorkspace implements Workspace {
         Task<String> task = new Task<>() {
             @Override
             protected String call() throws Exception {
-                AnalysisContext ctx = new AnalysisContext(
-                        lastEngine.getProjectInfo(),
-                        lastEngine.getDependencyGraph(),
-                        lastEngine.getProjectInfo().getEntities()
-                );
+                AnalysisContext ctx = lastEngine.getAnalysisContext();
                 String model = modelSelector.getValue();
                 AiAnalysisService service = registry.get(selectedAnalysisType);
 

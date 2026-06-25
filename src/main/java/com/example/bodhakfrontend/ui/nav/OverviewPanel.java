@@ -2,6 +2,7 @@ package com.example.bodhakfrontend.ui.nav;
 
 import com.example.bodhakfrontend.engine.AnalysisEngine;
 import com.example.bodhakfrontend.core.model.project.ProjectInfo;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 import com.example.bodhakfrontend.core.model.project.EntryPointInfo;
 
 import javafx.geometry.Insets;
@@ -65,49 +66,55 @@ public class OverviewPanel {
             return root;
         }
 
-        ProjectInfo info = engine.getProjectInfo();
+        AnalysisContext ctx = engine.getAnalysisContext();
+        ProjectInfo info = ctx.getProjectInfo();
 
         // ── Summary metrics row ──────────────────────────────────────────────
         HBox metricsRow = new HBox(10);
 
         String projectFlavor = "—";
-        if (info.getEntryPointInfo() != null) {
-            projectFlavor = info.getEntryPointInfo().getFlavorSummary();
+        if (info.entryPointInfo() != null) {
+            projectFlavor = info.entryPointInfo().getFlavorSummary();
         }
 
-        int langCount = info.getLanguageCountMap() != null ? info.getLanguageCountMap().size() : 0;
+        int langCount = info.languageCountMap() != null ? info.languageCountMap().size() : 0;
 
         metricsRow.getChildren().addAll(
             metricCard("Project Type",  projectFlavor,                          "#4bf6ff"),
-            metricCard("Classes",       String.valueOf(info.getTotalEntities()), "#8bfd91"),
+            metricCard("Classes",       String.valueOf(info.totalEntities()), "#8bfd91"),
             metricCard("Languages",     String.valueOf(langCount),               "#ffd54f"),
-            metricCard("Files",         String.valueOf(info.getKnownFiles() != null ? info.getKnownFiles().size() : 0), "#d2a8ff")
+            metricCard("Files",         String.valueOf(info.knownFiles() != null ? info.knownFiles().size() : 0), "#d2a8ff")
         );
         metricsRow.getChildren().forEach(n -> HBox.setHgrow(n, Priority.ALWAYS));
         root.getChildren().add(metricsRow);
 
         // ── Health metrics row ───────────────────────────────────────────────
+        int healthy = (int) ctx.getEntities().stream().filter(e -> e.getWarnings().isEmpty()).count();
+        int withWarnings = (int) ctx.getEntities().stream().filter(e -> !e.getWarnings().isEmpty()).count();
+        int godClasses = (int) ctx.getEntities().stream().filter(e -> e.getIssueType() != null &&
+                e.getIssueType().contains(com.example.bodhakfrontend.core.model.entity.IssueType.GOD_CLASS)).count();
+
         HBox healthRow = new HBox(10);
         healthRow.getChildren().addAll(
-            metricCard("Healthy",      String.valueOf(info.getHealthyEntities()),       "#8bfd91"),
-            metricCard("With Warnings",String.valueOf(info.getEntitiesWithWarnings()),  "#ffd54f"),
-            metricCard("God Classes",  String.valueOf(info.getGodEntities()),           "#ff8a80")
+            metricCard("Healthy",      String.valueOf(healthy),       "#8bfd91"),
+            metricCard("With Warnings",String.valueOf(withWarnings),  "#ffd54f"),
+            metricCard("God Classes",  String.valueOf(godClasses),           "#ff8a80")
         );
         healthRow.getChildren().forEach(n -> HBox.setHgrow(n, Priority.ALWAYS));
         root.getChildren().add(healthRow);
 
         // ── Languages detected ───────────────────────────────────────────────
-        if (info.getLanguageCountMap() != null && !info.getLanguageCountMap().isEmpty()) {
+        if (info.languageCountMap() != null && !info.languageCountMap().isEmpty()) {
             VBox langCard = sectionCard("🌐  Languages Detected");
-            info.getLanguageCountMap().forEach((lang, paths) ->
+            info.languageCountMap().forEach((lang, paths) ->
                 langCard.getChildren().add(chipLabel(lang + "  (" + paths.size() + " files)", "#d2a8ff", "rgba(210,168,255,0.10)"))
             );
             root.getChildren().add(langCard);
         }
 
         // ── Entry points ─────────────────────────────────────────────────────
-        if (info.getEntryPointInfo() != null) {
-            EntryPointInfo ep = info.getEntryPointInfo();
+        if (info.entryPointInfo() != null) {
+            EntryPointInfo ep = info.entryPointInfo();
             VBox epCard = sectionCard("🚀  Entry Points");
 
             if (ep.getPrimaryEntry() != null) {
@@ -123,9 +130,9 @@ public class OverviewPanel {
         }
 
         // ── Namespaces / Packages ─────────────────────────────────────────────
-        if (info.getNamespaceInfos() != null && !info.getNamespaceInfos().isEmpty()) {
-            VBox pkgCard = sectionCard("📦  Namespaces / Packages  (" + info.getNamespaceInfos().size() + ")");
-            info.getNamespaceInfos().keySet().stream().sorted().limit(12)
+        if (ctx.getNamespaces() != null && !ctx.getNamespaces().isEmpty()) {
+            VBox pkgCard = sectionCard("📦  Namespaces / Packages  (" + ctx.getNamespaces().size() + ")");
+            ctx.getNamespaces().keySet().stream().sorted().limit(12)
                 .forEach(pkg -> pkgCard.getChildren().add(rowLabel(pkg)));
             root.getChildren().add(pkgCard);
         }

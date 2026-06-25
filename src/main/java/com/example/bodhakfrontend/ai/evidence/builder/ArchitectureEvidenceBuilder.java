@@ -3,7 +3,7 @@ package com.example.bodhakfrontend.ai.evidence.builder;
 import com.example.bodhakfrontend.ai.evidence.model.*;
 import com.example.bodhakfrontend.ai.evidence.model.architectur.ArchitectureAnalysisEvidence;
 import com.example.bodhakfrontend.ai.evidence.model.architectur.ArchitectureSummaryEvidence;
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 import com.example.bodhakfrontend.core.model.entity.EntityInfo;
 import com.example.bodhakfrontend.core.model.entity.IssueType;
 import com.example.bodhakfrontend.core.model.project.ProjectInfo;
@@ -27,16 +27,24 @@ public class ArchitectureEvidenceBuilder implements EvidenceBuilder<Architecture
         if (listener != null) {
             long edgeCount = graph.globalDependencies().values().stream().mapToInt(java.util.Set::size).sum();
             listener.publish(new AnalysisEvent(System.currentTimeMillis(), AnalysisEventType.METRIC, "Dependency graph loaded", 
-                projectInfo.getTotalEntities() + " entities\n" + edgeCount + " dependency edges"));
+                analysisContext.getEntities().size() + " entities\n" + edgeCount + " dependency edges"));
         }
-        
+
+        List<EntityInfo> entities = analysisContext.getEntities();
+        int totalEntities        = entities.size();
+        int withWarnings         = (int) entities.stream().filter(e -> !e.getWarnings().isEmpty()).count();
+        int healthy              = totalEntities - withWarnings;
+        int godCount             = (int) entities.stream().filter(e -> e.getIssueType() != null && e.getIssueType().contains(com.example.bodhakfrontend.core.model.entity.IssueType.GOD_CLASS)).count();
+        int highlyCoupled        = (int) entities.stream().filter(e -> e.getIssueType() != null && e.getIssueType().contains(com.example.bodhakfrontend.core.model.entity.IssueType.HIGH_COUPLING)).count();
+        int circular             = (int) entities.stream().filter(e -> !e.getCircularGroups().isEmpty()).count();
+
         ArchitectureSummaryEvidence summaryEvidence=new ArchitectureSummaryEvidence(
-                projectInfo.getTotalEntities(),
-                projectInfo.getHealthyEntities(),
-                projectInfo.getEntitiesWithWarnings(),
-                projectInfo.getGodEntities(),
-                projectInfo.getHighlyCoupledEntities(),
-                projectInfo.getCircularEntities(),
+                totalEntities,
+                healthy,
+                withWarnings,
+                godCount,
+                highlyCoupled,
+                circular,
                 graph.circularGroups().size()
         );
         DependencyGraphEvidenceBuilder dependencyGraphEvidenceBuilder=new DependencyGraphEvidenceBuilder();
@@ -59,11 +67,11 @@ public class ArchitectureEvidenceBuilder implements EvidenceBuilder<Architecture
         }
 
         List<HighCouplingEvidence> couplingEvidence =
-                projectInfo.getEntities()
+                analysisContext.getEntities()
                         .stream()
                         .filter(entity ->
                                 entity.getIssueType()
-                                        .contains(IssueType.HIGH_COUPLING))
+                                        .contains(com.example.bodhakfrontend.core.model.entity.IssueType.HIGH_COUPLING))
                         .map(entity -> {
 
                             int fanIn =
@@ -90,11 +98,11 @@ public class ArchitectureEvidenceBuilder implements EvidenceBuilder<Architecture
                         )
                         .toList();
         List<GodClassEvidence> godClasses =
-                projectInfo.getEntities()
+                analysisContext.getEntities()
                         .stream()
                         .filter(entity ->
                                 entity.getIssueType()
-                                        .contains(IssueType.GOD_CLASS))
+                                        .contains(com.example.bodhakfrontend.core.model.entity.IssueType.GOD_CLASS))
                         .map(entity ->
                                 new GodClassEvidence(
 
@@ -142,11 +150,11 @@ public class ArchitectureEvidenceBuilder implements EvidenceBuilder<Architecture
     }
 
     private List<EntityInfo> filterByIssue(
-            ProjectInfo projectInfo,
-            IssueType issueType
+            AnalysisContext analysisContext,
+            com.example.bodhakfrontend.core.model.entity.IssueType issueType
     ) {
 
-        return projectInfo.getEntities()
+        return analysisContext.getEntities()
                 .stream()
                 .filter(entity ->
                         entity.getIssueType().contains(issueType))

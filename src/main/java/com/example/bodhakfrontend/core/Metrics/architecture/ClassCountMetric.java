@@ -1,6 +1,6 @@
 
 package com.example.bodhakfrontend.core.Metrics.architecture;
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 import com.example.bodhakfrontend.core.Metrics.Metric;
 
 public class ClassCountMetric
@@ -12,7 +12,7 @@ public class ClassCountMetric
             AnalysisContext context
     ) {
 
-        return context.getProjectInfo()
-                .getTotalEntities();
+        var projectInfo = context.getProjectInfo();
+        return projectInfo.totalEntities();
     }
 }

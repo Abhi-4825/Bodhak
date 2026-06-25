@@ -1,7 +1,7 @@
 package com.example.bodhakfrontend.ai.evidence.builder;
 
 import com.example.bodhakfrontend.ai.evidence.model.HighFanInEvidence;
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 import com.example.bodhakfrontend.core.model.project.ProjectInfo;
 
 import java.util.Comparator;
@@ -12,7 +12,7 @@ public class HighFanInEvidenceBuilder {
            AnalysisContext context
     ) {
         ProjectInfo projectInfo=context.getProjectInfo();
-        return projectInfo.getEntities()
+        return context.getEntities()
                 .stream()
                 .map(entity ->
                         new HighFanInEvidence(

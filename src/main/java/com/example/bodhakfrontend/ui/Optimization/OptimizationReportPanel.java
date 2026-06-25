@@ -1,8 +1,8 @@
 package com.example.bodhakfrontend.ui.Optimization;
-
+import com.example.bodhakfrontend.core.analysis.entityflag.EntityFlag;
 import com.example.bodhakfrontend.core.model.entity.EntityInfo;
 import com.example.bodhakfrontend.core.model.entity.MemberInfo;
-import com.example.bodhakfrontend.core.model.project.Hotspot;
+import com.example.bodhakfrontend.core.model.hotspot.HotspotInfo;
 import com.example.bodhakfrontend.engine.optimization.Model.*;
 import com.example.bodhakfrontend.ui.helper.UiFeatures;
 import javafx.animation.FadeTransition;
@@ -29,7 +29,7 @@ import javafx.util.Duration;
 import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+
 
 public class OptimizationReportPanel {
 
@@ -355,16 +355,16 @@ public class OptimizationReportPanel {
     }
 
     private VBox createHotspotsSection(OptimizationReport optimizationReport) {
-        List<Hotspot> hotspots = optimizationReport.getHotspots();
+        List<HotspotInfo> hotspots = optimizationReport.getHotspots();
         VBox sectionBox = new VBox(15);
         HBox sectionTitle = loadLabelWithIcon("hotspot.png","Code Hotspots");
         FlowPane cardsContainer = new FlowPane(15, 15);
         cardsContainer.setAlignment(Pos.CENTER_LEFT);
 
 
-        for(Hotspot hotspot:hotspots){
+        for(HotspotInfo hotspot:hotspots){
 
-            cardsContainer.getChildren().add(createHotspotCard(hotspot.getEntity(), hotspot.getReasons()));
+            cardsContainer.getChildren().add(createHotspotCard(hotspot.entity(), hotspot.flags()));
 
         }
 
@@ -375,15 +375,15 @@ public class OptimizationReportPanel {
         return sectionBox;
     }
 
-    private VBox createHotspotCard(EntityInfo clazz, Iterable<String> reasons) {
+    private VBox createHotspotCard(EntityInfo clazz, Iterable<EntityFlag> reasons) {
         VBox card = new VBox(5);
         card.setStyle("-fx-background-color: #2b1c1c; -fx-background-radius: 8; -fx-padding: 12; -fx-border-color: #5c3a3a; -fx-border-width: 1; -fx-border-radius: 8; -fx-pref-width: 250px;");
 
         Label classLabel = new Label(clazz.toString());
         classLabel.setStyle("-fx-font-size: 14px; -fx-font-family: 'Courier New'; -fx-text-fill: #f28b82; -fx-font-weight: bold; -fx-wrap-text: true;");
         VBox reasonsBox = new VBox(5);
-        for(String reason: reasons){
-            Label issueLabel = new Label(reason);
+        for(EntityFlag flag: reasons){
+            Label issueLabel = new Label(flag.name());
             issueLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #e8eaed;");
             reasonsBox.getChildren().add(issueLabel);
 

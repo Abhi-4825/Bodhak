@@ -89,16 +89,19 @@ public class CodeHealthWorkspace implements Workspace {
             metricCard("Cycles",  String.valueOf(cycleCount),
                 cycleCount == 0 ? "#8bfd91" : "#ff8a80"),
             metricCard("Classes",
-                String.valueOf(engine.getProjectInfo().getEntities().size()), "#4bf6ff")
+                String.valueOf(engine.getAnalysisContext().getEntities().size()), "#4bf6ff")
         );
         healthRow.getChildren().forEach(n -> HBox.setHgrow(n, Priority.ALWAYS));
         page.getChildren().add(healthRow);
 
         // ── Entity quality distribution ──────────────────────────────────────
-        int total       = engine.getProjectInfo().getTotalEntities();
-        int healthy     = engine.getProjectInfo().getHealthyEntities();
-        int withWarnings= engine.getProjectInfo().getEntitiesWithWarnings();
-        int godClasses  = engine.getProjectInfo().getGodEntities();
+        var entities = engine.getAnalysisContext().getEntities();
+        int total        = entities.size();
+        int withWarnings = (int) entities.stream().filter(e -> !e.getWarnings().isEmpty()).count();
+        int godClasses   = (int) entities.stream().filter(e ->
+                e.getIssueType() != null &&
+                e.getIssueType().contains(com.example.bodhakfrontend.core.model.entity.IssueType.GOD_CLASS)).count();
+        int healthy      = total - withWarnings;
 
         HBox qualityRow = new HBox(16);
         qualityRow.getChildren().addAll(

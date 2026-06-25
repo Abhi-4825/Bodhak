@@ -1,6 +1,6 @@
 package com.example.bodhakfrontend.ui.dashboard.architecture;
 
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 import com.example.bodhakfrontend.engine.AnalysisEngine;
 import com.example.bodhakfrontend.engine.GraphSnapshot;
 import com.example.bodhakfrontend.ui.dashboard.architecture.analysis.ArchitectureDashboardDataBuilder;
@@ -37,13 +37,7 @@ public class ArchitectureDashboard {
             return new VBox();
         }
 
-        AnalysisContext context =
-                new AnalysisContext(
-                        engine.getProjectInfo(),
-                        engine.getDependencyGraph(),
-                        engine.getProjectInfo()
-                                .getEntities()
-                );
+        AnalysisContext context = engine.getAnalysisContext();
 
         ArchitectureDashboardDataBuilder builder =
                 new ArchitectureDashboardDataBuilder();
@@ -58,7 +52,7 @@ public class ArchitectureDashboard {
                 new NodeInspectorPanel();
 
         if (state.getNamespaceMap().isEmpty()) {
-            state.setNamespaceMap(engine.getProjectInfo().getNamespaceInfos());
+            state.setNamespaceMap(engine.getAnalysisContext().getNamespaces());
         }
 
         if (workspaceState.getArchitectureView() == null) {

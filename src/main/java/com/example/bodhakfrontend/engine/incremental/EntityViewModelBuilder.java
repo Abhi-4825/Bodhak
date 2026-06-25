@@ -103,7 +103,7 @@ public class EntityViewModelBuilder {
      *
      * <p>Currently a placeholder for future dependency-overlay logic on ViewModels.
      * The snapshot data is already embedded in each {@link EntityInfo} via
-     * {@link com.example.bodhakfrontend.engine.AnalysisEngine#applyGraphDependencies}.
+     * {@link com.example.bodhakfrontend.engine.AnalysisEngine#}.
      */
     @SuppressWarnings("unused")
     private void refreshDependencies() {

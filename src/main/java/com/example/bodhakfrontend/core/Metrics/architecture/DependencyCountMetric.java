@@ -1,7 +1,7 @@
 package com.example.bodhakfrontend.core.Metrics.architecture;
 
 
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 import com.example.bodhakfrontend.core.Metrics.Metric;
 
 import java.util.Set;

@@ -1,6 +1,6 @@
 package com.example.bodhakfrontend.core.Metrics;
 
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 import com.example.bodhakfrontend.core.model.entity.EntityInfo;
 import com.example.bodhakfrontend.engine.DependencyGraph;
 import com.example.bodhakfrontend.engine.GraphSnapshot;

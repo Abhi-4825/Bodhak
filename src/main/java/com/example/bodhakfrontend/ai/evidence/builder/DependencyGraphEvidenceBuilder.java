@@ -1,7 +1,7 @@
 package com.example.bodhakfrontend.ai.evidence.builder;
 
 import com.example.bodhakfrontend.ai.evidence.model.DependencyGraphEvidence;
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 import com.example.bodhakfrontend.core.model.project.ProjectInfo;
 import com.example.bodhakfrontend.engine.GraphSnapshot;
 
@@ -28,21 +28,21 @@ public class DependencyGraphEvidenceBuilder {
                         .orElse(0);
 
         int maxFanIn =
-                projectInfo.getEntities()
+                context.getEntities()
                         .stream()
                         .mapToInt(e -> e.getUsedBy().size())
                         .max()
                         .orElse(0);
 
         int maxFanOut =
-                projectInfo.getEntities()
+                context.getEntities()
                         .stream()
                         .mapToInt(e -> e.getDependsOn().size())
                         .max()
                         .orElse(0);
 
         double avgFanOut =
-                projectInfo.getEntities()
+                context.getEntities()
                         .stream()
                         .mapToInt(e -> e.getDependsOn().size())
                         .average()
@@ -50,7 +50,7 @@ public class DependencyGraphEvidenceBuilder {
 
         return new DependencyGraphEvidence(
 
-                projectInfo.getTotalEntities(),
+                projectInfo.totalEntities(),
 
                 totalEdges,
 

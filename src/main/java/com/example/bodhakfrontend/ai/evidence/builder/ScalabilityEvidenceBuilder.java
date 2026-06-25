@@ -2,7 +2,7 @@ package com.example.bodhakfrontend.ai.evidence.builder;
 
 import com.example.bodhakfrontend.ai.evidence.model.CircularDependencyEvidence;
 import com.example.bodhakfrontend.ai.evidence.model.scalability.ScalabilityAnalysisEvidence;
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 import com.example.bodhakfrontend.engine.GraphSnapshot;
 
 import java.util.List;

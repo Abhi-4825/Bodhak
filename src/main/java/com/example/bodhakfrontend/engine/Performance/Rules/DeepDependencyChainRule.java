@@ -2,10 +2,10 @@ package com.example.bodhakfrontend.engine.Performance.Rules;
 
 
 
-import com.example.bodhakfrontend.core.Analysis.AnalysisCategory;
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
-import com.example.bodhakfrontend.core.Analysis.AnalysisIssue;
-import com.example.bodhakfrontend.core.Analysis.AnalysisSeverity;
+import com.example.bodhakfrontend.core.analysis.AnalysisCategory;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisIssue;
+import com.example.bodhakfrontend.core.analysis.AnalysisSeverity;
 import com.example.bodhakfrontend.core.model.entity.EntityInfo;
 import com.example.bodhakfrontend.core.Metrics.DependencyDepthMetric;
 

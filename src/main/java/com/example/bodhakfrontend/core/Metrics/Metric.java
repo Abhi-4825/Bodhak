@@ -1,6 +1,6 @@
 package com.example.bodhakfrontend.core.Metrics;
 
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 
 public interface Metric<T> {
 

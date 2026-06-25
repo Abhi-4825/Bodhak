@@ -1,4 +1,4 @@
-package com.example.bodhakfrontend.core.Analysis;
+package com.example.bodhakfrontend.core.analysis;
 
 public enum AnalysisSeverity {
 

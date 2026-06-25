@@ -1,6 +1,9 @@
 package com.example.bodhakfrontend.engine.growth.rules;
 
-import com.example.bodhakfrontend.core.Analysis.*;
+import com.example.bodhakfrontend.core.analysis.AnalysisCategory;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisIssue;
+import com.example.bodhakfrontend.core.analysis.AnalysisSeverity;
 import com.example.bodhakfrontend.core.Metrics.DependencyDepthMetric;
 import com.example.bodhakfrontend.core.Metrics.PropagationMetric;
 import com.example.bodhakfrontend.core.model.entity.EntityInfo;

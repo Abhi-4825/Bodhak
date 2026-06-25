@@ -1,10 +1,7 @@
 package com.example.bodhakfrontend.ui.nav.workspace.impl;
 
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
 import com.example.bodhakfrontend.engine.AnalysisEngine;
-import com.example.bodhakfrontend.engine.GraphSnapshot;
 import com.example.bodhakfrontend.ui.dashboard.architecture.ArchitectureDashboard;
-import com.example.bodhakfrontend.ui.dashboard.architecture.components.NodeInspectorPanel;
 import com.example.bodhakfrontend.ui.dashboard.architecture.model.ArchitectureGraphState;
 import com.example.bodhakfrontend.ui.dashboard.architecture.model.ArchitectureWorkspaceState;
 import com.example.bodhakfrontend.ui.nav.workspace.Workspace;

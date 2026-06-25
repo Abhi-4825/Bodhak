@@ -4,7 +4,7 @@ import com.example.bodhakfrontend.ai.evidence.builder.ScalabilityEvidenceBuilder
 import com.example.bodhakfrontend.ai.evidence.model.scalability.ScalabilityAnalysisEvidence;
 import com.example.bodhakfrontend.ai.ollama.OllamaClient;
 import com.example.bodhakfrontend.ai.prompt.ScalabilityPromptBuilder;
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 
 import com.example.bodhakfrontend.ai.event.AnalysisEvent;
 import com.example.bodhakfrontend.ai.event.AnalysisEventType;

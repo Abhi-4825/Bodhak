@@ -1,16 +1,21 @@
 package com.example.bodhakfrontend.engine;
 
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.builder.DefaultAnalysisContextFactory;
 import com.example.bodhakfrontend.core.model.entity.EntityInfo;
 import com.example.bodhakfrontend.core.model.namespace.NamespaceInfo;
 import com.example.bodhakfrontend.core.model.project.ProjectInfo;
-import com.example.bodhakfrontend.core.model.warning.WarningRule;
+import com.example.bodhakfrontend.core.model.project.ProjectSnapshot;
 import com.example.bodhakfrontend.core.plugin.LanguagePlugin;
 import com.example.bodhakfrontend.core.plugin.LanguagePluginRegistry;
 import com.example.bodhakfrontend.core.projectType.classification.ProjectClassificationResult;
+import com.example.bodhakfrontend.core.projectType.detection.DetectionContext;
 import com.example.bodhakfrontend.core.projectType.detection.FrameworkDetectorRegistry;
 import com.example.bodhakfrontend.core.projectType.engine.ProjectTypeAnalyzer;
 import com.example.bodhakfrontend.engine.analyzer.GlobalEntryPointDetector;
+import com.example.bodhakfrontend.engine.builder.NamespaceBuilder;
+import com.example.bodhakfrontend.engine.builder.ProjectInfoBuilder;
+import com.example.bodhakfrontend.engine.builder.ProjectSnapshotBuilder;
 import com.example.bodhakfrontend.engine.incremental.EntityViewModelBuilder;
 
 import java.nio.file.Path;
@@ -19,41 +24,80 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 
+/**
+ * Central analysis orchestrator.
+ *
+ * Analysis pipeline (on full analyze):
+ *   1. Scan files
+ *   2. Extract names (for dependency graph seeding)
+ *   3. Build DependencyGraph
+ *   4. Build EntityInfo objects (rich parsing)
+ *   5. Apply graph dependencies to entities (usedBy, dependsOn, cycles)
+ *   6. Build ViewModels (UI incremental layer)
+ *   7. Build Namespaces
+ *   8. Build ProjectInfo (pure metadata)
+ *   9. Build ProjectSnapshot (structure)
+ *  10. Classify project type
+ *  11. Create AnalysisContext (canonical analysis state)
+ *
+ * After {@code analyze()} returns, consumers call {@code getAnalysisContext()} or
+ * the convenience {@code getProjectInfo()} / {@code getGraphSnapshot()}.
+ */
 public class AnalysisEngine {
 
+    // ── Collaborators ─────────────────────────────────────────────────────────
+
     private final LanguagePluginRegistry registry;
-    private final ProjectScanner scanner;
-    private final DependencyGraph dependencyGraph;
-    private final NamespaceBuilder namespaceBuilder;
-    private final ProjectInfoBuilder projectInfoBuilder;
+    private final ProjectScanner         scanner;
+    private final DependencyGraph        dependencyGraph;
+    private final NamespaceBuilder       namespaceBuilder;
+    private final ProjectInfoBuilder     projectInfoBuilder;
+    private final ProjectSnapshotBuilder projectSnapshotBuilder;
+    private final DefaultAnalysisContextFactory contextFactory;
     private final EntityViewModelBuilder viewModelBuilder;
-    private final ProjectTypeAnalyzer projectTypeAnalyzer;
+    private final ProjectTypeAnalyzer    projectTypeAnalyzer;
+
     private final com.example.bodhakfrontend.core.api.engine.EndpointDiscoveryEngine endpointDiscoveryEngine;
 
-    private final Map<Path, List<EntityInfo>> entityPathMap = new ConcurrentHashMap<>();
-    private final Map<Path, Set<String>> pathNamesMap = new ConcurrentHashMap<>();
-    private final List<EntityInfo> allEntities = new ArrayList<>();
-    private ProjectClassificationResult classificationResult;
+    // ── Mutable analysis state ────────────────────────────────────────────────
+
+    private final Map<Path, List<EntityInfo>> entityPathMap  = new ConcurrentHashMap<>();
+    private final Map<Path, Set<String>>      pathNamesMap   = new ConcurrentHashMap<>();
+    private final List<EntityInfo>            allEntities    = new ArrayList<>();
+
+    /** Canonical analysis result — populated after {@code analyze()} completes. */
+    private AnalysisContext analysisContext;
+
     private com.example.bodhakfrontend.core.api.model.ApiSurface apiSurface;
 
-    public AnalysisEngine(LanguagePluginRegistry registry, EntityViewModelBuilder viewModelBuilder,
-                          FrameworkDetectorRegistry detectorRegistry,
-                          com.example.bodhakfrontend.core.api.engine.EndpointDiscoveryEngine endpointDiscoveryEngine) {
-        this.registry = registry;
-        this.viewModelBuilder = viewModelBuilder;
-        this.scanner = new ProjectScanner(registry);
-        this.dependencyGraph = new DependencyGraph(registry);
-        this.namespaceBuilder = new NamespaceBuilder();
-        this.projectInfoBuilder = new ProjectInfoBuilder(scanner, new GlobalEntryPointDetector(registry));
-        this.projectTypeAnalyzer = new ProjectTypeAnalyzer(detectorRegistry);
+    // ── Constructor ───────────────────────────────────────────────────────────
+
+    public AnalysisEngine(
+            LanguagePluginRegistry registry,
+            EntityViewModelBuilder viewModelBuilder,
+            FrameworkDetectorRegistry detectorRegistry,
+            com.example.bodhakfrontend.core.api.engine.EndpointDiscoveryEngine endpointDiscoveryEngine
+    ) {
+        this.registry              = registry;
+        this.viewModelBuilder      = viewModelBuilder;
+        this.scanner               = new ProjectScanner(registry);
+        this.dependencyGraph       = new DependencyGraph(registry);
+        this.namespaceBuilder      = new NamespaceBuilder();
+        this.projectInfoBuilder    = new ProjectInfoBuilder(scanner, new GlobalEntryPointDetector(registry));
+        this.projectSnapshotBuilder = new ProjectSnapshotBuilder();
+        this.contextFactory        = new DefaultAnalysisContextFactory();
+        this.projectTypeAnalyzer   = new ProjectTypeAnalyzer(detectorRegistry);
         this.endpointDiscoveryEngine = endpointDiscoveryEngine;
     }
 
+    // ── Full analysis ─────────────────────────────────────────────────────────
+
     public void analyze(Path projectPath) {
-        // 1. Scan files
+
+        // Stage 1 — Scan files
         Set<Path> files = scanner.scan(projectPath);
 
-        // 2. Extract names mapped to file paths
+        // Stage 2 — Extract names per file
         for (Path file : files) {
             LanguagePlugin plugin = registry.forFile(file).orElse(null);
             if (plugin != null) {
@@ -62,84 +106,59 @@ public class AnalysisEngine {
             }
         }
 
-        Set<String> allKnownNames = pathNamesMap.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
+        Set<String> allKnownNames = pathNamesMap.values().stream()
+                .flatMap(Set::stream)
+                .collect(Collectors.toSet());
 
-        // 3. Build Dependency Graph
+        // Stage 3 — Build Dependency Graph
         dependencyGraph.buildInitialGraph(pathNamesMap, allKnownNames);
 
-        // 4. Extract rich EntityInfo via builder
+        // Stage 4 — Build EntityInfo
         for (Path file : files) {
             LanguagePlugin plugin = registry.forFile(file).orElse(null);
             if (plugin != null) {
                 List<EntityInfo> entities = plugin.getEntityBuilder().build(file);
-                
-                // Process warnings
-                for (EntityInfo e : entities) {
-                    List<WarningRule> warnings = plugin.getWarningProvider().evaluate(e);
-                    e.getWarnings().addAll(warnings);
-                }
-
                 allEntities.addAll(entities);
                 entityPathMap.put(file, new ArrayList<>(entities));
             }
         }
 
-        // Apply dependencies to entities
+        // Stage 5 — Apply graph dependencies to entities
         applyGraphDependencies(allEntities);
 
-        // 5. Build ViewModels
+        // Stage 6 — Build ViewModels
         viewModelBuilder.initialBuild(allEntities);
 
-
-        // 6. Build Namespaces
+        // Stage 7 — Build Namespaces
         Map<String, NamespaceInfo> namespaces = namespaceBuilder.build(allEntities);
 
-        // 7. Aggregate Project Info
-        projectInfoBuilder.buildAll(projectPath, allEntities, namespaces);
+        // Stage 8 — Build ProjectInfo (pure metadata)
+        ProjectInfo projectInfo = projectInfoBuilder.buildAll(projectPath, allEntities);
 
-        // 8. Project Type Detection
-        AnalysisContext analysisContext = new AnalysisContext(
-                getProjectInfo(), dependencyGraph, allEntities);
-        this.classificationResult = projectTypeAnalyzer.analyze(analysisContext);
+        // Stage 9 — Build ProjectSnapshot (structural view)
+        ProjectSnapshot snapshot = projectSnapshotBuilder.build(projectInfo, allEntities, namespaces);
 
-        // 9. Endpoint Discovery
-        com.example.bodhakfrontend.core.projectType.detection.DetectionContext detectionContext = 
-                new com.example.bodhakfrontend.core.projectType.detection.DetectionContext(analysisContext);
-        this.apiSurface = endpointDiscoveryEngine.analyze(detectionContext, registry);
+        // Stage 10 — Classify project type
+        ProjectClassificationResult classificationResult =
+                projectTypeAnalyzer.analyze(projectInfo, allEntities);
 
-
-        // --- PRINT STATEMENT TO SEE OUTPUT IN CONSOLE ---
-        System.out.println("\n=== PROJECT TYPE DETECTION OUTPUT ===");
-        System.out.println("Primary Project Type: " + this.classificationResult.primaryType());
-        System.out.println("Detected Project Types with Confidence:");
-        this.classificationResult.projectTypes().forEach((type, confidence) -> {
-            System.out.printf("  - %s (Confidence: %.2f)%n", type, confidence);
-        });
-        System.out.println("Detected Frameworks:");
-        if (this.classificationResult.detectedFrameworks().isEmpty()) {
-            System.out.println("  - None");
-        } else {
-            this.classificationResult.detectedFrameworks().forEach(framework -> {
-                System.out.printf("  * %s (Confidence: %.2f, Score: %.2f)%n",
-                        framework.frameworkName(), framework.confidence(), framework.score());
-                System.out.println("    Evidence:");
-                framework.evidence().forEach(ev -> {
-                    System.out.printf("      - [%s] %s (Weight: %.2f, Source: %s)%n",
-                            ev.category(), ev.description(), ev.weight(), ev.source());
-                });
-            });
-        }
-        System.out.println("=====================================\n");
+        // Stage 11 — Create AnalysisContext (canonical analysis state)
+        this.analysisContext = contextFactory.create(snapshot, dependencyGraph, classificationResult);
+        //
+        DetectionContext detectionContext=new DetectionContext(allEntities,projectInfo);
+        this.apiSurface=endpointDiscoveryEngine.analyze(detectionContext,registry);
     }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
 
     private void applyGraphDependencies(List<EntityInfo> entities) {
         Map<String, Set<String>> revDeps = dependencyGraph.getReverseDependencies();
-        Set<Set<String>> cycles = dependencyGraph.getCircularGroups();
-        
+        Set<Set<String>>         cycles  = dependencyGraph.getCircularGroups();
+
         for (EntityInfo e : entities) {
             String name = e.getEntityName();
-            Path file = e.getSourceFile().toPath().toAbsolutePath().normalize();
-            
+            Path file   = e.getSourceFile().toPath().toAbsolutePath().normalize();
+
             // Depends ON
             Map<String, Set<String>> fileDeps = dependencyGraph.getFileDependencies().get(file);
             if (fileDeps != null) {
@@ -148,7 +167,7 @@ public class AnalysisEngine {
 
             // Used BY
             e.getUsedBy().addAll(revDeps.getOrDefault(name, Set.of()));
-            
+
             // Cycles
             Set<Set<String>> myCycles = new HashSet<>();
             for (Set<String> cycle : cycles) {
@@ -158,140 +177,139 @@ public class AnalysisEngine {
         }
     }
 
-    public ProjectInfo getProjectInfo() {
-        // Evaluate project level metrics using ProjectInfoBuilder
-        return projectInfoBuilder.buildAll(
-                (scanner.getKnownFolders().isEmpty() ? null : scanner.getKnownFolders().iterator().next()),
-                allEntities, 
-                namespaceBuilder.build(allEntities)
-        );
-    }
-    
-    public Map<Path, List<EntityInfo>> getEntityPathMap() {
-        return entityPathMap;
+    // ── Public API ────────────────────────────────────────────────────────────
+
+    /**
+     * Returns the canonical analysis state.
+     * Returns {@code null} if {@link #analyze(Path)} has not been called yet.
+     */
+    public AnalysisContext getAnalysisContext() {
+        return analysisContext;
     }
 
     /**
-     * Returns an unmodifiable snapshot of the entities currently associated with
-     * the given file path. Returns an empty list if the path is unknown.
-     * Safe to call from any thread.
+     * Convenience accessor for project metadata.
+     * Equivalent to {@code getAnalysisContext().getProjectInfo()}.
+     */
+    public ProjectInfo getProjectInfo() {
+        return analysisContext == null ? null : analysisContext.getProjectInfo();
+    }
+
+    /**
+     * Returns an unmodifiable snapshot of entities for the given file path.
+     * Returns an empty list if the path is unknown.
      */
     public List<EntityInfo> getEntitiesForFile(Path file) {
         Path normalized = file.toAbsolutePath().normalize();
         List<EntityInfo> list = entityPathMap.get(normalized);
         return list == null ? Collections.emptyList() : Collections.unmodifiableList(list);
     }
-    public DependencyGraph getDependencyGraph(){return dependencyGraph;}
-    /**
-     * Returns the latest immutable {@link GraphSnapshot} from the dependency graph.
-     * Safe to call from any thread.
-     */
+
+    public DependencyGraph getDependencyGraph() { return dependencyGraph; }
+
+    /** Returns the latest immutable {@link GraphSnapshot}. */
     public GraphSnapshot getGraphSnapshot() {
         return dependencyGraph.snapshot();
     }
 
-    // Incremental handlers...
-    public void onFileCreate(Path file) {
-        Path normalized = file.toAbsolutePath().normalize();
-        scanner.onFileCreated(normalized);
-        
-        LanguagePlugin plugin = registry.forFile(normalized).orElse(null);
-        if (plugin == null) return;
-        
-        // 1. Name Extractor
-        Set<String> names = plugin.getNameExtractor().extractNames(normalized);
-        pathNamesMap.put(normalized, names);
-        Set<String> allKnownNames = pathNamesMap.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
-        
-        // 2. Dependency Graph
-        dependencyGraph.updateForFile(normalized, allKnownNames);
-        
-        // 3. Entity creation
-        List<EntityInfo> newEntities = plugin.getEntityBuilder().build(normalized);
-        for (EntityInfo e : newEntities) {
-            e.getWarnings().addAll(plugin.getWarningProvider().evaluate(e));
-        }
-        
-        allEntities.addAll(newEntities);
-        entityPathMap.put(normalized, new ArrayList<>(newEntities));
-        
-        applyGraphDependencies(allEntities); // Refresh all entity dep fields
-        
-        viewModelBuilder.onFileCreate(newEntities);
-        projectInfoBuilder.onFileCreated(file);
-    }
-    
-    public void onFileDelete(Path file) {
-        Path normalized = file.toAbsolutePath().normalize();
-        scanner.onFileDeleted(normalized);
-        
-        LanguagePlugin plugin = registry.forFile(normalized).orElse(null);
-        if (plugin != null) plugin.getEntityBuilder().invalidate(normalized);
-        
-        pathNamesMap.remove(normalized);
-        dependencyGraph.removeFile(normalized);
-        
-        List<EntityInfo> removed = entityPathMap.remove(normalized);
-        if (removed != null) {
-            allEntities.removeAll(removed);
-            viewModelBuilder.onFileDelete(removed);
-        }
-        
-        applyGraphDependencies(allEntities); // Refresh all entity dep fields
-        projectInfoBuilder.onFileDeleted(file);
-    }
-    
-    public void onFileModify(Path file) {
-        Path normalized = file.toAbsolutePath().normalize();
-        LanguagePlugin plugin = registry.forFile(normalized).orElse(null);
-        if (plugin == null) return;
-        
-        List<EntityInfo> oldEntities = new ArrayList<>(entityPathMap.getOrDefault(normalized, new ArrayList<>()));
-        plugin.getEntityBuilder().invalidate(normalized);
-
-        // Re-extract
-        Set<String> names = plugin.getNameExtractor().extractNames(normalized);
-        pathNamesMap.put(normalized, names);
-        Set<String> allKnownNames = pathNamesMap.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
-        
-        dependencyGraph.updateForFile(normalized, allKnownNames);
-        
-        allEntities.removeAll(oldEntities);
-        
-        List<EntityInfo> newEntities = plugin.getEntityBuilder().build(normalized);
-        for (EntityInfo e : newEntities) {
-            e.getWarnings().addAll(plugin.getWarningProvider().evaluate(e));
-        }
-        
-        allEntities.addAll(newEntities);
-        entityPathMap.put(normalized, new ArrayList<>(newEntities));
-        
-        applyGraphDependencies(allEntities);
-        
-        viewModelBuilder.onFileModify(oldEntities, newEntities);
-        projectInfoBuilder.onFileDeleted(file);
-        projectInfoBuilder.onFileCreated(file);
-    }
-    
-    public void onFolderCreate(Path folder) {
-        scanner.onFolderCreated(folder);
-    }
-    
-    public void onFolderDelete(Path folder) {
-        scanner.onFolderDeleted(folder);
+    public Map<Path, List<EntityInfo>> getEntityPathMap() {
+        return entityPathMap;
     }
 
     public LanguagePluginRegistry getPluginRegistry() {
         return registry;
     }
 
-    /** Returns the result of project type classification, or null if not yet analyzed. */
+    /** Returns the result of project-type classification, or null if not yet analyzed. */
     public ProjectClassificationResult getClassificationResult() {
-        return classificationResult;
+        return analysisContext == null ? null : analysisContext.getClassificationResult();
     }
 
     /** Returns the discovered API surface, or null if not yet analyzed. */
     public com.example.bodhakfrontend.core.api.model.ApiSurface getApiSurface() {
         return apiSurface;
     }
+
+    // ── Incremental update handlers ───────────────────────────────────────────
+
+    public void onFileCreate(Path file) {
+        Path normalized = file.toAbsolutePath().normalize();
+        scanner.onFileCreated(normalized);
+
+        LanguagePlugin plugin = registry.forFile(normalized).orElse(null);
+        if (plugin == null) return;
+
+        // Name extraction
+        Set<String> names = plugin.getNameExtractor().extractNames(normalized);
+        pathNamesMap.put(normalized, names);
+        Set<String> allKnownNames = pathNamesMap.values().stream()
+                .flatMap(Set::stream).collect(Collectors.toSet());
+
+        // Graph update
+        dependencyGraph.updateForFile(normalized, allKnownNames);
+
+        // Entity creation
+        List<EntityInfo> newEntities = plugin.getEntityBuilder().build(normalized);
+        allEntities.addAll(newEntities);
+        entityPathMap.put(normalized, new ArrayList<>(newEntities));
+
+        applyGraphDependencies(allEntities);
+
+        viewModelBuilder.onFileCreate(newEntities);
+        projectInfoBuilder.onFileCreated(file);
+    }
+
+    public void onFileDelete(Path file) {
+        Path normalized = file.toAbsolutePath().normalize();
+        scanner.onFileDeleted(normalized);
+
+        LanguagePlugin plugin = registry.forFile(normalized).orElse(null);
+        if (plugin != null) plugin.getEntityBuilder().invalidate(normalized);
+
+        pathNamesMap.remove(normalized);
+        dependencyGraph.removeFile(normalized);
+
+        List<EntityInfo> removed = entityPathMap.remove(normalized);
+        if (removed != null) {
+            allEntities.removeAll(removed);
+            viewModelBuilder.onFileDelete(removed);
+        }
+
+        applyGraphDependencies(allEntities);
+        projectInfoBuilder.onFileDeleted(file);
+    }
+
+    public void onFileModify(Path file) {
+        Path normalized = file.toAbsolutePath().normalize();
+        LanguagePlugin plugin = registry.forFile(normalized).orElse(null);
+        if (plugin == null) return;
+
+        List<EntityInfo> oldEntities = new ArrayList<>(
+                entityPathMap.getOrDefault(normalized, new ArrayList<>()));
+        plugin.getEntityBuilder().invalidate(normalized);
+
+        // Re-extract
+        Set<String> names = plugin.getNameExtractor().extractNames(normalized);
+        pathNamesMap.put(normalized, names);
+        Set<String> allKnownNames = pathNamesMap.values().stream()
+                .flatMap(Set::stream).collect(Collectors.toSet());
+
+        dependencyGraph.updateForFile(normalized, allKnownNames);
+
+        allEntities.removeAll(oldEntities);
+
+        List<EntityInfo> newEntities = plugin.getEntityBuilder().build(normalized);
+        allEntities.addAll(newEntities);
+        entityPathMap.put(normalized, new ArrayList<>(newEntities));
+
+        applyGraphDependencies(allEntities);
+
+        viewModelBuilder.onFileModify(oldEntities, newEntities);
+        projectInfoBuilder.onFileDeleted(file);
+        projectInfoBuilder.onFileCreated(file);
+    }
+
+    public void onFolderCreate(Path folder) { scanner.onFolderCreated(folder); }
+
+    public void onFolderDelete(Path folder) { scanner.onFolderDeleted(folder); }
 }

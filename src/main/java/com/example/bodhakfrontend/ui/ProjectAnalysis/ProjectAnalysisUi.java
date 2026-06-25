@@ -1,7 +1,9 @@
 package com.example.bodhakfrontend.ui.ProjectAnalysis;
 
-import com.example.bodhakfrontend.core.model.entity.EntityInfo;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 import com.example.bodhakfrontend.core.model.entity.IssueType;
+import com.example.bodhakfrontend.core.model.entity.EntityInfo;
+import com.example.bodhakfrontend.core.model.hotspot.HotspotInfo;
 import com.example.bodhakfrontend.core.model.namespace.NamespaceInfo;
 import com.example.bodhakfrontend.core.model.project.*;
 import com.example.bodhakfrontend.ui.helper.UiFeatures;
@@ -32,7 +34,8 @@ public class ProjectAnalysisUi {
 
 
     // completeBuild
-    public Node build(ProjectInfo projectInfo) {
+    public Node build(AnalysisContext context) {
+
         VBox root=new VBox(10);
         root.setPadding(new Insets(10));
         root.getStyleClass().add("card");
@@ -44,10 +47,10 @@ public class ProjectAnalysisUi {
         exportBtn.getStyleClass().addAll("btn-secondary", "editor-bottom-btn");
         exportbar.getChildren().add(exportBtn);
         exportBtn.setOnAction(e -> {
-            exporter.exportAnalysis(projectInfo);
+            exporter.exportAnalysis(context);
         });
         container.getChildren().add(exportbar);
-        analyzeView(root, projectInfo);
+        analyzeView(root, context);
         container.getChildren().add(root);
         ScrollPane scrollPane = new ScrollPane(container);
         scrollPane.setFitToWidth(true);
@@ -55,16 +58,19 @@ public class ProjectAnalysisUi {
         return scrollPane;
     }
 
-    private void analyzeView(VBox root,ProjectInfo projectInfo) {
+    private void analyzeView(VBox root, AnalysisContext context) {
+        ProjectInfo projectInfo = context.getProjectInfo();
+        List<EntityInfo> entities = context.getEntities();
+        Map<String, NamespaceInfo> namespaces = context.getNamespaces();
+
         createSection(root,"/icons/summary.png","Project Summary",buildProjectSummary(projectInfo),"icon-blue",true);
         createSection(root,"/icons/entryPoint.png","Entry Points",buildEntryPointSection(projectInfo),"icon-blue",true);
-        createSection(root,"/icons/packageOverview.png","Namespace Overview",buildPackageOverView(projectInfo),"icon-blue",false);
+        createSection(root,"/icons/packageOverview.png","Namespace Overview",buildPackageOverView(namespaces),"icon-blue",false);
         createSection(root,"/icons/largestFiles.png","Largest Files",buildLargestFileView(projectInfo),"icon-blue",false);
-        createSection(root,"/icons/classMetric.png","Entity Metrics |" + projectInfo.getEntities().size() + " entities",buildClassMetricsView(projectInfo),"icon-blue",false);
-        createSection(root,"/icons/health.png","Project Health",buildHealthSummary(projectInfo),"icon-blue",true);
-        createSection(root,"/icons/hotspot.png","Risk Hotspots", buildHotspotView(projectInfo, uiFeatures),"icon-blue",false);
-        createSection(root,"/icons/unused.png","🧹 Unused or Suspicious Entities", buildUnusedClassView(projectInfo, uiFeatures),"icon-blue",false);
-
+        createSection(root,"/icons/classMetric.png","Entity Metrics |" + entities.size() + " entities",buildClassMetricsView(entities),"icon-blue",false);
+        createSection(root,"/icons/health.png","Project Health",buildHealthSummary(entities),"icon-blue",true);
+        createSection(root,"/icons/hotspot.png","Risk Hotspots", buildHotspotView(entities, uiFeatures),"icon-blue",false);
+        createSection(root,"/icons/unused.png","🧹 Unused or Suspicious Entities", buildUnusedClassView(entities, uiFeatures),"icon-blue",false);
     }
   // for Project Overview section
   private Node buildProjectSummary(ProjectInfo projectInfo) {
@@ -82,7 +88,7 @@ public class ProjectAnalysisUi {
       typeLabel.getStyleClass().add("metric-title");
 
       Label typeValue = new Label(
-              projectInfo.getEntryPointInfo().getProjectFlavors().toString()
+              projectInfo.entryPointInfo().getProjectFlavors().toString()
       );
       typeValue.getStyleClass().add("metric-value");
 
@@ -95,8 +101,8 @@ public class ProjectAnalysisUi {
       Label sizeLabel = new Label("SIZE");
       sizeLabel.getStyleClass().add("metric-title");
 
-      String sizeText = projectInfo.getKnownFolders().size()
-              + " Fld / " + projectInfo.getKnownFiles().size() + " Files";
+      String sizeText = projectInfo.knownFolders().size()
+              + " Fld / " + projectInfo.knownFiles().size() + " Files";
 
       Label sizeValue = new Label(sizeText);
       sizeValue.getStyleClass().add("metric-value");
@@ -111,7 +117,7 @@ public class ProjectAnalysisUi {
       Label langTitle = new Label("Languages");
       langTitle.getStyleClass().add("section-subtitle");
 
-      Map<String, Set<Path>> map = projectInfo.getLanguageCountMap();
+      Map<String, Set<Path>> map = projectInfo.languageCountMap();
 
       int total = map.values().stream().mapToInt(Set::size).sum();
 
@@ -188,7 +194,7 @@ private Node buildEntryPointSection(ProjectInfo projectInfo) {
     root.getStyleClass().add("analysis-card");
 
     // ================= PRIMARY ENTRY =================
-    EntryPointInfo.Entry primaryEntry = projectInfo.getEntryPointInfo().getPrimaryEntry();
+    EntryPointInfo.Entry primaryEntry = projectInfo.entryPointInfo().getPrimaryEntry();
 
     if (primaryEntry != null) {
 
@@ -209,7 +215,7 @@ private Node buildEntryPointSection(ProjectInfo projectInfo) {
     }
 
     // ================= SECONDARY ENTRIES =================
-    Set<EntryPointInfo.Entry> secondary = projectInfo.getEntryPointInfo().getSecondaryEntries();
+    Set<EntryPointInfo.Entry> secondary = projectInfo.entryPointInfo().getSecondaryEntries();
 
     if (!secondary.isEmpty()) {
 
@@ -251,9 +257,7 @@ private Node buildEntryPointSection(ProjectInfo projectInfo) {
     return root;
 }
 // package OverView Class which pkg Contains how many classes
-private Node buildPackageOverView(ProjectInfo projectInfo) {
-
-    Map<String, NamespaceInfo> packageInfos = projectInfo.getNamespaceInfos();
+private Node buildPackageOverView(Map<String, NamespaceInfo> packageInfos) {
 
     VBox root = new VBox(10); // spacing between cards
 
@@ -308,7 +312,7 @@ private Node buildLargestFileView(ProjectInfo result) {
         root.getChildren().add(empty);
         return root;
     }
-    List<LargestFileInfo> files=result.getLargestFiles();
+    List<LargestFileInfo> files=result.largestFiles();
 
     for(LargestFileInfo lf:files){
         HBox row = new HBox();
@@ -342,8 +346,7 @@ private Node buildLargestFileView(ProjectInfo result) {
     return root;
 }
 
-private Node buildClassMetricsView(ProjectInfo projectInfo) {
-    List<EntityInfo> classes=projectInfo.getEntities();
+private Node buildClassMetricsView(List<EntityInfo> classes) {
     if (classes == null || classes.isEmpty()) {
         return new Label("No Entity Found!");
     }
@@ -518,10 +521,18 @@ private Node buildClassMetricsView(ProjectInfo projectInfo) {
         }
     }
 // for health summary
-private Node buildHealthSummary(ProjectInfo projectInfo) {
+private Node buildHealthSummary(List<EntityInfo> entities) {
 
     VBox root = new VBox(12);
     root.getStyleClass().add("analysis-card");
+
+    int healthy        = (int) entities.stream().filter(e -> e.getWarnings().isEmpty()).count();
+    int withWarnings   = (int) entities.stream().filter(e -> !e.getWarnings().isEmpty()).count();
+    int circular       = (int) entities.stream().filter(e -> !e.getCircularGroups().isEmpty()).count();
+    int highlyCoupled  = (int) entities.stream().filter(e ->
+            e.getIssueType() != null && e.getIssueType().contains(IssueType.HIGH_COUPLING)).count();
+    int godClasses     = (int) entities.stream().filter(e ->
+            e.getIssueType() != null && e.getIssueType().contains(IssueType.GOD_CLASS)).count();
 
     // ================= TOP METRICS =================
     FlowPane topRow = new FlowPane();
@@ -533,28 +544,28 @@ private Node buildHealthSummary(ProjectInfo projectInfo) {
 
     // ===== HEALTHY =====
     VBox healthyBox = createHealthBox(
-            String.valueOf(projectInfo.getHealthyEntities()),
+            String.valueOf(healthy),
             "HEALTHY",
             "health-value"
     );
 
     // ===== WARNINGS =====
     VBox warningBox = createHealthBox(
-            String.valueOf(projectInfo.getEntitiesWithWarnings()),
+            String.valueOf(withWarnings),
             "WARNINGS",
             "warning-value"
     );
 
     // ===== CYCLES =====
     VBox cycleBox = createHealthBox(
-            String.valueOf(projectInfo.getCircularEntities()),
+            String.valueOf(circular),
             "CYCLES",
             "warning-value"
     );
 
     // ===== COUPLED =====
     VBox highBoundBox = createHealthBox(
-            String.valueOf(projectInfo.getHighlyCoupledEntities()),
+            String.valueOf(highlyCoupled),
             "HIGHLY COUPLED",
             "warning-value"
     );
@@ -564,8 +575,6 @@ private Node buildHealthSummary(ProjectInfo projectInfo) {
     // ================= GOD CLASS ALERT =================
     VBox alertBox = new VBox(4);
     alertBox.getStyleClass().add("health-alert");
-
-    int godClasses = projectInfo.getGodEntities();
 
     Label alertTitle = new Label(godClasses + " God Entities");
     alertTitle.getStyleClass().add("alert-title");
@@ -598,42 +607,46 @@ private Node buildHealthSummary(ProjectInfo projectInfo) {
 
         return box;
     }
-private Node buildHotspotView(ProjectInfo projectInfo, UiFeatures uiFeatures) {
+private Node buildHotspotView(List<HotspotInfo> hotspotInfos, UiFeatures uiFeatures) {
 
-    List<Hotspot> hotspots = projectInfo.getHotspots();
+    // Derive hotspots from entities with GOD_CLASS or HIGH_COUPLING issue types
+    List<EntityInfo> hotspotEntities = entities.stream()
+            .filter(e -> e.getIssueType() != null &&
+                    (e.getIssueType().contains(IssueType.GOD_CLASS) ||
+                     e.getIssueType().contains(IssueType.HIGH_COUPLING)))
+            .toList();
 
     VBox root = new VBox(12);
-    root.setFillWidth(true); // ✅ IMPORTANT
+    root.setFillWidth(true);
 
-    if (hotspots.isEmpty()) {
+    if (hotspotEntities.isEmpty()) {
         Label empty = new Label("✅ No high-risk hotspots detected");
         empty.getStyleClass().add("label-muted");
         root.getChildren().add(empty);
         return root;
     }
 
-    for (Hotspot hs : hotspots) {
-
-        EntityInfo ci = hs.getEntity();
+    for (EntityInfo ci : hotspotEntities) {
 
         VBox card = new VBox(10);
-        card.getStyleClass().addAll("hotspot-card", getRiskClass((int) hs.getScore()));
+        card.getStyleClass().addAll("hotspot-card");
         card.setPadding(new Insets(12));
 
-        card.setMaxWidth(Double.MAX_VALUE); // ✅ CRITICAL FIX
+        card.setMaxWidth(Double.MAX_VALUE);
 
         // ================= TOP ROW =================
         HBox topRow = new HBox(10);
         topRow.setAlignment(Pos.CENTER_LEFT);
 
         VBox left = new VBox(4);
-        left.setMaxWidth(Double.MAX_VALUE); // ✅ IMPORTANT
-        HBox.setHgrow(left, Priority.ALWAYS); // ✅ IMPORTANT
+        left.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(left, Priority.ALWAYS);
 
         Label title = new Label(getSimpleName(ci.getEntityName()));
         title.getStyleClass().add("hotspot-title");
 
-        Label desc = new Label(hs.getReasons().toString());
+        String issues = ci.getIssueType() == null ? "" : ci.getIssueType().toString();
+        Label desc = new Label(issues);
         desc.getStyleClass().add("hotspot-desc");
         desc.setWrapText(true);
 
@@ -642,14 +655,14 @@ private Node buildHotspotView(ProjectInfo projectInfo, UiFeatures uiFeatures) {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Label badge = new Label(getRiskLabel((int)hs.getScore()));
-        badge.getStyleClass().addAll("risk-badge", getRiskClass((int)hs.getScore()));
+        Label badge = new Label("HIGH RISK");
+        badge.getStyleClass().addAll("risk-badge", "risk-high");
 
         topRow.getChildren().addAll(left, spacer, badge);
 
         // ================= METRICS =================
         HBox metrics = new HBox(30);
-        metrics.setAlignment(Pos.CENTER_LEFT); // ✅ small improvement
+        metrics.setAlignment(Pos.CENTER_LEFT);
 
         metrics.getChildren().addAll(
                 metric("LOC", String.valueOf(ci.getLinesOfCode())),
@@ -670,7 +683,7 @@ private Node buildHotspotView(ProjectInfo projectInfo, UiFeatures uiFeatures) {
         card.setOnMouseEntered(e -> card.getStyleClass().add("hotspot-hover"));
         card.setOnMouseExited(e -> card.getStyleClass().remove("hotspot-hover"));
 
-        card.getChildren().addAll(topRow, metrics); // ✅ YOU MISSED THIS EARLIER
+        card.getChildren().addAll(topRow, metrics);
 
         root.getChildren().add(card);
     }
@@ -703,12 +716,15 @@ private VBox metric(String title, String value) {
 
     // for unused Classes
     private Node buildUnusedClassView(
-            ProjectInfo projectInfo, UiFeatures uiFeatures
+            List<EntityInfo> entities, UiFeatures uiFeatures
     ) {
         VBox root = new VBox(12);
         root.setFillWidth(true);
 
-        Set<UnusedEntityInfo> unused = projectInfo.getUnusedEntities();
+        // Entities with no usedBy references are effectively unused
+        List<EntityInfo> unused = entities.stream()
+                .filter(e -> e.getUsedBy().isEmpty())
+                .toList();
 
         if (unused.isEmpty()) {
             Label empty = new Label("✅ No Unused Entity Found");
@@ -717,9 +733,7 @@ private VBox metric(String title, String value) {
             return root;
         }
 
-        for (UnusedEntityInfo unusedClass : unused) {
-
-            EntityInfo ci = unusedClass.getEntity();
+        for (EntityInfo ci : unused) {
 
             VBox card = new VBox(8);
             card.getStyleClass().add("unused-card");
@@ -749,13 +763,10 @@ private VBox metric(String title, String value) {
 
             Label warning = new Label("⚠");
             warning.getStyleClass().add("unused-warning");
-            
-            Label confLabel = new Label(unusedClass.getConfidence().name());
-            confLabel.getStyleClass().add("confidence-badge-" + unusedClass.getConfidence().name().toLowerCase());
 
-            topRow.getChildren().addAll(left, spacer, confLabel, warning);
+            topRow.getChildren().addAll(left, spacer, warning);
 
-            Label reason = new Label(unusedClass.getReason());
+            Label reason = new Label("No incoming references detected");
             reason.getStyleClass().add("unused-reason");
             reason.setWrapText(true);
 

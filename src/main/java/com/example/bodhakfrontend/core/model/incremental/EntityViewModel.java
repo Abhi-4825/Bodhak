@@ -67,7 +67,7 @@ public class EntityViewModel {
         usedBy.addAll(entity.getUsedBy());
 
         circularGroups.setAll(entity.getCircularGroups());
-        warnings.setAll(entity.getWarnings());
+
     }
 
     // ── Properties ───────────────────────────────────────────────────────────
@@ -109,11 +109,14 @@ public class EntityViewModel {
             getLinesOfCode(), getBeginLine(), getBeginColumn(),
             contribution
         );
-        info.setWarnings(new ArrayList<>(warnings));
+
         return info;
     }
     
     // ── UI Compatibility ────────────────────────────────────────────────────
     public StringProperty simpleNameProperty() { return entityName; }
     public String getName() { return getEntityName(); }
+
+    /** Convenience alias for {@link #toEntityInfo()}. */
+    public EntityInfo getEntity() { return toEntityInfo(); }
 }

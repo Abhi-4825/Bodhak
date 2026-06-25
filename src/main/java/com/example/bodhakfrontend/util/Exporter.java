@@ -1,7 +1,7 @@
 package com.example.bodhakfrontend.util;
 
 import com.example.bodhakfrontend.core.model.project.EntryPointInfo;
-import com.example.bodhakfrontend.core.model.project.Hotspot;
+
 import com.example.bodhakfrontend.core.model.project.ProjectInfo;
 import com.example.bodhakfrontend.core.model.project.UnusedEntityInfo;
 
@@ -10,8 +10,13 @@ import javafx.stage.FileChooser;
 import java.io.File;
 import java.io.PrintWriter;
 
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.model.entity.EntityInfo;
+
 public class Exporter {
-    public void exportAnalysis(ProjectInfo result) {
+    public void exportAnalysis(AnalysisContext context) {
+        ProjectInfo result = context.getProjectInfo();
+        java.util.List<EntityInfo> entities = context.getEntities();
 
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Export Analysis");
@@ -27,46 +32,21 @@ public class Exporter {
             // Project Summary
             out.println("=== PROJECT SUMMARY ===");
             out.println("Type: " + result
-                    .getEntryPointInfo().getProjectFlavors().toString());
-            out.println("Folders: " + result.getKnownFolders().size());
-            out.println("Files: " + result.getKnownFiles().size());
+                    .entryPointInfo().getProjectFlavors().toString());
+            out.println("Folders: " + result.knownFolders().size());
+            out.println("Files: " + result.knownFiles().size());
             out.println();
 
             // Entry Points
             out.println("=== ENTRY POINTS ===");
-            EntryPointInfo ep = result.getEntryPointInfo();
+            EntryPointInfo ep = result.entryPointInfo();
             out.println("Primary: " + ep.getPrimaryEntry().entityName());
             for (EntryPointInfo.Entry s : ep.getSecondaryEntries()) {
                 out.println("Secondary: " + s.entityName());
             }
             out.println();
 
-            // Health Summary
-            out.println("=== PROJECT HEALTH ===");
 
-            out.println("Total Classes: " + result.getTotalEntities());
-            out.println("Healthy: " + result.getHealthyEntities());
-            out.println("Warnings: " + result.getEntitiesWithWarnings());
-            out.println("God Classes: " + result.getGodEntities());
-            out.println("Circular: " + result.getCircularEntities());
-            out.println();
-
-            // Hotspots
-            out.println("=== HOTSPOTS ===");
-            for (Hotspot h : result.getHotspots()) {
-                out.println(
-                        h.getEntity().getEntityName()
-                                + " | Score=" + h.getScore()
-                                + " | LOC=" + h.getEntity().getLinesOfCode()
-                );
-            }
-            out.println();
-
-            // Unused Classes
-            out.println("=== UNUSED CLASSES ===");
-            for (UnusedEntityInfo uc : result.getUnusedEntities()) {
-                out.println(uc.getEntity().getEntityName() + " | LOC=" + uc.getEntity().getLinesOfCode());
-            }
 
         } catch (Exception ex) {
             ex.printStackTrace();

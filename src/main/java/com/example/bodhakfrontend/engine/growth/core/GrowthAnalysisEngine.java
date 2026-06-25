@@ -1,7 +1,7 @@
 package com.example.bodhakfrontend.engine.growth.core;
 
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
-import com.example.bodhakfrontend.core.Analysis.AnalysisIssue;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisIssue;
 import com.example.bodhakfrontend.engine.growth.rules.GrowthRule;
 
 import java.util.ArrayList;

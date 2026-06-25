@@ -1,6 +1,6 @@
 package com.example.bodhakfrontend.ai.service;
 
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 
 import com.example.bodhakfrontend.ai.event.AnalysisProgressListener;
 

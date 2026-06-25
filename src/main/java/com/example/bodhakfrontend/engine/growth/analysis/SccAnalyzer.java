@@ -1,6 +1,6 @@
 package com.example.bodhakfrontend.engine.growth.analysis;
 
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 import com.example.bodhakfrontend.engine.GraphSnapshot;
 import com.example.bodhakfrontend.engine.growth.model.SccCluster;
 

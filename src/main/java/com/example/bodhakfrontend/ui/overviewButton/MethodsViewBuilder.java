@@ -1,6 +1,7 @@
 package com.example.bodhakfrontend.ui.overviewButton;
 
 import com.example.bodhakfrontend.core.model.entity.*;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 import com.example.bodhakfrontend.core.model.project.ProjectInfo;
 import com.example.bodhakfrontend.core.model.entity.MethodFilter;
 import com.example.bodhakfrontend.ui.helper.UiFeatures;
@@ -18,15 +19,15 @@ import java.util.stream.Collectors;
 public class MethodsViewBuilder {
 
     private final UiFeatures uiFeatures;
-    private final ProjectInfo projectInfo;
+    private final AnalysisContext context;
 
-    public MethodsViewBuilder(UiFeatures uiFeatures, ProjectInfo projectInfo) {
+    public MethodsViewBuilder(UiFeatures uiFeatures, AnalysisContext context) {
         this.uiFeatures = uiFeatures;
-        this.projectInfo = projectInfo;
+        this.context = context;
     }
 
     public Node build(String entityName) {
-        EntityInfo entityInfo = projectInfo.getEntities().stream().filter(e -> e.getEntityName().equals(entityName)).findFirst().orElse(null);
+        EntityInfo entityInfo = context.getEntities().stream().filter(e -> e.getEntityName().equals(entityName)).findFirst().orElse(null);
         if (entityInfo == null) {
             return new Label("Entity not found: " + entityName);
         }

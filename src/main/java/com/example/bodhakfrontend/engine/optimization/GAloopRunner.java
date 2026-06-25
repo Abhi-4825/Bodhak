@@ -1,7 +1,7 @@
 package com.example.bodhakfrontend.engine.optimization;
 
-import com.example.bodhakfrontend.core.model.project.Hotspot;
-import com.example.bodhakfrontend.core.model.project.ProjectInfo;
+
+import com.example.bodhakfrontend.core.model.hotspot.HotspotInfo;
 import com.example.bodhakfrontend.engine.optimization.Builder.*;
 import com.example.bodhakfrontend.engine.optimization.Crossover.UniformCrossover;
 import com.example.bodhakfrontend.engine.optimization.Model.*;
@@ -17,10 +17,12 @@ import java.util.function.Consumer;
 
 
 
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
+
 public class GAloopRunner {
 
     public Task<OptimizationReport> createTask(
-            ProjectInfo projectInfo,
+            AnalysisContext context,
             Consumer<String> progressListener
     ) {
         return new Task<>() {
@@ -35,7 +37,7 @@ public class GAloopRunner {
 
                 Metrics metrics =
                         projectMetricsBuilder
-                                .getProjectMetrics(projectInfo);
+                                .getProjectMetrics(context);
 
                 GenePoolBuilder genePoolBuilder =
                         new GenePoolBuilder();
@@ -44,7 +46,7 @@ public class GAloopRunner {
                         genePoolBuilder.getWeightedGenePool(
                                 metrics,
                                 lookUpClasses.getClassSuggestion(
-                                        projectInfo.getEntities(),
+                                        context.getEntities(),
                                         metrics
                                 )
                         );
@@ -75,11 +77,11 @@ public class GAloopRunner {
                 progressListener.accept("Analyzing refactoring targets...");
                 RefactoringSuggestionEngine refactoringSuggestionEngine =new RefactoringSuggestionEngine();
 
-                List<RefactoringSuggestion> suggestions=refactoringSuggestionEngine.generateSuggestions(result,projectInfo,metrics);
+                List<RefactoringSuggestion> suggestions=refactoringSuggestionEngine.generateSuggestions(result,context,metrics);
 
                 double beforeScore=calculateScore(result.beforeMetrics());
                 double afterScore=calculateScore(result.afterMetrics());
-                List<Hotspot> hotspots=projectInfo.getHotspots();
+                List<HotspotInfo> hotspots=java.util.Collections.emptyList();
                 progressListener.accept("Optimization analysis completed.");
 
 

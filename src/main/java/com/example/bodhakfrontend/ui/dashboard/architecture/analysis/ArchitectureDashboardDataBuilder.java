@@ -2,7 +2,7 @@ package com.example.bodhakfrontend.ui.dashboard.architecture.analysis;
 
 
 
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 import com.example.bodhakfrontend.core.Metrics.architecture.ArchitectureMetrics;
 import com.example.bodhakfrontend.ui.dashboard.architecture.model.ArchitectureDashboardData;
 

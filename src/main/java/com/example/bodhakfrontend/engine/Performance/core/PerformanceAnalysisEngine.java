@@ -2,9 +2,9 @@ package com.example.bodhakfrontend.engine.Performance.core;
 
 
 
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
-import com.example.bodhakfrontend.core.Analysis.AnalysisIssue;
-import com.example.bodhakfrontend.core.Analysis.AnalysisReport;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisIssue;
+import com.example.bodhakfrontend.core.analysis.AnalysisReport;
 import com.example.bodhakfrontend.engine.Performance.Rules.PerformanceRule;
 
 import java.util.ArrayList;

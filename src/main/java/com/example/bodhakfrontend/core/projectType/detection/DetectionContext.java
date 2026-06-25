@@ -1,6 +1,6 @@
 package com.example.bodhakfrontend.core.projectType.detection;
 
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 import com.example.bodhakfrontend.core.model.entity.EntityInfo;
 import com.example.bodhakfrontend.core.model.project.ProjectInfo;
 import com.example.bodhakfrontend.engine.DependencyGraph;
@@ -19,23 +19,19 @@ import java.util.stream.*;
  */
 public final class DetectionContext {
 
-    private final AnalysisContext analysisContext;
+    private final ProjectInfo projectInfo;
     private final Map<String, List<EntityInfo>> entitiesByLanguage;
 
-    public DetectionContext(AnalysisContext analysisContext) {
-        this.analysisContext = analysisContext;
-        this.entitiesByLanguage = analysisContext.getEntities().stream()
+    public DetectionContext(List<EntityInfo> entities,ProjectInfo projectInfo) {
+        this.projectInfo=projectInfo;
+        this.entitiesByLanguage = entities.stream()
                 .collect(Collectors.groupingBy(
                         e -> e.getLanguage().toLowerCase(),
                         Collectors.toUnmodifiableList()
                 ));
     }
 
-    // ── Delegated access ───────────────────────────────────────
-    public AnalysisContext analysisContext()  { return analysisContext; }
-    public ProjectInfo projectInfo()         { return analysisContext.getProjectInfo(); }
-    public DependencyGraph dependencyGraph() { return analysisContext.getDependencyGraph(); }
-    public List<EntityInfo> allEntities()    { return analysisContext.getEntities(); }
+
 
     // ── Language-filtered queries ──────────────────────────────
     public List<EntityInfo> entitiesForLanguage(String languageId) {
@@ -69,7 +65,7 @@ public final class DetectionContext {
 
     // ── File-system queries (using ProjectInfo.knownFiles) ────
     public boolean hasFile(String fileName) {
-        return projectInfo().getKnownFiles().stream()
+        return projectInfo.knownFiles().stream()
                 .anyMatch(p -> p.getFileName().toString()
                         .equalsIgnoreCase(fileName));
     }
@@ -77,20 +73,20 @@ public final class DetectionContext {
     public boolean hasFileMatching(String glob) {
         PathMatcher matcher = FileSystems.getDefault()
                 .getPathMatcher("glob:" + glob);
-        return projectInfo().getKnownFiles().stream()
+        return projectInfo.knownFiles().stream()
                 .anyMatch(p -> matcher.matches(p.getFileName()));
     }
 
     public Set<Path> filesMatching(String glob) {
         PathMatcher matcher = FileSystems.getDefault()
                 .getPathMatcher("glob:" + glob);
-        return projectInfo().getKnownFiles().stream()
+        return projectInfo.knownFiles().stream()
                 .filter(p -> matcher.matches(p.getFileName()))
                 .collect(Collectors.toUnmodifiableSet());
     }
 
     public boolean hasDirectory(String dirName) {
-        return projectInfo().getKnownFolders().stream()
+        return projectInfo.knownFolders().stream()
                 .anyMatch(p -> p.getFileName() != null
                         && p.getFileName().toString()
                         .equalsIgnoreCase(dirName));
@@ -98,7 +94,7 @@ public final class DetectionContext {
 
     // ── Build file content queries ────────────────────────────
     public Optional<String> readFileContent(String fileName) {
-        return projectInfo().getKnownFiles().stream()
+        return projectInfo.knownFiles().stream()
                 .filter(p -> p.getFileName().toString()
                         .equalsIgnoreCase(fileName))
                 .findFirst()

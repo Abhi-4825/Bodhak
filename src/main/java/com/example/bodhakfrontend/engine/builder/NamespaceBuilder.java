@@ -1,8 +1,9 @@
-package com.example.bodhakfrontend.engine;
+package com.example.bodhakfrontend.engine.builder;
 
 import com.example.bodhakfrontend.core.model.entity.EntityInfo;
 import com.example.bodhakfrontend.core.model.namespace.NamespaceInfo;
 import com.example.bodhakfrontend.core.model.namespace.NamespaceWarning;
+import com.example.bodhakfrontend.engine.CircularDependency;
 
 import java.util.*;
 

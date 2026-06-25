@@ -2,7 +2,7 @@ package com.example.bodhakfrontend.core.Metrics.architecture;
 
 
 
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 import com.example.bodhakfrontend.core.Metrics.Metric;
 
 public class NamespaceCountMetric
@@ -14,8 +14,7 @@ public class NamespaceCountMetric
             AnalysisContext context
     ) {
 
-        return context.getProjectInfo()
-                .getNamespaceInfos()
+        return context.getNamespaces()
                 .size();
     }
 }

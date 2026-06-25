@@ -4,7 +4,7 @@ import com.example.bodhakfrontend.ai.evidence.builder.ArchitectureEvidenceBuilde
 import com.example.bodhakfrontend.ai.evidence.model.architectur.ArchitectureAnalysisEvidence;
 import com.example.bodhakfrontend.ai.ollama.OllamaClient;
 import com.example.bodhakfrontend.ai.prompt.ArchitecturePromptBuilder;
-import com.example.bodhakfrontend.core.Analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 
 import com.example.bodhakfrontend.ai.event.AnalysisEvent;
 import com.example.bodhakfrontend.ai.event.AnalysisEventType;

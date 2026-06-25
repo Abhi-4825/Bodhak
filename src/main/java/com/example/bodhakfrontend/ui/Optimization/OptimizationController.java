@@ -1,5 +1,6 @@
 package com.example.bodhakfrontend.ui.Optimization;
 
+import com.example.bodhakfrontend.core.analysis.AnalysisContext;
 import com.example.bodhakfrontend.core.model.project.ProjectInfo;
 import com.example.bodhakfrontend.engine.optimization.GAloopRunner;
 import com.example.bodhakfrontend.engine.optimization.Model.OptimizationReport;
@@ -9,14 +10,14 @@ import javafx.concurrent.Task;
 
 public class OptimizationController {
 private final RightPanelTabManager  rightPanelTabManager;
-private final ProjectInfo projectInfo;
+private final AnalysisContext context;
 private OptimizationPanel optimizationPanel;
 private final UiFeatures uiFeatures;
 
 
-    public OptimizationController(RightPanelTabManager rightPanelTabManager, ProjectInfo projectInfo, UiFeatures uiFeatures) {
+    public OptimizationController(RightPanelTabManager rightPanelTabManager, AnalysisContext context, UiFeatures uiFeatures) {
         this.rightPanelTabManager = rightPanelTabManager;
-        this.projectInfo = projectInfo;
+        this.context = context;
         this.uiFeatures = uiFeatures;
     }
 
@@ -26,7 +27,7 @@ private final UiFeatures uiFeatures;
         GAloopRunner runner = new GAloopRunner();
 
         Task<OptimizationReport> task = runner.createTask(
-                projectInfo,
+                context,
                 message -> optimizationPanel.appendMessage(message)
         );
 
