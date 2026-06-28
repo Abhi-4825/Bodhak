@@ -31,9 +31,15 @@ public class HealthAnalyserView {
     private final Map<String, EntityViewModel> vmMap;
     private final VBox root = new VBox(12);
     private EntityViewModel currentVm;
+    private final java.util.function.Supplier<com.example.bodhakfrontend.core.analysis.AnalysisContext> contextSupplier;
 
     public HealthAnalyserView(Map<String, EntityViewModel> vmMap) {
+        this(vmMap, () -> null);
+    }
+
+    public HealthAnalyserView(Map<String, EntityViewModel> vmMap, java.util.function.Supplier<com.example.bodhakfrontend.core.analysis.AnalysisContext> contextSupplier) {
         this.vmMap = vmMap;
+        this.contextSupplier = contextSupplier;
         root.setPadding(new Insets(12));
     }
 
@@ -269,7 +275,7 @@ public class HealthAnalyserView {
 
         FixSuggestionEngine engine = new FixSuggestionEngine();
         List<FixSuggestion> allFixes =
-                engine.suggestAll(currentVm.toEntityInfo());
+                engine.suggestAll(currentVm.toEntityInfo(), contextSupplier.get());
 
         VBox fixBox = new VBox(8);
 

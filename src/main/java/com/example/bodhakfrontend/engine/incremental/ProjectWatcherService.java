@@ -1,5 +1,6 @@
 package com.example.bodhakfrontend.engine.incremental;
 
+import com.example.bodhakfrontend.core.analysis.entityflag.EntityCharacteristics;
 import com.example.bodhakfrontend.engine.AnalysisEngine;
 import com.example.bodhakfrontend.sync.bus.UIEventBus;
 import com.example.bodhakfrontend.sync.events.*;
@@ -8,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -141,31 +143,25 @@ public class ProjectWatcherService {
         if (kind == ENTRY_CREATE) {
             engine.onFileCreate(fullPath);
             bus.publish(new FileTreeChangedEvent(containingDir));
-            bus.publish(new ProjectSummaryChangedEvent(engine.getAnalysisContext()));
-            bus.publish(new EntityListChangedEvent(
-                    engine.getEntitiesForFile(fullPath), java.util.List.of(), java.util.List.of()
-            ));
+            bus.publish(new EntityListChangedEvent(engine.getEntitiesForFile(fullPath), List.of(),List.of()));
 
         } else if (kind == ENTRY_MODIFY) {
-            var before = engine.getEntitiesForFile(fullPath);
             engine.onFileModify(fullPath);
-            var after  = engine.getEntitiesForFile(fullPath);
+            var after = engine.getEntitiesForFile(fullPath);
             bus.publish(new EditorReloadEvent(fullPath));
-            bus.publish(new EntityListChangedEvent(
-                    java.util.List.of(), java.util.List.of(), after
-            ));
-            bus.publish(new ProjectSummaryChangedEvent(engine.getAnalysisContext()));
-            bus.publish(new DependencyGraphChangedEvent(engine.getGraphSnapshot()));
 
+            // Re-publish the updated entities
+            bus.publish(new EntityListChangedEvent(
+                    List.of(), List.of(),after
+            ));
         } else if (kind == ENTRY_DELETE) {
             var removed = engine.getEntitiesForFile(fullPath);
             engine.onFileDelete(fullPath);
             bus.publish(new FileTreeChangedEvent(containingDir));
             bus.publish(new EditorCloseEvent(fullPath));
             bus.publish(new EntityListChangedEvent(
-                    java.util.List.of(), removed, java.util.List.of()
+                    List.of(), removed, List.of()
             ));
-            bus.publish(new ProjectSummaryChangedEvent(engine.getAnalysisContext()));
         }
     }
 }

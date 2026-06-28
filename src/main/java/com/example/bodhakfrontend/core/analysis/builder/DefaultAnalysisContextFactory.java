@@ -1,7 +1,8 @@
 package com.example.bodhakfrontend.core.analysis.builder;
 
-import com.example.bodhakfrontend.core.analysis.entityflag.*;
+
 import com.example.bodhakfrontend.core.analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.entityflag.*;
 import com.example.bodhakfrontend.core.model.project.ProjectSnapshot;
 import com.example.bodhakfrontend.core.projectType.classification.ProjectClassificationResult;
 import com.example.bodhakfrontend.engine.DependencyGraph;
@@ -12,7 +13,7 @@ import java.util.List;
  * Default {@link AnalysisContextFactory} implementation.
  *
  * Responsibilities:
- *   1. Calculate {@link ProjectBaselines} from the snapshot's entity list
+ *   1. Calculate {@link} from the snapshot's entity list
  *   2. Build and return a fully-populated {@link AnalysisContext}
  *
  * No UI logic. No dashboard logic.

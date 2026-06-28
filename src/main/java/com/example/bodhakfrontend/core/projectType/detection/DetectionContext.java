@@ -5,25 +5,40 @@ import com.example.bodhakfrontend.core.model.entity.EntityInfo;
 import com.example.bodhakfrontend.core.model.project.ProjectInfo;
 import com.example.bodhakfrontend.engine.DependencyGraph;
 
-import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.util.*;
-import java.util.stream.*;
+import java.util.stream.Collectors;
 
 /**
- * Rich context object passed to every FrameworkDetector.
- * Wraps AnalysisContext and provides convenience query methods
- * for common detection patterns.
- *
- * Thread-safe: all returned collections are unmodifiable snapshots.
+ * Enriched query context passed to framework detectors.
  */
 public final class DetectionContext {
 
+    private final AnalysisContext analysisContext;
     private final ProjectInfo projectInfo;
+    private final List<EntityInfo> allEntities;
+    private final DependencyGraph dependencyGraph;
     private final Map<String, List<EntityInfo>> entitiesByLanguage;
 
-    public DetectionContext(List<EntityInfo> entities,ProjectInfo projectInfo) {
-        this.projectInfo=projectInfo;
+    public DetectionContext(AnalysisContext analysisContext) {
+        this.analysisContext = analysisContext;
+        this.projectInfo = analysisContext.getProjectInfo();
+        this.allEntities = analysisContext.getEntities();
+        this.dependencyGraph = analysisContext.getDependencyGraph();
+        this.entitiesByLanguage = allEntities.stream()
+                .collect(Collectors.groupingBy(
+                        e -> e.getLanguage().toLowerCase(),
+                        Collectors.toUnmodifiableList()
+                ));
+    }
+
+    public DetectionContext(List<EntityInfo> entities, ProjectInfo projectInfo) {
+        this.analysisContext = null;
+        this.projectInfo = projectInfo;
+        this.allEntities = entities;
+        this.dependencyGraph = null;
         this.entitiesByLanguage = entities.stream()
                 .collect(Collectors.groupingBy(
                         e -> e.getLanguage().toLowerCase(),
@@ -31,12 +46,15 @@ public final class DetectionContext {
                 ));
     }
 
-
+    // ── Delegated access ───────────────────────────────────────
+    public AnalysisContext analysisContext()  { return analysisContext; }
+    public ProjectInfo projectInfo()         { return projectInfo; }
+    public DependencyGraph dependencyGraph() { return dependencyGraph; }
+    public List<EntityInfo> allEntities()    { return allEntities; }
 
     // ── Language-filtered queries ──────────────────────────────
     public List<EntityInfo> entitiesForLanguage(String languageId) {
-        return entitiesByLanguage.getOrDefault(
-                languageId.toLowerCase(), List.of());
+        return entitiesByLanguage.getOrDefault(languageId.toLowerCase(), List.of());
     }
 
     // ── Decorator / annotation queries ────────────────────────
@@ -98,11 +116,11 @@ public final class DetectionContext {
                 .filter(p -> p.getFileName().toString()
                         .equalsIgnoreCase(fileName))
                 .findFirst()
-                .flatMap(p -> {
+                .map(path -> {
                     try {
-                        return Optional.of(Files.readString(p));
-                    } catch (IOException e) {
-                        return Optional.empty();
+                        return java.nio.file.Files.readString(path);
+                    } catch (Exception e) {
+                        return null;
                     }
                 });
     }

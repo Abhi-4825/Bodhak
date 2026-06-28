@@ -66,7 +66,7 @@ public class OverviewPanel {
             return root;
         }
 
-        AnalysisContext ctx = engine.getAnalysisContext();
+        AnalysisContext ctx = engine.getAnalysisContextManager().getCurrentContext();
         ProjectInfo info = ctx.getProjectInfo();
 
         // ── Summary metrics row ──────────────────────────────────────────────
@@ -89,17 +89,17 @@ public class OverviewPanel {
         root.getChildren().add(metricsRow);
 
         // ── Health metrics row ───────────────────────────────────────────────
-        int healthy = (int) ctx.getEntities().stream().filter(e -> e.getWarnings().isEmpty()).count();
-        int withWarnings = (int) ctx.getEntities().stream().filter(e -> !e.getWarnings().isEmpty()).count();
-        int godClasses = (int) ctx.getEntities().stream().filter(e -> e.getIssueType() != null &&
-                e.getIssueType().contains(com.example.bodhakfrontend.core.model.entity.IssueType.GOD_CLASS)).count();
+//        int healthy = (int) ctx.getEntities().stream().filter(e -> e.getWarnings().isEmpty()).count();
+//        int withWarnings = (int) ctx.getEntities().stream().filter(e -> !e.getWarnings().isEmpty()).count();
+//        int godClasses = (int) ctx.getEntities().stream().filter(e -> e.getIssueType() != null &&
+//                e.getIssueType().contains(com.example.bodhakfrontend.core.model.entity.IssueType.GOD_CLASS)).count();
 
         HBox healthRow = new HBox(10);
-        healthRow.getChildren().addAll(
-            metricCard("Healthy",      String.valueOf(healthy),       "#8bfd91"),
-            metricCard("With Warnings",String.valueOf(withWarnings),  "#ffd54f"),
-            metricCard("God Classes",  String.valueOf(godClasses),           "#ff8a80")
-        );
+//        healthRow.getChildren().addAll(
+//            metricCard("Healthy",      String.valueOf(healthy),       "#8bfd91"),
+//            metricCard("With Warnings",String.valueOf(withWarnings),  "#ffd54f"),
+//            metricCard("God Classes",  String.valueOf(godClasses),           "#ff8a80")
+//        );
         healthRow.getChildren().forEach(n -> HBox.setHgrow(n, Priority.ALWAYS));
         root.getChildren().add(healthRow);
 

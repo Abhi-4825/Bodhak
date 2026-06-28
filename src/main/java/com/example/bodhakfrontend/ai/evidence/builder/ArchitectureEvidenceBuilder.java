@@ -4,11 +4,13 @@ import com.example.bodhakfrontend.ai.evidence.model.*;
 import com.example.bodhakfrontend.ai.evidence.model.architectur.ArchitectureAnalysisEvidence;
 import com.example.bodhakfrontend.ai.evidence.model.architectur.ArchitectureSummaryEvidence;
 import com.example.bodhakfrontend.core.analysis.AnalysisContext;
+import com.example.bodhakfrontend.core.analysis.entityflag.EntityCharacteristics;
+import com.example.bodhakfrontend.core.analysis.entityflag.EntityFlag;
 import com.example.bodhakfrontend.core.model.entity.EntityInfo;
-import com.example.bodhakfrontend.core.model.entity.IssueType;
 import com.example.bodhakfrontend.core.model.project.ProjectInfo;
 import com.example.bodhakfrontend.engine.GraphSnapshot;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
@@ -30,12 +32,13 @@ public class ArchitectureEvidenceBuilder implements EvidenceBuilder<Architecture
                 analysisContext.getEntities().size() + " entities\n" + edgeCount + " dependency edges"));
         }
 
+        Collection<EntityCharacteristics> characteristics = analysisContext.getCharacteristics();
         List<EntityInfo> entities = analysisContext.getEntities();
         int totalEntities        = entities.size();
-        int withWarnings         = (int) entities.stream().filter(e -> !e.getWarnings().isEmpty()).count();
+        int withWarnings         = (int) characteristics.stream().filter(c -> !c.flags().isEmpty()).count();
         int healthy              = totalEntities - withWarnings;
-        int godCount             = (int) entities.stream().filter(e -> e.getIssueType() != null && e.getIssueType().contains(com.example.bodhakfrontend.core.model.entity.IssueType.GOD_CLASS)).count();
-        int highlyCoupled        = (int) entities.stream().filter(e -> e.getIssueType() != null && e.getIssueType().contains(com.example.bodhakfrontend.core.model.entity.IssueType.HIGH_COUPLING)).count();
+        int godCount             = (int) characteristics.stream().filter(c -> c.flags().contains(EntityFlag.OVERSIZED_ENTITY)).count();
+        int highlyCoupled        = (int) characteristics.stream().filter(c -> c.flags().contains(EntityFlag.HIGH_COUPLING)).count();
         int circular             = (int) entities.stream().filter(e -> !e.getCircularGroups().isEmpty()).count();
 
         ArchitectureSummaryEvidence summaryEvidence=new ArchitectureSummaryEvidence(
@@ -67,27 +70,16 @@ public class ArchitectureEvidenceBuilder implements EvidenceBuilder<Architecture
         }
 
         List<HighCouplingEvidence> couplingEvidence =
-                analysisContext.getEntities()
-                        .stream()
-                        .filter(entity ->
-                                entity.getIssueType()
-                                        .contains(com.example.bodhakfrontend.core.model.entity.IssueType.HIGH_COUPLING))
-                        .map(entity -> {
-
-                            int fanIn =
-                                    entity.getUsedBy().size();
-
-                            int fanOut =
-                                    entity.getDependsOn().size();
-
+                characteristics.stream()
+                        .filter(c -> c.flags().contains(EntityFlag.HIGH_COUPLING))
+                        .map(c -> {
+                            EntityInfo entity = c.entityInfo();
+                            int fanIn = entity.getUsedBy().size();
+                            int fanOut = entity.getDependsOn().size();
                             return new HighCouplingEvidence(
-
                                     entity.getEntityName(),
-
                                     fanIn,
-
                                     fanOut,
-
                                     fanIn + fanOut
                             );
                         })
@@ -98,25 +90,18 @@ public class ArchitectureEvidenceBuilder implements EvidenceBuilder<Architecture
                         )
                         .toList();
         List<GodClassEvidence> godClasses =
-                analysisContext.getEntities()
-                        .stream()
-                        .filter(entity ->
-                                entity.getIssueType()
-                                        .contains(com.example.bodhakfrontend.core.model.entity.IssueType.GOD_CLASS))
-                        .map(entity ->
-                                new GodClassEvidence(
-
-                                        entity.getEntityName(),
-
-                                        entity.getLinesOfCode(),
-
-                                        (int) entity.getMethodCount(),
-
-                                        entity.getFields().size(),
-
-                                        entity.getDependsOn().size()
-                                )
-                        )
+                characteristics.stream()
+                        .filter(c -> c.flags().contains(EntityFlag.OVERSIZED_ENTITY))
+                        .map(c -> {
+                            EntityInfo entity = c.entityInfo();
+                            return new GodClassEvidence(
+                                    entity.getEntityName(),
+                                    entity.getLinesOfCode(),
+                                    (int) entity.getMethodCount(),
+                                    entity.getFields().size(),
+                                    entity.getDependsOn().size()
+                            );
+                        })
                         .toList();
                         
         HighFanInEvidenceBuilder highFanInEvidenceBuilder=new HighFanInEvidenceBuilder();
@@ -149,15 +134,14 @@ public class ArchitectureEvidenceBuilder implements EvidenceBuilder<Architecture
         );
     }
 
-    private List<EntityInfo> filterByIssue(
+    private List<EntityInfo> filterByFlag(
             AnalysisContext analysisContext,
-            com.example.bodhakfrontend.core.model.entity.IssueType issueType
+            EntityFlag flag
     ) {
-
-        return analysisContext.getEntities()
+        return analysisContext.getCharacteristics()
                 .stream()
-                .filter(entity ->
-                        entity.getIssueType().contains(issueType))
+                .filter(c -> c.flags().contains(flag))
+                .map(EntityCharacteristics::entityInfo)
                 .toList();
     }
 }

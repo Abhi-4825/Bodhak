@@ -54,16 +54,26 @@ public final class ProjectTypeAnalyzer {
     /**
      * Execute the full pipeline.
      */
-    public ProjectClassificationResult analyze(ProjectInfo projectInfo, List<EntityInfo> entityInfos) {
+    public ProjectClassificationResult analyze(AnalysisContext analysisContext) {
         // Stage 1: Build enriched context
-        DetectionContext detectionContext = new DetectionContext(entityInfos,projectInfo);
+        DetectionContext detectionContext = new DetectionContext(analysisContext);
+
         // Stage 2: Run all framework detectors
         List<FrameworkDetectionResult> detectedFrameworks =
                 detectorRegistry.detectAll(detectionContext);
+
         // Stage 3: Aggregate capabilities
         CapabilityProfile profile =
                 capabilityAggregator.aggregate(detectedFrameworks);
+
         // Stage 4: Classify project types
+        return classifier.classify(profile, detectedFrameworks);
+    }
+
+    public ProjectClassificationResult analyze(ProjectInfo projectInfo, List<EntityInfo> entityInfos) {
+        DetectionContext detectionContext = new DetectionContext(entityInfos, projectInfo);
+        List<FrameworkDetectionResult> detectedFrameworks = detectorRegistry.detectAll(detectionContext);
+        CapabilityProfile profile = capabilityAggregator.aggregate(detectedFrameworks);
         return classifier.classify(profile, detectedFrameworks);
     }
 }

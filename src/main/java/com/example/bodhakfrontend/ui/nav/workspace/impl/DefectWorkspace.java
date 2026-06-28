@@ -24,6 +24,7 @@ import javafx.scene.text.TextAlignment;
 import javafx.util.Duration;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -40,9 +41,6 @@ public class DefectWorkspace implements Workspace {
 
     private final BorderPane root;
 
-    // for making the screen scroll to Result head
-    private Label resultsAnchor;
-
     // Sidebar controls
     private final ToggleGroup analysisToggle = new ToggleGroup();
     private final ComboBox<String> modelSelector;
@@ -54,28 +52,15 @@ public class DefectWorkspace implements Workspace {
     
     // Persistent Views
     private final VBox emptyStateView;
-    private final ScrollPane investigationSessionView;
-    
-    // UI elements inside investigationSessionView
-    private final VBox sessionContainer;
-    private final VBox timelineFeed;
-    private final VBox resultsDashboardView;
-    
-    // Real-Time Status Footer
-    private final HBox statusFooter;
-    private final Label statusLabel;
-    
-    // Typing state for model inference
-    private TypingMessageBubble currentModelBubble;
-
-    // Event Queue for pacing
-    private final Queue<AnalysisEvent> eventQueue = new ConcurrentLinkedQueue<>();
-    private Timeline eventPoller;
+    private final StackPane contentStack = new StackPane();
+    private final Map<AnalysisType, InvestigationPane> panes = new java.util.EnumMap<>(AnalysisType.class);
 
     // State
     private AnalysisEngine lastEngine;
     private String lastFindings;
     private AnalysisType selectedAnalysisType = AnalysisType.ARCHITECTURE;
+    private Task<String> activeAnalysisTask;
+    private final HBox runControlContainer = new HBox(8);
 
     private static final ObjectMapper mapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -90,7 +75,7 @@ public class DefectWorkspace implements Workspace {
         public List<String> responsibleEntities;
         public String severity;
         public String explanation;
-        public List<String> possibleFixes;
+        public List<Object> possibleFixes;
     }
 
     public DefectWorkspace() {
@@ -120,52 +105,25 @@ public class DefectWorkspace implements Workspace {
             if (!runButton.isDisabled()) runButton.setStyle(buildRunButtonStyle(false));
         });
         runButton.setOnAction(e -> handleRunAnalysis());
+        runControlContainer.getChildren().add(runButton);
 
         // Content area setup
         contentHolder = new StackPane();
         contentHolder.setStyle("-fx-background-color: #0e1415;");
 
         emptyStateView = buildEmptyStateView();
-        
-        timelineFeed = new VBox(20);
-        timelineFeed.setMaxWidth(800);
-        timelineFeed.setAlignment(Pos.TOP_LEFT);
-        
-        statusFooter = new HBox(8);
-        statusFooter.setAlignment(Pos.CENTER_LEFT);
-        statusFooter.setPadding(new Insets(10, 0, 10, 40));
-        statusLabel = new Label("● Initializing analysis...");
-        statusLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #566465; -fx-font-style: italic;");
-        statusFooter.getChildren().add(statusLabel);
-        
-        resultsDashboardView = new VBox(24);
-        resultsDashboardView.setMaxWidth(1000);
-        resultsDashboardView.setAlignment(Pos.TOP_LEFT);
-        resultsDashboardView.setVisible(false);
-        resultsDashboardView.setManaged(false);
+        contentStack.getChildren().add(emptyStateView);
 
-        sessionContainer = new VBox(20);
-        sessionContainer.setPadding(new Insets(40, 80, 80, 80));
-        sessionContainer.setAlignment(Pos.TOP_CENTER);
-        sessionContainer.getChildren().addAll(timelineFeed, statusFooter, resultsDashboardView);
-        
-        investigationSessionView = new ScrollPane(sessionContainer);
-        investigationSessionView.setFitToWidth(true);
-        investigationSessionView.setStyle("-fx-background-color: transparent; -fx-background: #0e1415;");
-        investigationSessionView.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        for (AnalysisType type : AnalysisType.values()) {
+            InvestigationPane pane = new InvestigationPane();
+            pane.setVisible(false);
+            pane.setManaged(false);
+            panes.put(type, pane);
+            contentStack.getChildren().add(pane);
+        }
 
-        contentHolder.getChildren().addAll(emptyStateView, investigationSessionView);
-        
-        // Setup event poller
-        eventPoller = new Timeline(new KeyFrame(Duration.millis(600), e -> {
-            AnalysisEvent event = eventQueue.poll();
-            if (event != null) {
-                processEvent(event);
-            }
-        }));
-        eventPoller.setCycleCount(Timeline.INDEFINITE);
+        contentHolder.getChildren().add(contentStack);
 
-        // Initial state
         switchView(emptyStateView);
 
         root.setLeft(buildSidebar());
@@ -196,7 +154,7 @@ public class DefectWorkspace implements Workspace {
     }
 
     private void switchView(Node targetView) {
-        for (Node child : contentHolder.getChildren()) {
+        for (Node child : contentStack.getChildren()) {
             if (child == targetView) {
                 child.setVisible(true);
                 child.setManaged(true);
@@ -208,6 +166,17 @@ public class DefectWorkspace implements Workspace {
             } else {
                 child.setVisible(false);
                 child.setManaged(false);
+            }
+        }
+    }
+
+    private void showPane(AnalysisType type) {
+        InvestigationPane activePane = panes.get(type);
+        if (activePane != null) {
+            if (activePane.hasRun()) {
+                switchView(activePane);
+            } else {
+                switchView(emptyStateView);
             }
         }
     }
@@ -243,6 +212,7 @@ public class DefectWorkspace implements Workspace {
             if (i == 0) btn.setSelected(true);
             btn.setOnAction(e -> {
                 selectedAnalysisType = mapType(type);
+                showPane(selectedAnalysisType);
             });
             typeList.getChildren().add(btn);
         }
@@ -257,7 +227,7 @@ public class DefectWorkspace implements Workspace {
 
         VBox runBox = new VBox();
         runBox.setPadding(new Insets(12, 16, 24, 16));
-        runBox.getChildren().add(runButton);
+        runBox.getChildren().add(runControlContainer);
 
         sidebar.getChildren().addAll(config, spacer, runBox);
         return sidebar;
@@ -325,131 +295,22 @@ public class DefectWorkspace implements Workspace {
         return empty;
     }
 
-    private void addActivityEvent(AnalysisEvent event) {
-        if (event.type() == AnalysisEventType.MODEL_STREAM_CHUNK) {
-            Platform.runLater(() -> {
-                flushQueue(); // Ensure MODEL event is processed before appending
-                if (currentModelBubble != null) {
-                    currentModelBubble.appendChunk(event.details());
-                }
-            });
-            return;
-        }
-        eventQueue.add(event);
-    }
-    
-    private void flushQueue() {
-        while (!eventQueue.isEmpty()) {
-            processEvent(eventQueue.poll());
-        }
-    }
-
-    private void processEvent(AnalysisEvent event) {
-        Node node;
-        if (event.type() == AnalysisEventType.INFO) {
-            TypingMessageBubble aiBubble = new TypingMessageBubble("🤖", "#4bf6ff", "rgba(75,246,255,0.15)", investigationSessionView, false);
-            aiBubble.startTyping(event.title());
-            node = aiBubble;
-            statusLabel.setText("● Building evidence...");
-        } else if (event.type() == AnalysisEventType.MODEL) {
-            currentModelBubble = new TypingMessageBubble("🧠", "#8bfd91", "rgba(139,253,145,0.15)", investigationSessionView, true);
-            currentModelBubble.startTyping(modelSelector.getValue() + " reasoning...\n\n");
-            
-            VBox modelGroup = new VBox(16);
-            modelGroup.getChildren().addAll(buildSystemCard(event), currentModelBubble);
-            node = modelGroup;
-            statusLabel.setText("● Receiving response tokens...");
-        } else if (event.type() == AnalysisEventType.SUCCESS || event.type() == AnalysisEventType.ERROR) {
-            node = buildSystemCard(event);
-            statusLabel.setText("✓ Analysis complete");
-        } else {
-            node = buildSystemCard(event);
-            statusLabel.setText("● Computing metrics...");
-        }
-        
-        node.setTranslateY(15);
-        node.setOpacity(0);
-        
-        TranslateTransition tt = new TranslateTransition(Duration.millis(300), node);
-        tt.setToY(0);
-        
-        FadeTransition ft = new FadeTransition(Duration.millis(300), node);
-        ft.setToValue(1);
-        
-        timelineFeed.getChildren().add(node);
-        tt.play();
-        ft.play();
-        
-        // Auto scroll
-        Platform.runLater(() -> investigationSessionView.setVvalue(1.0));
-    }
-
-    private Node buildSystemCard(AnalysisEvent event) {
-        HBox container = new HBox();
-        container.setPadding(new Insets(0, 0, 0, 40)); 
-        
-        VBox card = new VBox(8);
-        card.setPadding(new Insets(16));
-        card.setStyle("-fx-background-color: #111819; -fx-border-color: #1e2526; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 1;");
-        card.setMaxWidth(500);
-
-        HBox header = new HBox(8);
-        header.setAlignment(Pos.CENTER_LEFT);
-        
-        String icon = "•";
-        String color = "#849494";
-        if (event.type() == AnalysisEventType.METRIC) { icon = "📊"; color = "#4bf6ff"; }
-        else if (event.type() == AnalysisEventType.FINDING) { icon = "🔍"; color = "#ffd166"; }
-        else if (event.type() == AnalysisEventType.MODEL) { icon = "⚡"; color = "#8bfd91"; }
-        else if (event.type() == AnalysisEventType.SUCCESS) { icon = "✓"; color = "#06d6a0"; }
-        else if (event.type() == AnalysisEventType.ERROR) { icon = "✕"; color = "#ff4b4b"; }
-
-        Label iconLbl = new Label(icon);
-        iconLbl.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 12px;");
-        
-        Label titleLbl = new Label(event.title());
-        titleLbl.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #dde4e5;");
-        
-        header.getChildren().addAll(iconLbl, titleLbl);
-        card.getChildren().add(header);
-        
-        if (event.details() != null && !event.details().isBlank()) {
-            Label detailsLbl = new Label(event.details());
-            detailsLbl.setWrapText(true);
-            detailsLbl.setStyle("-fx-font-size: 12px; -fx-text-fill: #849494; -fx-line-spacing: 4px;");
-            card.getChildren().add(detailsLbl);
-        }
-
-        container.getChildren().add(card);
-        return container;
-    }
-
-    // ── Run Analysis ──────────────────────────────────────────────────────────
-
     private void handleRunAnalysis() {
         if (lastEngine == null) return;
 
+        InvestigationPane activePane = panes.get(selectedAnalysisType);
+        if (activePane == null) return;
+
         runButton.setDisable(true);
-        runButton.setText("⏳  Analysing…");
-        runButton.setStyle(buildRunButtonStyle(true));
+        showRunningState();
         
-        timelineFeed.getChildren().clear();
-        resultsDashboardView.getChildren().clear();
-        resultsDashboardView.setVisible(false);
-        resultsDashboardView.setManaged(false);
-        currentModelBubble = null;
-        eventQueue.clear();
-        statusLabel.setText("● Initializing analysis...");
-        statusFooter.setVisible(true);
-        statusFooter.setManaged(true);
-        
-        switchView(investigationSessionView);
-        eventPoller.play();
+        activePane.prepareForAnalysis(modelSelector.getValue());
+        switchView(activePane);
 
         Task<String> task = new Task<>() {
             @Override
             protected String call() throws Exception {
-                AnalysisContext ctx = lastEngine.getAnalysisContext();
+                AnalysisContext ctx = lastEngine.getAnalysisContextManager().getCurrentContext();
                 String model = modelSelector.getValue();
                 AiAnalysisService service = registry.get(selectedAnalysisType);
 
@@ -457,91 +318,24 @@ public class DefectWorkspace implements Workspace {
                     throw new IllegalStateException("Analysis type not implemented: " + selectedAnalysisType);
                 }
 
-                return service.analyze(ctx, model, DefectWorkspace.this::addActivityEvent);
+                return service.analyze(ctx, model, activePane::addActivityEvent);
             }
         };
 
+        activeAnalysisTask = task;
+
         task.setOnSucceeded(e -> {
-            lastFindings = task.getValue();
+            String findings = task.getValue();
             Platform.runLater(() -> {
-                flushQueue();
-                eventPoller.stop();
-                if (currentModelBubble != null) {
-                    currentModelBubble.finishStreaming();
-                }
-                
-                statusLabel.setText("✓ Analysis Complete - Generating findings dashboard...");
-                
-                // Wait 1 second before showing results
-                Timeline delay = new Timeline(new KeyFrame(Duration.millis(1000), ev -> {
-                    statusFooter.setVisible(false);
-                    statusFooter.setManaged(false);
-                    
-                    Label transitionLbl = new Label("✓ Analysis Completed");
-                    transitionLbl.setStyle("-fx-text-fill: #06d6a0; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 0 0 20 40;");
-                    timelineFeed.getChildren().add(transitionLbl);
-
-                    populateResultsView(lastFindings);
-                    
-                    resultsDashboardView.setVisible(true);
-                    resultsDashboardView.setManaged(true);
-
-
-                    
-                    FadeTransition fade = new FadeTransition(Duration.millis(800), resultsDashboardView);
-                    fade.setFromValue(0);
-                    fade.setToValue(1);
-                    
-                    TranslateTransition translate = new TranslateTransition(Duration.millis(800), resultsDashboardView);
-                    translate.setFromY(40);
-                    translate.setToY(0);
-                    
-                    ParallelTransition pt = new ParallelTransition(fade, translate);
-                    PauseTransition pause =
-                            new PauseTransition(
-                                    Duration.millis(300)
-                            );
-
-                    pause.setOnFinished(event -> {
-
-                        scrollToResults();
-
-                        pt.play();
-                    });
-
-                    pause.play();
-
-
-
-
-
-                    
-                    // Smooth auto scroll to findings
-                    
-                    resetRunButton();
-                }));
-                delay.play();
+                activePane.finalizeAnalysis(findings, selectedAnalysisType);
+                resetRunButton();
             });
         });
 
         task.setOnFailed(e -> Platform.runLater(() -> {
-            flushQueue();
-            eventPoller.stop();
-            if (currentModelBubble != null) {
-                currentModelBubble.finishStreaming();
-            }
             Throwable ex = task.getException();
-            lastFindings = "Analysis failed: " + (ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName());
-            
-            processEvent(new AnalysisEvent(System.currentTimeMillis(), AnalysisEventType.ERROR, "Analysis Failed", lastFindings));
-            
-            statusFooter.setVisible(false);
-            statusFooter.setManaged(false);
-            
-            populateResultsView(lastFindings);
-            resultsDashboardView.setVisible(true);
-            resultsDashboardView.setManaged(true);
-            
+            String error = "Analysis failed: " + (ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName());
+            activePane.handleAnalysisFailure(error);
             resetRunButton();
         }));
 
@@ -549,182 +343,43 @@ public class DefectWorkspace implements Workspace {
     }
 
     private void resetRunButton() {
+        activeAnalysisTask = null;
+        showIdleState();
         runButton.setDisable(lastEngine == null);
         runButton.setText("▶  Run Analysis");
         runButton.setStyle(buildRunButtonStyle(false));
     }
 
-    // ── Structured Results UI ─────────────────────────────────────────────────
+    private void showRunningState() {
+        runControlContainer.getChildren().clear();
 
-    private String cleanJson(String raw) {
-        if (raw == null) return "{}";
-        String cleaned = raw.trim();
-        if (cleaned.startsWith("```json")) cleaned = cleaned.substring(7);
-        else if (cleaned.startsWith("```")) cleaned = cleaned.substring(3);
-        if (cleaned.endsWith("```")) cleaned = cleaned.substring(0, cleaned.length() - 3);
-        return cleaned.trim();
+        Button runningBtn = new Button("⏳ Running...");
+        runningBtn.setDisable(true);
+        runningBtn.setStyle("-fx-background-color: #2f3637; -fx-text-fill: #849494; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 12; -fx-font-size: 12px;");
+        HBox.setHgrow(runningBtn, Priority.ALWAYS);
+        runningBtn.setMaxWidth(Double.MAX_VALUE);
+
+        Button stopBtn = new Button("⏹ Stop");
+        stopBtn.setStyle("-fx-background-color: #ff4b4b; -fx-text-fill: #0e1415; -fx-font-weight: bold; -fx-background-radius: 6; -fx-padding: 10 14; -fx-font-size: 12px; -fx-cursor: hand;");
+        stopBtn.setOnAction(e -> handleStopAnalysis());
+
+        runControlContainer.getChildren().addAll(runningBtn, stopBtn);
     }
 
-    private void populateResultsView(String findings) {
-        resultsDashboardView.getChildren().clear();
-        resultsAnchor = new Label();
-        resultsAnchor.setManaged(false);
-        resultsAnchor.setVisible(false);
-
-        resultsDashboardView.getChildren().add(resultsAnchor);
-
-        // Header
-        HBox header = new HBox(12);
-        header.setAlignment(Pos.CENTER_LEFT);
-        header.setPadding(new Insets(20, 0, 10, 0));
-
-        Label typeLabel = new Label(selectedAnalysisType.name().replace("_", " ") + " RESULTS");
-        typeLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #dde4e5;");
-
-        Label badge = new Label("AI Generated");
-        badge.setStyle("-fx-background-color: rgba(139,253,145,0.10); -fx-text-fill: #8bfd91; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 4 10; -fx-background-radius: 12;");
-
-        header.getChildren().addAll(typeLabel, badge);
-        resultsDashboardView.getChildren().add(header);
-
-        // Try parsing JSON
-        try {
-            String jsonContent = cleanJson(findings);
-            AnalysisResult result = mapper.readValue(jsonContent, AnalysisResult.class);
-
-            if (result != null && result.defects != null && !result.defects.isEmpty()) {
-                // Summary Cards Layout
-                HBox summaryLayout = new HBox(20);
-                summaryLayout.getChildren().addAll(
-                    createSummaryCard("Total Defects", String.valueOf(result.defects.size()), "#dde4e5"),
-                    createSummaryCard("High Severity", String.valueOf(result.defects.stream().filter(d -> "HIGH".equalsIgnoreCase(d.severity) || "CRITICAL".equalsIgnoreCase(d.severity)).count()), "#ff4b4b"),
-                    createSummaryCard("Medium Severity", String.valueOf(result.defects.stream().filter(d -> "MEDIUM".equalsIgnoreCase(d.severity)).count()), "#ffd166")
-                );
-                resultsDashboardView.getChildren().add(summaryLayout);
-
-                // Defect Cards
-                VBox defectsList = new VBox(16);
-                for (Defect defect : result.defects) {
-                    defectsList.getChildren().add(createDefectCard(defect));
-                }
-                resultsDashboardView.getChildren().add(defectsList);
-            } else {
-                Label noDefects = new Label("No structured defects found. The AI returned an empty or invalid format.");
-                noDefects.setStyle("-fx-text-fill: #849494; -fx-font-size: 14px;");
-                resultsDashboardView.getChildren().add(noDefects);
-            }
-        } catch (Exception ex) {
-            // Fallback to text if JSON parsing fails
-            Label errorLabel = new Label("Could not parse structured results. Displaying raw output.");
-            errorLabel.setStyle("-fx-text-fill: #ff4b4b; -fx-font-size: 12px;");
-            resultsDashboardView.getChildren().add(errorLabel);
-            ex.printStackTrace();
-            System.out.println("RAW RESPONSE");
-            System.out.println(findings);
-        }
-
-        // Developer JSON Section
-        TitledPane devPane = new TitledPane();
-        devPane.setText("Developer Mode: Raw JSON Response");
-        devPane.setExpanded(false);
-        devPane.setStyle("-fx-base: #111819; -fx-box-border: #1e2526; -fx-text-fill: #849494; -fx-font-size: 12px;");
-        
-        Label rawLabel = new Label(findings);
-        rawLabel.setWrapText(true);
-        rawLabel.setStyle("-fx-font-family: 'JetBrains Mono', monospace; -fx-text-fill: #a8b5b5; -fx-padding: 10; -fx-font-size: 11px;");
-        
-        ScrollPane rawScroll = new ScrollPane(rawLabel);
-        rawScroll.setFitToWidth(true);
-        rawScroll.setPrefHeight(200);
-        rawScroll.setStyle("-fx-background: #0b0f10; -fx-border-color: #1e2526;");
-        
-        devPane.setContent(rawScroll);
-        resultsDashboardView.getChildren().add(devPane);
+    private void showIdleState() {
+        runControlContainer.getChildren().clear();
+        runControlContainer.getChildren().add(runButton);
     }
 
-    private VBox createSummaryCard(String title, String value, String valueColor) {
-        VBox card = new VBox(8);
-        card.setPadding(new Insets(16, 24, 16, 24));
-        card.setStyle("-fx-background-color: #111819; -fx-background-radius: 8; -fx-border-color: #1e2526; -fx-border-radius: 8; -fx-border-width: 1;");
-        HBox.setHgrow(card, Priority.ALWAYS);
-
-        Label titleLabel = new Label(title.toUpperCase());
-        titleLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #566465; -fx-font-weight: bold; -fx-letter-spacing: 0.5;");
-
-        Label valueLabel = new Label(value);
-        valueLabel.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: " + valueColor + ";");
-
-        card.getChildren().addAll(titleLabel, valueLabel);
-        return card;
-    }
-
-    private VBox createDefectCard(Defect defect) {
-        VBox card = new VBox(12);
-        card.setPadding(new Insets(20));
-        card.setStyle("-fx-background-color: #111819; -fx-background-radius: 8; -fx-border-color: #1e2526; -fx-border-radius: 8; -fx-border-width: 1;");
-
-        // Header (Type + Severity)
-        HBox header = new HBox(10);
-        header.setAlignment(Pos.CENTER_LEFT);
-        
-        Label typeLabel = new Label(defect.defectType != null ? defect.defectType : "Unknown Defect");
-        typeLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #dde4e5;");
-
-        String sevColor = "#a8b5b5";
-        if (defect.severity != null) {
-            if ("HIGH".equalsIgnoreCase(defect.severity) || "CRITICAL".equalsIgnoreCase(defect.severity)) sevColor = "#ff4b4b";
-            else if ("MEDIUM".equalsIgnoreCase(defect.severity)) sevColor = "#ffd166";
-            else if ("LOW".equalsIgnoreCase(defect.severity)) sevColor = "#06d6a0";
-        }
-
-        Label sevBadge = new Label(defect.severity != null ? defect.severity.toUpperCase() : "UNKNOWN");
-        sevBadge.setStyle("-fx-background-color: " + sevColor + "20; -fx-text-fill: " + sevColor + "; -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 4 8; -fx-background-radius: 4;");
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        header.getChildren().addAll(typeLabel, sevBadge, spacer);
-
-        // Explanation
-        Label explanation = new Label(defect.explanation != null ? defect.explanation : "No explanation provided.");
-        explanation.setWrapText(true);
-        explanation.setStyle("-fx-font-size: 13px; -fx-text-fill: #a8b5b5; -fx-line-spacing: 4px;");
-
-        card.getChildren().addAll(header, explanation);
-
-        // Entities
-        if (defect.responsibleEntities != null && !defect.responsibleEntities.isEmpty()) {
-            VBox entitiesBox = new VBox(4);
-            Label entTitle = new Label("Responsible Entities:");
-            entTitle.setStyle("-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #849494;");
-            
-            FlowPane flow = new FlowPane(8, 8);
-            for (String entity : defect.responsibleEntities) {
-                Label eLbl = new Label(entity);
-                eLbl.setStyle("-fx-background-color: #1a2122; -fx-text-fill: #4bf6ff; -fx-font-family: 'JetBrains Mono', monospace; -fx-font-size: 11px; -fx-padding: 4 8; -fx-background-radius: 4; -fx-border-color: #242b2c; -fx-border-radius: 4;");
-                flow.getChildren().add(eLbl);
+    private void handleStopAnalysis() {
+        if (activeAnalysisTask != null && activeAnalysisTask.isRunning()) {
+            activeAnalysisTask.cancel(true);
+            InvestigationPane activePane = panes.get(selectedAnalysisType);
+            if (activePane != null) {
+                activePane.stopAnalysis();
             }
-            entitiesBox.getChildren().addAll(entTitle, flow);
-            card.getChildren().add(entitiesBox);
+            resetRunButton();
         }
-
-        // Fixes
-        if (defect.possibleFixes != null && !defect.possibleFixes.isEmpty()) {
-            VBox fixesBox = new VBox(4);
-            Label fixesTitle = new Label("Suggested Fixes:");
-            fixesTitle.setStyle("-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #849494;");
-            fixesBox.getChildren().add(fixesTitle);
-            
-            for (String fix : defect.possibleFixes) {
-                Label fixLbl = new Label("• " + fix);
-                fixLbl.setWrapText(true);
-                fixLbl.setStyle("-fx-font-size: 12px; -fx-text-fill: #8bfd91;");
-                fixesBox.getChildren().add(fixLbl);
-            }
-            card.getChildren().add(fixesBox);
-        }
-
-        return card;
     }
 
     // ── Style helpers ─────────────────────────────────────────────────────────
@@ -757,61 +412,5 @@ public class DefectWorkspace implements Workspace {
             case "Maintainability Analysis" -> AnalysisType.MAINTAINABILITY;
             default -> AnalysisType.ARCHITECTURE;
         };
-    }
-    private void scrollToResults() {
-
-        Platform.runLater(() -> {
-
-            sessionContainer.applyCss();
-            sessionContainer.layout();
-
-            double contentHeight =
-                    sessionContainer.getHeight();
-
-            double viewportHeight =
-                    investigationSessionView
-                            .getViewportBounds()
-                            .getHeight();
-
-            double resultsY =
-                    resultsDashboardView.getLayoutY();
-
-            double scrollableHeight =
-                    contentHeight - viewportHeight;
-
-            if (scrollableHeight <= 0) {
-                return;
-            }
-
-            double targetVvalue =
-                    resultsY / scrollableHeight;
-
-            targetVvalue =
-                    Math.max(
-                            0.0,
-                            Math.min(1.0, targetVvalue)
-                    );
-
-            System.out.println(
-                    "resultsY=" + resultsY +
-                            ", contentHeight=" + contentHeight +
-                            ", viewportHeight=" + viewportHeight +
-                            ", target=" + targetVvalue
-            );
-
-            Timeline timeline =
-                    new Timeline(
-                            new KeyFrame(
-                                    Duration.seconds(1.2),
-                                    new KeyValue(
-                                            investigationSessionView.vvalueProperty(),
-                                            targetVvalue,
-                                            Interpolator.EASE_BOTH
-                                    )
-                            )
-                    );
-
-            timeline.play();
-        });
     }
 }

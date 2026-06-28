@@ -22,6 +22,7 @@ import com.example.bodhakfrontend.ui.Front.FileTreeNodeFactory;
 import com.example.bodhakfrontend.ui.Optimization.OptimizationController;
 import com.example.bodhakfrontend.ui.PlaceHolderUi;
 import com.example.bodhakfrontend.ui.ProjectAnalysis.ProjectAnalysisUi;
+import com.example.bodhakfrontend.ui.ProjectAnalysis.state.ProjectAnalysisState;
 import com.example.bodhakfrontend.ui.nav.BodhakNavBar;
 import com.example.bodhakfrontend.ui.nav.NavTab;
 import com.example.bodhakfrontend.ui.nav.OverviewPanel;
@@ -64,6 +65,7 @@ public class App extends Application {
     private UIEventBus uiEventBus;
     private UpdateDispatcher dispatcher;
     private UIStore uiStore;
+    private ProjectAnalysisState projectAnalysisState;
 
     // Navigation
     private BodhakNavBar    navBar;
@@ -266,14 +268,11 @@ public class App extends Application {
                 rightPanelTabManager.openAnalyzeTab(() -> new Label("No project loaded."));
                 return;
             }
-            // Always uses the live projectInfo from the store — never a stale snapshot
-            rightPanelTabManager.openAnalyzeTab(
-                    () -> projectAnalysisUi.build(appController.getEngine().getAnalysisContext())
-            );
+            rightPanelTabManager.openAnalyzeTab(() -> projectAnalysisUi);
         });
 
         optimizeBtn.setOnAction(e -> {
-            new OptimizationController(rightPanelTabManager, appController.getEngine().getAnalysisContext(), uiFeatures)
+            new OptimizationController(rightPanelTabManager, appController.getAnalysisContextManager().getCurrentContext(), uiFeatures)
                     .startOptimization();
             optimizeBtn.setText("Refresh");
         });
@@ -296,14 +295,16 @@ public class App extends Application {
                     : Map.of();
             MethodView methodView = new MethodView(uiFeatures, vmMap);
             ModernDependencyView classDependencyView = new ModernDependencyView(vmMap);
-            HealthAnalyserView healthAnalyserView = new HealthAnalyserView(vmMap);
+            HealthAnalyserView healthAnalyserView = new HealthAnalyserView(vmMap, () -> 
+                appController != null ? appController.getAnalysisContextManager().getCurrentContext() : null
+            );
 
             Tab selectedTab = codeTabPane.getSelectionModel().getSelectedItem();
             if (selectedTab == null) return;
             File file = (File) selectedTab.getUserData();
             List<EntityInfo> classes = uiStore != null
                     ? uiStore.getEntities().stream()
-                    .map(com.example.bodhakfrontend.core.model.incremental.EntityViewModel::getEntity)
+                    .map(EntityViewModel::getEntity)
                     .filter(ei -> ei.getSourceFile().toPath().toAbsolutePath().normalize()
                             .equals(file.toPath().toAbsolutePath().normalize()))
                     .toList()
@@ -414,7 +415,9 @@ public class App extends Application {
 
     private void initAfterLoad(File folder, AppController ctx) {
         this.appController = ctx;
+
         AnalysisEngine engine = ctx.getEngine();
+        projectAnalysisUi.setAnalysisState(ctx.getAnalysisContextManager().getAnalysisState());
 
         // ── 1. Create a fresh per-project UIStore ─────────────────────────────
         uiStore = new UIStore();
@@ -427,19 +430,20 @@ public class App extends Application {
         // from loadTask.setOnSucceeded which runs on FX thread)
         uiStore.setProjectInfo(engine.getProjectInfo());
         uiStore.setGraphSnapshot(engine.getGraphSnapshot());
-        for (EntityInfo ei : engine.getAnalysisContext().getEntities()) {
+        for (EntityInfo ei : ctx.getAnalysisContextManager().getCurrentContext().getEntities()) {
             uiStore.addEntities(List.of(new EntityViewModel(ei)));
         }
 
+
        // Testing
-
-        System.out.println("Architectural analysis testing");
-        AnalysisContext analysisContext = engine.getAnalysisContext();
-        ArchitectureEvidenceBuilder architectureEvidenceBuilder=new ArchitectureEvidenceBuilder();
-        ArchitectureAnalysisEvidence evidence=architectureEvidenceBuilder.build(analysisContext, null);
-
-       String prompt=new ArchitecturePromptBuilder().build(evidence);
-        System.out.println(prompt);
+//
+//        System.out.println("Architectural analysis testing");
+//        AnalysisContext analysisContext = ctx.getAnalysisContextManager().getCurrentContext();
+//        ArchitectureEvidenceBuilder architectureEvidenceBuilder=new ArchitectureEvidenceBuilder();
+//        ArchitectureAnalysisEvidence evidence=architectureEvidenceBuilder.build(analysisContext, null);
+//
+//       String prompt=new ArchitecturePromptBuilder().build(evidence);
+//        System.out.println(prompt);
 //
 //        ArchitectureAnalysisService service=new ArchitectureAnalysisService();
 //        try {
@@ -459,24 +463,8 @@ public class App extends Application {
         List<UiUpdateHandler> handlers = List.of(
                 new FileTreeHandler(fileTreeView, fileTreeNodeFactory, uiStore),
                 new EditorHandler(codeTabPane, rightPanelTabManager),
-                new ProjectSummaryHandler(uiStore, rightPanelTabManager, projectAnalysisUi),
                 new EntityListHandler(uiStore),
-                new LogAndProgressHandler(uiStore),
-                new UiUpdateHandler() {
-                    @Override
-                    public boolean canHandle(com.example.bodhakfrontend.sync.api.UiUpdateEvent event) {
-                        return event instanceof com.example.bodhakfrontend.sync.events.ProjectSummaryChangedEvent;
-                    }
-
-                    @Override
-                    public void apply(com.example.bodhakfrontend.sync.api.UiUpdateEvent event) {
-                        // Incremental project changes — refresh the overview panel only.
-                        // Full workspace refresh (incl. Architecture) happens in initAfterLoad
-                        // when a new project is loaded.
-                        overviewPanel.clearCache();
-                        overviewPanel.update(appController != null ? appController.getEngine() : null);
-                    }
-                }
+                new LogAndProgressHandler(uiStore)
         );
         dispatcher = new UpdateDispatcher(
                 uiEventBus,

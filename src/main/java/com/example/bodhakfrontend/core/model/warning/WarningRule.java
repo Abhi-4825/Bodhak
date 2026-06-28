@@ -1,6 +1,7 @@
 package com.example.bodhakfrontend.core.model.warning;
 
-import com.example.bodhakfrontend.core.model.entity.IssueType;
+import com.example.bodhakfrontend.core.analysis.entityflag.EntityFlag;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,8 +16,10 @@ public class WarningRule {
     private Severity severity;
     private String language;
     
-    private List<IssueType> requiredIssues = new ArrayList<>();
-    private List<IssueType> forbiddenIssues = new ArrayList<>();
+    @JsonProperty("requiredIssues")
+    private List<EntityFlag> requiredIssues = new ArrayList<>();
+    @JsonProperty("forbiddenIssues")
+    private List<EntityFlag> forbiddenIssues = new ArrayList<>();
 
     public WarningRule() {} // For Jackson
 
@@ -45,11 +48,15 @@ public class WarningRule {
     public void setLanguage(String l) { this.language = l;   }
 
     // ── Getters/Setters for matching logic ────────────────────────────────────
-    public List<IssueType> getRequiredIssues() { return requiredIssues; }
-    public void setRequiredIssues(List<IssueType> ri) { this.requiredIssues = ri; }
+    public List<EntityFlag> getRequiredIssues() { 
+        return requiredIssues == null ? List.of() : requiredIssues.stream().filter(java.util.Objects::nonNull).toList(); 
+    }
+    public void setRequiredIssues(List<EntityFlag> ri) { this.requiredIssues = ri; }
     
-    public List<IssueType> getForbiddenIssues() { return forbiddenIssues; }
-    public void setForbiddenIssues(List<IssueType> fi) { this.forbiddenIssues = fi; }
+    public List<EntityFlag> getForbiddenIssues() { 
+        return forbiddenIssues == null ? List.of() : forbiddenIssues.stream().filter(java.util.Objects::nonNull).toList(); 
+    }
+    public void setForbiddenIssues(List<EntityFlag> fi) { this.forbiddenIssues = fi; }
 
     // ── JSON compatibility helpers ──────────────────────────────────────────
     public void setMessage(String m) { this.description = m; this.title = "Analysis Warning"; }

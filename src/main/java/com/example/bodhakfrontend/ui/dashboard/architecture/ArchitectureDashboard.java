@@ -37,7 +37,7 @@ public class ArchitectureDashboard {
             return new VBox();
         }
 
-        AnalysisContext context = engine.getAnalysisContext();
+        AnalysisContext context = engine.getAnalysisContextManager().getCurrentContext();
 
         ArchitectureDashboardDataBuilder builder =
                 new ArchitectureDashboardDataBuilder();
@@ -52,7 +52,7 @@ public class ArchitectureDashboard {
                 new NodeInspectorPanel();
 
         if (state.getNamespaceMap().isEmpty()) {
-            state.setNamespaceMap(engine.getAnalysisContext().getNamespaces());
+            state.setNamespaceMap(context.getNamespaces());
         }
 
         if (workspaceState.getArchitectureView() == null) {

@@ -93,6 +93,6 @@ public class ArchitectureGraphState {
         dependencyPositions.clear();
         cyclePositions.clear();
         hotspotPositions.clear();
-        namespaceMap.clear();
+        namespaceMap=new HashMap<>();
     }
 }

@@ -1,7 +1,6 @@
 package com.example.bodhakfrontend.core.model.entity;
 
 import com.example.bodhakfrontend.core.model.warning.WarningRule;
-import com.example.bodhakfrontend.core.model.entity.IssueType;
 
 import java.io.File;
 import java.util.*;
@@ -55,6 +54,9 @@ public class EntityInfo {
 
     // ── Plugin-provided contribution ──────────────────────────────────────────
     private final EntityContribution contribution;
+
+
+
     // ─────────────────────────────────────────────────────────────────────────
 
     public EntityInfo(String entityName, String namespaceName, File sourceFile,
@@ -116,6 +118,11 @@ public class EntityInfo {
     public long getConstructorCount() {
         return members.stream().filter(m -> m.getKind() == MemberKind.CONSTRUCTOR).count();
     }
+
+
+    // ── Warning management ────────────────────────────────────────────────────
+
+
 
 
     // ── Display ───────────────────────────────────────────────────────────────

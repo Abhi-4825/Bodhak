@@ -179,23 +179,30 @@ public class TestContextBuilder {
         knownFolders.add(tempDir);
 
         ProjectInfo projectInfo = new ProjectInfo(
+                tempDir.getFileName() != null ? tempDir.getFileName().toString() : "test-project",
+                tempDir,
                 Map.of(),                           // languageCountMap
                 List.of(),                          // largestFiles
                 knownFolders,                       // knownFolders
                 knownFiles,                         // knownFiles
-                entities,                           // entities
-                Map.of(),                           // namespaceInfos
-                List.of(),                          // hotspots
                 EntryPointInfo.unknown(),            // entryPointInfo
-                Set.of(),                           // unusedEntities
-                entities.size(),                    // totalEntities
-                entities.size(), 0, 0, 0, 0         // metric counts
+                entities.size()                     // totalEntities
         );
 
         LanguagePluginRegistry emptyRegistry = new LanguagePluginRegistry();
         DependencyGraph dependencyGraph = new DependencyGraph(emptyRegistry);
 
-        return new AnalysisContext(projectInfo, dependencyGraph, entities);
+        com.example.bodhakfrontend.core.model.project.ProjectSnapshot snapshot =
+                new com.example.bodhakfrontend.core.model.project.ProjectSnapshot(projectInfo, entities, Map.of());
+        com.example.bodhakfrontend.core.projectType.classification.ProjectClassificationResult classificationResult =
+                new com.example.bodhakfrontend.core.projectType.classification.ProjectClassificationResult(
+                        Map.of(),
+                        ProjectType.LIBRARY,
+                        new com.example.bodhakfrontend.core.projectType.capability.CapabilityProfile(Map.of(), 0),
+                        List.of()
+                );
+        return new com.example.bodhakfrontend.core.analysis.builder.DefaultAnalysisContextFactory().create(
+                snapshot, dependencyGraph, classificationResult);
     }
 
     /**

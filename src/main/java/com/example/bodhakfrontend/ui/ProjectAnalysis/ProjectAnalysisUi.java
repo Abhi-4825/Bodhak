@@ -1,13 +1,15 @@
 package com.example.bodhakfrontend.ui.ProjectAnalysis;
 
 import com.example.bodhakfrontend.core.analysis.AnalysisContext;
-import com.example.bodhakfrontend.core.model.entity.IssueType;
 import com.example.bodhakfrontend.core.model.entity.EntityInfo;
-import com.example.bodhakfrontend.core.model.hotspot.HotspotInfo;
 import com.example.bodhakfrontend.core.model.namespace.NamespaceInfo;
 import com.example.bodhakfrontend.core.model.project.*;
+import com.example.bodhakfrontend.ui.ProjectAnalysis.state.*;
 import com.example.bodhakfrontend.ui.helper.UiFeatures;
 import com.example.bodhakfrontend.util.Exporter;
+
+import javafx.beans.binding.Bindings;
+import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -18,19 +20,41 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 
 import java.net.URL;
-import java.nio.file.Path;
-import java.util.Comparator;
+
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-public class ProjectAnalysisUi {
+
+public class ProjectAnalysisUi extends StackPane {
     private final Exporter exporter=new Exporter();
     private final UiFeatures uiFeatures;
+    private  ProjectAnalysisState state;
 
     public ProjectAnalysisUi(UiFeatures uiFeatures) {
         this.uiFeatures = uiFeatures;
+
     }
+    public void setAnalysisState(ProjectAnalysisState state) {
+        this.state = state;
+        // Rebuild the dashboard view reactively when context updates
+        state.analysisContextProperty().addListener((obs, oldCtx, newCtx) -> {
+            if (newCtx != null) {
+                javafx.application.Platform.runLater(() -> {
+                    getChildren().setAll(build(newCtx));
+                });
+            } else {
+                javafx.application.Platform.runLater(this.getChildren()::clear);
+            }
+        });
+        // Seed initial UI if context is already available
+        if (state.getAnalysisContext() != null) {
+            getChildren().setAll(build(state.getAnalysisContext()));
+        }
+    }
+
+
+
+
 
 
     // completeBuild
@@ -62,54 +86,112 @@ public class ProjectAnalysisUi {
         ProjectInfo projectInfo = context.getProjectInfo();
         List<EntityInfo> entities = context.getEntities();
         Map<String, NamespaceInfo> namespaces = context.getNamespaces();
-
-        createSection(root,"/icons/summary.png","Project Summary",buildProjectSummary(projectInfo),"icon-blue",true);
-        createSection(root,"/icons/entryPoint.png","Entry Points",buildEntryPointSection(projectInfo),"icon-blue",true);
-        createSection(root,"/icons/packageOverview.png","Namespace Overview",buildPackageOverView(namespaces),"icon-blue",false);
-        createSection(root,"/icons/largestFiles.png","Largest Files",buildLargestFileView(projectInfo),"icon-blue",false);
-        createSection(root,"/icons/classMetric.png","Entity Metrics |" + entities.size() + " entities",buildClassMetricsView(entities),"icon-blue",false);
-        createSection(root,"/icons/health.png","Project Health",buildHealthSummary(entities),"icon-blue",true);
-        createSection(root,"/icons/hotspot.png","Risk Hotspots", buildHotspotView(entities, uiFeatures),"icon-blue",false);
-        createSection(root,"/icons/unused.png","🧹 Unused or Suspicious Entities", buildUnusedClassView(entities, uiFeatures),"icon-blue",false);
+        createSection(root,"/icons/summary.png","Project Type Classification",buildProjectTypeView(),"icon-blue",true);
+        createSection(root,"/icons/summary.png","Project Summary",buildProjectSummary(),"icon-blue",true);
+        createSection(root,"/icons/entryPoint.png","Entry Points",buildEntryPointSection(),"icon-blue",true);
+        createSection(root,"/icons/packageOverview.png","Namespace Overview",buildPackageOverView(),"icon-blue",false);
+        createSection(root,"/icons/largestFiles.png","Largest Files",buildLargestFileView(),"icon-blue",false);
+        createSection(root,"/icons/classMetric.png","Entity Metrics |" + entities.size() + " entities",buildClassMetricsView(),"icon-blue",false);
+        createSection(root,"/icons/hotspot.png","Risk Hotspots", buildHotspotView(),"icon-blue",false);
     }
+
+
+    // projectType
+    private Node buildProjectTypeView() {
+        ProjectTypeState projectType = state.getProjectTypeState();
+        VBox root = new VBox(12);
+        root.getStyleClass().add("analysis-card");
+
+        // ===== PRIMARY TYPE CARD =====
+        VBox primaryCard = new VBox(6);
+        primaryCard.getStyleClass().add("primary-entry-card"); // reuse similar styling card
+        Label title = new Label("PRIMARY CLASSIFICATION");
+        title.getStyleClass().add("entry-title");
+        Label typeName = new Label();
+        typeName.getStyleClass().add("entry-main");
+        typeName.textProperty().bind(projectType.primaryTypeProperty());
+        primaryCard.getChildren().addAll(title, typeName);
+        root.getChildren().add(primaryCard);
+
+        // ===== DETECTED TYPES & CONFIDENCES =====
+        VBox typesSection = new VBox(8);
+        Label typesTitle = new Label("Detected Types & Confidence Levels");
+        typesTitle.getStyleClass().add("section-subtitle");
+        VBox typesList = new VBox(6);
+        typesSection.getChildren().addAll(typesTitle, typesList);
+        root.getChildren().add(typesSection);
+
+        // ===== DETECTED FRAMEWORKS =====
+        VBox fwSection = new VBox(8);
+        Label fwTitle = new Label("Detected Frameworks");
+        fwTitle.getStyleClass().add("section-subtitle");
+        VBox fwList = new VBox(6);
+        fwSection.getChildren().addAll(fwTitle, fwList);
+        root.getChildren().add(fwSection);
+
+        // Reactive Rebuilder
+        Runnable rebuild = () -> {
+            typesList.getChildren().clear();
+            fwList.getChildren().clear();
+
+            for (ProjectTypeItem item : projectType.getProjectTypes()) {
+                Label label = new Label("• " + item.type().name() + " (" + (int)(item.confidence() * 100) + "%)");
+                label.getStyleClass().add("label-muted");
+                typesList.getChildren().add(label);
+            }
+
+            for (FrameworkItem item : projectType.getDetectedFrameworks()) {
+                HBox row = new HBox(8);
+                Label name = new Label(item.frameworkName());
+                name.getStyleClass().add("entry-name");
+                Label badge = new Label(item.detected() ? "DETECTED" : "CANDIDATE");
+                badge.getStyleClass().addAll("entry-kind-badge");
+                row.getChildren().addAll(badge, name);
+                fwList.getChildren().add(row);
+            }
+        };
+
+        rebuild.run();
+        projectType.getProjectTypes().addListener((ListChangeListener<ProjectTypeItem>) c -> rebuild.run());
+        projectType.getDetectedFrameworks().addListener((ListChangeListener<FrameworkItem>) c -> rebuild.run());
+
+        return root;
+    }
+
+
   // for Project Overview section
-  private Node buildProjectSummary(ProjectInfo projectInfo) {
+  private Node buildProjectSummary() {
+
+      ProjectSummaryState summary = state.getProjectSummary();
 
       VBox root = new VBox(12);
       root.getStyleClass().add("analysis-card");
 
       // ================= TOP METRICS =================
       HBox topRow = new HBox(10);
-
-      VBox typeBox = new VBox(4);
-      typeBox.getStyleClass().add("metric-box");
-
-      Label typeLabel = new Label("TYPE");
-      typeLabel.getStyleClass().add("metric-title");
-
-      Label typeValue = new Label(
-              projectInfo.entryPointInfo().getProjectFlavors().toString()
-      );
-      typeValue.getStyleClass().add("metric-value");
-
-      typeBox.getChildren().addAll(typeLabel, typeValue);
-
-
       VBox sizeBox = new VBox(4);
       sizeBox.getStyleClass().add("metric-box");
 
       Label sizeLabel = new Label("SIZE");
       sizeLabel.getStyleClass().add("metric-title");
 
-      String sizeText = projectInfo.knownFolders().size()
-              + " Fld / " + projectInfo.knownFiles().size() + " Files";
-
-      Label sizeValue = new Label(sizeText);
+      Label sizeValue = new Label();
       sizeValue.getStyleClass().add("metric-value");
+
+      sizeValue.textProperty().bind(
+              Bindings.createStringBinding(
+                      () -> summary.totalFoldersProperty().get()
+                              + " Fld / "
+                              + summary.totalFilesProperty().get()
+                              + " Files",
+                      summary.totalFoldersProperty(),
+                      summary.totalFilesProperty()
+              )
+      );
 
       sizeBox.getChildren().addAll(sizeLabel, sizeValue);
 
-      topRow.getChildren().addAll(typeBox, sizeBox);
+      topRow.getChildren().addAll( sizeBox);
 
       // ================= LANGUAGES =================
       VBox langSection = new VBox(6);
@@ -117,11 +199,6 @@ public class ProjectAnalysisUi {
       Label langTitle = new Label("Languages");
       langTitle.getStyleClass().add("section-subtitle");
 
-      Map<String, Set<Path>> map = projectInfo.languageCountMap();
-
-      int total = map.values().stream().mapToInt(Set::size).sum();
-
-      // 🔥 Progress Bar Container
       StackPane progressBar = new StackPane();
       progressBar.getStyleClass().add("lang-bar");
       progressBar.setPrefHeight(8);
@@ -136,40 +213,75 @@ public class ProjectAnalysisUi {
       legend.setHgap(12);
       legend.setVgap(8);
 
-      for (String key : map.keySet()) {
+      Runnable rebuildLanguages = () -> {
 
-          int count = map.get(key).size();
-          double percent = total == 0 ? 0 : (double) count / total;
+          segments.getChildren().clear();
+          legend.getChildren().clear();
 
-          // ===== SEGMENT =====
-          Region segment = new Region();
-          segment.getStyleClass().addAll("lang-segment", getLangColorClass(key));
+          double total =
+                  summary.getLanguages()
+                          .stream()
+                          .mapToInt(LanguageInfo::count)
+                          .sum();
 
-          // 🔥 REAL PROPORTIONAL WIDTH (KEY FIX)
-          // We use minWidth to force the HBox to respect our proportional sizing
-          segment.minWidthProperty().bind(
-                  progressBar.widthProperty().multiply(percent)
-          );
-          segment.prefWidthProperty().bind(segment.minWidthProperty());
+          for (LanguageInfo info : summary.getLanguages()) {
 
-          segments.getChildren().add(segment);
+              double percent =
+                      total == 0 ? 0 : info.count() / total;
 
-          // ===== LEGEND =====
-          Label dot = new Label("●");
-          dot.getStyleClass().add(getLangDotClass(key));
+              Region segment = new Region();
+              segment.getStyleClass().addAll(
+                      "lang-segment",
+                      getLangColorClass(info.language())
+              );
 
-          Label text = new Label(key + " " + (int)(percent * 100) + "%");
-          text.getStyleClass().add("label-muted");
+              segment.minWidthProperty().bind(
+                      progressBar.widthProperty().multiply(percent)
+              );
 
-          HBox item = new HBox(4, dot, text);
-          legend.getChildren().add(item);
-      }
+              segment.prefWidthProperty().bind(
+                      segment.minWidthProperty()
+              );
+
+              segments.getChildren().add(segment);
+
+              Label dot = new Label("●");
+              dot.getStyleClass().add(
+                      getLangDotClass(info.language())
+              );
+
+              Label text = new Label(
+                      info.language() + " "
+                              + (int) (percent * 100)
+                              + "%"
+              );
+
+              text.getStyleClass().add("label-muted");
+
+              legend.getChildren().add(
+                      new HBox(4, dot, text)
+              );
+          }
+      };
+
+      rebuildLanguages.run();
+
+      summary.getLanguages().addListener(
+              (ListChangeListener<LanguageInfo>) c -> rebuildLanguages.run()
+      );
 
       progressBar.getChildren().add(segments);
 
-      langSection.getChildren().addAll(langTitle, progressBar, legend);
+      langSection.getChildren().addAll(
+              langTitle,
+              progressBar,
+              legend
+      );
 
-      root.getChildren().addAll(topRow, langSection);
+      root.getChildren().addAll(
+              topRow,
+              langSection
+      );
 
       return root;
   }
@@ -188,212 +300,266 @@ public class ProjectAnalysisUi {
         return colors[idx];
     }
 //for Entry Point info
-private Node buildEntryPointSection(ProjectInfo projectInfo) {
+private Node buildEntryPointSection() {
+
+    EntryPointState entryPoint = state.getEntryPoint();
 
     VBox root = new VBox(12);
     root.getStyleClass().add("analysis-card");
 
     // ================= PRIMARY ENTRY =================
-    EntryPointInfo.Entry primaryEntry = projectInfo.entryPointInfo().getPrimaryEntry();
 
-    if (primaryEntry != null) {
+    VBox primaryCard = new VBox(6);
+    primaryCard.getStyleClass().add("primary-entry-card");
 
-        VBox primaryCard = new VBox(6);
-        primaryCard.getStyleClass().add("primary-entry-card");
+    Label title = new Label("PRIMARY ENTRY");
+    title.getStyleClass().add("entry-title");
 
-        Label title = new Label("PRIMARY ENTRY");
-        title.getStyleClass().add("entry-title");
+    Label className = new Label();
+    className.getStyleClass().add("entry-main");
+    className.textProperty().bind(entryPoint.primaryNameProperty());
 
-        Label className = new Label(getSimpleName(primaryEntry.entityName()));
-        className.getStyleClass().add("entry-main");
+    Label desc = new Label();
+    desc.getStyleClass().add("entry-sub");
+    desc.textProperty().bind(entryPoint.primaryLabelProperty());
 
-        Label desc = new Label(primaryEntry.label());
-        desc.getStyleClass().add("entry-sub");
+    primaryCard.getChildren().addAll(title, className, desc);
 
-        primaryCard.getChildren().addAll(title, className, desc);
-        root.getChildren().add(primaryCard);
-    }
+    // Hide the card when there is no primary entry
+    primaryCard.visibleProperty().bind(
+            entryPoint.primaryNameProperty().isNotEmpty()
+    );
+    primaryCard.managedProperty().bind(primaryCard.visibleProperty());
+
+    root.getChildren().add(primaryCard);
 
     // ================= SECONDARY ENTRIES =================
-    Set<EntryPointInfo.Entry> secondary = projectInfo.entryPointInfo().getSecondaryEntries();
 
-    if (!secondary.isEmpty()) {
+    VBox secondaryCard = new VBox(8);
+    secondaryCard.getStyleClass().add("secondary-entry-card");
 
-        VBox secondaryCard = new VBox(8);
-        secondaryCard.getStyleClass().add("secondary-entry-card");
+    Label secTitle = new Label("SECONDARY ENTRIES");
+    secTitle.getStyleClass().add("entry-title-muted");
 
-        Label secTitle = new Label("SECONDARY ENTRIES");
-        secTitle.getStyleClass().add("entry-title-muted");
+    VBox list = new VBox(6);
 
-        VBox list = new VBox(6);
+    Runnable rebuildSecondary = () -> {
 
-        for (EntryPointInfo.Entry ep : secondary) {
+        list.getChildren().clear();
 
-            HBox item = new HBox(8);
-            item.getStyleClass().add("entry-list-item");
+        for (EntryPointItem item : entryPoint.getSecondaryEntries()) {
 
-            Label kindBadge = new Label(ep.label());
+            HBox row = new HBox(8);
+            row.getStyleClass().add("entry-list-item");
+
+            Label kindBadge = new Label(item.label());
             kindBadge.getStyleClass().add("entry-kind-badge");
 
-            Label nameLabel = new Label("• " + getSimpleName(ep.entityName()));
+            Label nameLabel = new Label("• " + item.displayName());
             nameLabel.getStyleClass().add("entry-name");
 
-            item.getChildren().addAll(kindBadge, nameLabel);
-            item.setOnMouseClicked(e -> {
-                uiFeatures.openAndHighlight(
-                        getSimpleName(ep.entityName()),
-                        0, 0,
-                        null
-                );
-            });
+            row.getChildren().addAll(kindBadge, nameLabel);
 
-            list.getChildren().add(item);
+            row.setOnMouseClicked(e ->
+                    uiFeatures.openAndHighlight(
+                            item.qualifiedName(),
+                            0,
+                            0,
+                            null
+                    )
+            );
+
+            list.getChildren().add(row);
         }
 
-        secondaryCard.getChildren().addAll(secTitle, list);
-        root.getChildren().add(secondaryCard);
-    }
+        boolean hasSecondary = !entryPoint.getSecondaryEntries().isEmpty();
+
+        secondaryCard.setVisible(hasSecondary);
+        secondaryCard.setManaged(hasSecondary);
+    };
+
+    rebuildSecondary.run();
+
+    entryPoint.getSecondaryEntries().addListener(
+            (ListChangeListener<EntryPointItem>) change ->
+                    rebuildSecondary.run()
+    );
+
+    secondaryCard.getChildren().addAll(secTitle, list);
+
+    root.getChildren().add(secondaryCard);
 
     return root;
-}
-// package OverView Class which pkg Contains how many classes
-private Node buildPackageOverView(Map<String, NamespaceInfo> packageInfos) {
+}// package OverView Class which pkg Contains how many classes
+    private Node buildPackageOverView() {
 
-    VBox root = new VBox(10); // spacing between cards
+        NamespaceOverviewState namespaceState =
+                state.getNamespaceOverview();
 
-    if (packageInfos.isEmpty()) {
-        Label empty = new Label("No package found!");
-        empty.getStyleClass().add("label-muted");
-        root.getChildren().add(empty);
+        VBox root = new VBox(10);
+
+        Runnable rebuild = () -> {
+
+            root.getChildren().clear();
+
+            if (namespaceState.getNamespaces().isEmpty()) {
+
+                Label empty = new Label("No package found!");
+                empty.getStyleClass().add("label-muted");
+
+                root.getChildren().add(empty);
+
+                return;
+            }
+
+            for (NamespaceItem item : namespaceState.getNamespaces()) {
+
+                HBox row = new HBox();
+                row.getStyleClass().add("package-card");
+                row.setAlignment(Pos.CENTER_LEFT);
+                row.setPadding(new Insets(10));
+
+                Label packageLabel = new Label(item.namespaceName());
+                packageLabel.getStyleClass().add("package-name");
+
+                Region spacer = new Region();
+                HBox.setHgrow(spacer, Priority.ALWAYS);
+
+                Label count = new Label(item.entityCount() + " classes");
+                count.getStyleClass().add("package-badge");
+
+                row.getChildren().addAll(
+                        packageLabel,
+                        spacer,
+                        count
+                );
+
+                row.setOnMouseEntered(e ->
+                        row.getStyleClass().add("package-card-hover"));
+
+                row.setOnMouseExited(e ->
+                        row.getStyleClass().remove("package-card-hover"));
+
+                root.getChildren().add(row);
+            }
+        };
+
+        rebuild.run();
+
+        namespaceState.getNamespaces().addListener(
+                (ListChangeListener<NamespaceItem>) change ->
+                        rebuild.run()
+        );
+
         return root;
     }
-
-    packageInfos.forEach((packageName, packageInfo) -> {
-
-        HBox row = new HBox();
-        row.getStyleClass().add("package-card");
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.setPadding(new Insets(10));
-
-        // ===== LEFT (PACKAGE NAME) =====
-        Label packageLabel = new Label(packageInfo.getNamespaceName());
-        packageLabel.getStyleClass().add("package-name");
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        // ===== RIGHT (COUNT BADGE) =====
-        int size = packageInfo.getEntities().size();
-
-        Label count = new Label(size + " classes");
-        count.getStyleClass().add("package-badge");
-
-        row.getChildren().addAll(packageLabel, spacer, count);
-
-        // optional: hover interaction
-        row.setOnMouseEntered(e -> row.getStyleClass().add("package-card-hover"));
-        row.setOnMouseExited(e -> row.getStyleClass().remove("package-card-hover"));
-
-        root.getChildren().add(row);
-    });
-
-    return root;
-}
-
 // for Largest files
-private Node buildLargestFileView(ProjectInfo result) {
+private Node buildLargestFileView() {
 
+    LargestFilesState largestFiles =
+            state.getLargestFiles();
 
-    VBox root = new VBox(10); // spacing between cards
+    VBox root = new VBox(10);
 
-    if (result==null) {
-        Label empty = new Label("No File found!");
-        empty.getStyleClass().add("label-muted");
-        root.getChildren().add(empty);
-        return root;
-    }
-    List<LargestFileInfo> files=result.largestFiles();
+    Runnable rebuild = () -> {
 
-    for(LargestFileInfo lf:files){
-        HBox row = new HBox();
-        row.getStyleClass().add("package-card");
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.setPadding(new Insets(10));
-        // ===== LEFT (File name) =====
-        Label packageLabel = new Label(lf.getName());
-        packageLabel.getStyleClass().add("package-name");
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        // ===== RIGHT (COUNT BADGE) =====
-        int line=lf.getLoc();
+        root.getChildren().clear();
 
-        Label count = new Label(line+ " lines");
-        count.getStyleClass().add("package-badge");
+        if (largestFiles.getFiles().isEmpty()) {
 
-        row.getChildren().addAll(packageLabel, spacer, count);
+            Label empty = new Label("No File found!");
+            empty.getStyleClass().add("label-muted");
 
-        // optional: hover interaction
-        row.setOnMouseEntered(e -> row.getStyleClass().add("package-card-hover"));
-        row.setOnMouseExited(e -> row.getStyleClass().remove("package-card-hover"));
-        row.setOnMouseClicked(event -> {
-            uiFeatures.openFile(lf.getSourceFile());
+            root.getChildren().add(empty);
 
-        });
-        root.getChildren().add(row);
+            return;
+        }
 
+        for (LargestFileItem file : largestFiles.getFiles()) {
 
-    }
+            HBox row = new HBox();
+            row.getStyleClass().add("package-card");
+            row.setAlignment(Pos.CENTER_LEFT);
+            row.setPadding(new Insets(10));
+
+            Label fileName = new Label(file.name());
+            fileName.getStyleClass().add("package-name");
+
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+
+            Label lines = new Label(file.loc() + " lines");
+            lines.getStyleClass().add("package-badge");
+
+            row.getChildren().addAll(
+                    fileName,
+                    spacer,
+                    lines
+            );
+
+            row.setOnMouseEntered(e ->
+                    row.getStyleClass().add("package-card-hover"));
+
+            row.setOnMouseExited(e ->
+                    row.getStyleClass().remove("package-card-hover"));
+
+            row.setOnMouseClicked(e ->
+                    uiFeatures.openFile(file.sourceFile())
+            );
+
+            root.getChildren().add(row);
+        }
+    };
+
+    rebuild.run();
+
+    largestFiles.getFiles().addListener(
+            (ListChangeListener<LargestFileItem>) change ->
+                    rebuild.run()
+    );
+
     return root;
 }
 
-private Node buildClassMetricsView(List<EntityInfo> classes) {
-    if (classes == null || classes.isEmpty()) {
-        return new Label("No Entity Found!");
-    }
+    private Node buildClassMetricsView() {
 
-    List<EntityInfo> sorted =
-            classes.stream()
-                    .sorted(Comparator.comparing(
-                            classInfo -> {
-                                return getSimpleName(classInfo.getEntityName());
-                            },
-                            String.CASE_INSENSITIVE_ORDER
-                    ))
-                    .toList();
+        EntityMetricsState entityMetrics = state.getEntityMetricsState();
 
-    ListView<EntityInfo> listView = new ListView<>();
-    listView.setFocusTraversable(true);
-    listView.setOnKeyPressed(event -> {
-        EntityInfo selected = listView.getSelectionModel().getSelectedItem();
+        ListView<EntityMetricItem> listView = new ListView<>();
 
-        if (selected == null) return;
+        listView.setItems(entityMetrics.getEntities());
 
-        switch (event.getCode()) {
+        listView.setFocusTraversable(true);
 
-            case ENTER -> {
-                uiFeatures.openAndHighlight(
-                        getSimpleName(selected.getEntityName()),
-                        selected.getBeginLine(),
-                        selected.getBeginColumn(),
-                        selected.getSourceFile()
+        listView.setOnKeyPressed(event -> {
+
+            EntityMetricItem selected =
+                    listView.getSelectionModel().getSelectedItem();
+
+            if (selected == null) {
+                return;
+            }
+
+            switch (event.getCode()) {
+
+                case ENTER -> uiFeatures.openAndHighlight(
+                        selected.simpleName(),
+                        selected.beginLine(),
+                        selected.beginColumn(),
+                        selected.sourceFile()
                 );
-            }
 
-            case UP -> {
-                listView.getSelectionModel().selectPrevious();
-            }
+                case UP -> listView.getSelectionModel().selectPrevious();
 
-            case DOWN -> {
-                listView.getSelectionModel().selectNext();
+                case DOWN -> listView.getSelectionModel().selectNext();
             }
-        }
-    });
-    listView.getItems().setAll(sorted);
-    listView.setCellFactory(lv -> new ClassMetricsCell());
+        });
 
-    return listView;
-}
-    private class ClassMetricsCell extends ListCell<EntityInfo> {
+        listView.setCellFactory(lv -> new ClassMetricsCell());
+
+        return listView;
+    }
+    private class ClassMetricsCell extends ListCell<EntityMetricItem> {
 
         private final VBox root = new VBox(10);
 
@@ -462,7 +628,7 @@ private Node buildClassMetricsView(List<EntityInfo> classes) {
         }
 
         @Override
-        protected void updateItem(EntityInfo cls, boolean empty) {
+        protected void updateItem(EntityMetricItem cls, boolean empty) {
             super.updateItem(cls, empty);
 
             if (empty || cls == null) {
@@ -471,13 +637,13 @@ private Node buildClassMetricsView(List<EntityInfo> classes) {
             }
 
             // ===== DATA =====
-            className.setText(getSimpleName(cls.getEntityName()));
-            packageName.setText(cls.getNamespaceName());
+            className.setText(getSimpleName(cls.simpleName()));
+            packageName.setText(cls.namespace());
 
-            meth.setText(String.valueOf(cls.getMembers().stream().filter(m -> m.getKind() == com.example.bodhakfrontend.core.model.entity.MemberKind.METHOD).count()));
-            flds.setText(String.valueOf(cls.getFields().size()));
-            cons.setText(String.valueOf(cls.getMembers().stream().filter(m -> m.getKind() == com.example.bodhakfrontend.core.model.entity.MemberKind.CONSTRUCTOR).count()));
-            loc.setText(String.valueOf(cls.getLinesOfCode()));
+            meth.setText(String.valueOf(cls.methods()));
+            flds.setText(String.valueOf(cls.fields()));
+            cons.setText(String.valueOf(cls.constructors()));
+            loc.setText(String.valueOf(cls.loc()));
 
             if (cls.isAbstract()) {
                 badge.setText("ABSTRACT");
@@ -486,7 +652,7 @@ private Node buildClassMetricsView(List<EntityInfo> classes) {
                 badge.setText("FINAL");
                 badge.getStyleClass().setAll("class-badge", "badge-final");
             } else {
-                badge.setText(cls.getKind().name());
+                badge.setText(cls.kind().name());
                 badge.getStyleClass().setAll("class-badge","badge-class");
             }
 
@@ -508,10 +674,10 @@ private Node buildClassMetricsView(List<EntityInfo> classes) {
             root.setOnMouseClicked(e -> {
                 getListView().getSelectionModel().select(getIndex());
                 uiFeatures.openAndHighlight(
-                        getSimpleName(cls.getEntityName()),
-                        cls.getBeginLine(),
-                        cls.getBeginColumn(),
-                        cls.getSourceFile()
+                        getSimpleName(cls.qualifiedName()),
+                        cls.beginLine(),
+                        cls.beginColumn(),
+                        cls.sourceFile()
                 );
             });
 
@@ -521,73 +687,7 @@ private Node buildClassMetricsView(List<EntityInfo> classes) {
         }
     }
 // for health summary
-private Node buildHealthSummary(List<EntityInfo> entities) {
 
-    VBox root = new VBox(12);
-    root.getStyleClass().add("analysis-card");
-
-    int healthy        = (int) entities.stream().filter(e -> e.getWarnings().isEmpty()).count();
-    int withWarnings   = (int) entities.stream().filter(e -> !e.getWarnings().isEmpty()).count();
-    int circular       = (int) entities.stream().filter(e -> !e.getCircularGroups().isEmpty()).count();
-    int highlyCoupled  = (int) entities.stream().filter(e ->
-            e.getIssueType() != null && e.getIssueType().contains(IssueType.HIGH_COUPLING)).count();
-    int godClasses     = (int) entities.stream().filter(e ->
-            e.getIssueType() != null && e.getIssueType().contains(IssueType.GOD_CLASS)).count();
-
-    // ================= TOP METRICS =================
-    FlowPane topRow = new FlowPane();
-    topRow.setHgap(10);
-    topRow.setVgap(10);
-
-    // 🔥 IMPORTANT: allow wrapping based on parent width
-    topRow.prefWrapLengthProperty().bind(root.widthProperty());
-
-    // ===== HEALTHY =====
-    VBox healthyBox = createHealthBox(
-            String.valueOf(healthy),
-            "HEALTHY",
-            "health-value"
-    );
-
-    // ===== WARNINGS =====
-    VBox warningBox = createHealthBox(
-            String.valueOf(withWarnings),
-            "WARNINGS",
-            "warning-value"
-    );
-
-    // ===== CYCLES =====
-    VBox cycleBox = createHealthBox(
-            String.valueOf(circular),
-            "CYCLES",
-            "warning-value"
-    );
-
-    // ===== COUPLED =====
-    VBox highBoundBox = createHealthBox(
-            String.valueOf(highlyCoupled),
-            "HIGHLY COUPLED",
-            "warning-value"
-    );
-
-    topRow.getChildren().addAll(healthyBox, warningBox, cycleBox, highBoundBox);
-
-    // ================= GOD CLASS ALERT =================
-    VBox alertBox = new VBox(4);
-    alertBox.getStyleClass().add("health-alert");
-
-    Label alertTitle = new Label(godClasses + " God Entities");
-    alertTitle.getStyleClass().add("alert-title");
-
-    Label alertSubtitle = new Label("REQUIRES REFACTORING");
-    alertSubtitle.getStyleClass().add("alert-subtitle");
-
-    alertBox.getChildren().addAll(alertTitle, alertSubtitle);
-
-    root.getChildren().addAll(topRow, alertBox);
-
-    return root;
-}
 
     private VBox createHealthBox(String value, String label, String valueStyle) {
 
@@ -607,89 +707,128 @@ private Node buildHealthSummary(List<EntityInfo> entities) {
 
         return box;
     }
-private Node buildHotspotView(List<HotspotInfo> hotspotInfos, UiFeatures uiFeatures) {
+    private Node buildHotspotView() {
 
-    // Derive hotspots from entities with GOD_CLASS or HIGH_COUPLING issue types
-    List<EntityInfo> hotspotEntities = entities.stream()
-            .filter(e -> e.getIssueType() != null &&
-                    (e.getIssueType().contains(IssueType.GOD_CLASS) ||
-                     e.getIssueType().contains(IssueType.HIGH_COUPLING)))
-            .toList();
+        HotspotState hotspotState = state.getHotspot();
 
-    VBox root = new VBox(12);
-    root.setFillWidth(true);
+        VBox root = new VBox(12);
+        root.setFillWidth(true);
 
-    if (hotspotEntities.isEmpty()) {
-        Label empty = new Label("✅ No high-risk hotspots detected");
-        empty.getStyleClass().add("label-muted");
-        root.getChildren().add(empty);
-        return root;
-    }
+        Runnable rebuild = () -> {
 
-    for (EntityInfo ci : hotspotEntities) {
+            root.getChildren().clear();
 
-        VBox card = new VBox(10);
-        card.getStyleClass().addAll("hotspot-card");
-        card.setPadding(new Insets(12));
+            if (hotspotState.getHotspots().isEmpty()) {
 
-        card.setMaxWidth(Double.MAX_VALUE);
+                Label empty = new Label("✅ No high-risk hotspots detected");
+                empty.getStyleClass().add("label-muted");
 
-        // ================= TOP ROW =================
-        HBox topRow = new HBox(10);
-        topRow.setAlignment(Pos.CENTER_LEFT);
+                root.getChildren().add(empty);
+                return;
+            }
 
-        VBox left = new VBox(4);
-        left.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(left, Priority.ALWAYS);
+            for (HotspotItem item : hotspotState.getHotspots()) {
 
-        Label title = new Label(getSimpleName(ci.getEntityName()));
-        title.getStyleClass().add("hotspot-title");
+                VBox card = new VBox(10);
+                card.getStyleClass().add("hotspot-card");
+                card.setPadding(new Insets(12));
+                card.setMaxWidth(Double.MAX_VALUE);
 
-        String issues = ci.getIssueType() == null ? "" : ci.getIssueType().toString();
-        Label desc = new Label(issues);
-        desc.getStyleClass().add("hotspot-desc");
-        desc.setWrapText(true);
+                // ================= TOP ROW =================
 
-        left.getChildren().addAll(title, desc);
+                HBox topRow = new HBox(10);
+                topRow.setAlignment(Pos.CENTER_LEFT);
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+                VBox left = new VBox(4);
+                left.setMaxWidth(Double.MAX_VALUE);
+                HBox.setHgrow(left, Priority.ALWAYS);
 
-        Label badge = new Label("HIGH RISK");
-        badge.getStyleClass().addAll("risk-badge", "risk-high");
+                Label title = new Label(item.simpleName());
+                title.getStyleClass().add("hotspot-title");
 
-        topRow.getChildren().addAll(left, spacer, badge);
+                Label desc = new Label(item.description());
+                desc.getStyleClass().add("hotspot-desc");
+                desc.setWrapText(true);
 
-        // ================= METRICS =================
-        HBox metrics = new HBox(30);
-        metrics.setAlignment(Pos.CENTER_LEFT);
+                left.getChildren().addAll(title, desc);
 
-        metrics.getChildren().addAll(
-                metric("LOC", String.valueOf(ci.getLinesOfCode())),
-                metric("FI", String.valueOf(ci.getUsedBy().size())),
-                metric("FO", String.valueOf(ci.getDependsOn().size()))
+                Region spacer = new Region();
+                HBox.setHgrow(spacer, Priority.ALWAYS);
+
+                Label badge = new Label(item.riskLabel());
+                badge.getStyleClass().addAll(
+                        "risk-badge",
+                        item.riskCss()
+                );
+
+                topRow.getChildren().addAll(
+                        left,
+                        spacer,
+                        badge
+                );
+
+                // ================= METRICS =================
+
+                HBox metrics = new HBox(30);
+                metrics.setAlignment(Pos.CENTER_LEFT);
+
+                metrics.getChildren().addAll(
+
+                        metric(
+                                "LOC",
+                                String.valueOf(item.loc())
+                        ),
+
+                        metric(
+                                "FI",
+                                String.valueOf(item.fanIn())
+                        ),
+
+                        metric(
+                                "FO",
+                                String.valueOf(item.fanOut())
+                        )
+                );
+
+                card.getChildren().addAll(
+                        topRow,
+                        metrics
+                );
+
+                card.setOnMouseClicked(e -> {
+
+                    uiFeatures.openAndHighlight(
+
+                            item.qualifiedName(),
+
+                            item.beginLine(),
+
+                            item.beginColumn(),
+
+                            item.sourceFile()
+                    );
+
+                });
+
+                card.setOnMouseEntered(e ->
+                        card.getStyleClass().add("hotspot-hover"));
+
+                card.setOnMouseExited(e ->
+                        card.getStyleClass().remove("hotspot-hover"));
+
+                root.getChildren().add(card);
+            }
+        };
+
+        rebuild.run();
+
+        hotspotState.getHotspots().addListener(
+                (ListChangeListener<HotspotItem>) change ->
+                        rebuild.run()
         );
 
-        card.setOnMouseClicked(e -> {
-            uiFeatures.openAndHighlight(
-                    getSimpleName(ci.getEntityName()),
-                    ci.getBeginLine(),
-                    ci.getBeginColumn(),
-                    ci.getSourceFile()
-            );
-        });
-
-        // hover
-        card.setOnMouseEntered(e -> card.getStyleClass().add("hotspot-hover"));
-        card.setOnMouseExited(e -> card.getStyleClass().remove("hotspot-hover"));
-
-        card.getChildren().addAll(topRow, metrics);
-
-        root.getChildren().add(card);
+        return root;
     }
-
-    return root;
-}
 private VBox metric(String title, String value) {
         VBox box = new VBox(4);
         box.setAlignment(Pos.CENTER_LEFT);

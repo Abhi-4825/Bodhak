@@ -83,32 +83,31 @@ public class CodeHealthWorkspace implements Workspace {
         String healthStatus    = cycleCount == 0 ? "GOOD" : "NEEDS ATTENTION";
         String healthColor     = cycleCount == 0 ? "#8bfd91" : "#ffd54f";
 
+        com.example.bodhakfrontend.core.analysis.AnalysisContext context = engine.getAnalysisContextManager().getCurrentContext();
         HBox healthRow = new HBox(16);
         healthRow.getChildren().addAll(
             metricCard("Health",  healthStatus,                 healthColor),
             metricCard("Cycles",  String.valueOf(cycleCount),
                 cycleCount == 0 ? "#8bfd91" : "#ff8a80"),
             metricCard("Classes",
-                String.valueOf(engine.getAnalysisContext().getEntities().size()), "#4bf6ff")
+                String.valueOf(context.getEntities().size()), "#4bf6ff")
         );
         healthRow.getChildren().forEach(n -> HBox.setHgrow(n, Priority.ALWAYS));
         page.getChildren().add(healthRow);
 
         // ── Entity quality distribution ──────────────────────────────────────
-        var entities = engine.getAnalysisContext().getEntities();
+        var entities = context.getEntities();
         int total        = entities.size();
-        int withWarnings = (int) entities.stream().filter(e -> !e.getWarnings().isEmpty()).count();
-        int godClasses   = (int) entities.stream().filter(e ->
-                e.getIssueType() != null &&
-                e.getIssueType().contains(com.example.bodhakfrontend.core.model.entity.IssueType.GOD_CLASS)).count();
-        int healthy      = total - withWarnings;
+//        int withWarnings = (int) entities.stream().filter(e -> !e.getWarnings().isEmpty()).count();
+//        int godClasses   = (int) entities.stream().filter(e ->
+//                e.getIssueType() != null &&
+//                e.getIssueType().contains(com.example.bodhakfrontend.core.model.entity.IssueType.GOD_CLASS)).count();
+//        int healthy      = total - withWarnings;
 
         HBox qualityRow = new HBox(16);
         qualityRow.getChildren().addAll(
-            metricCard("Total Entities", String.valueOf(total),        "#d2a8ff"),
-            metricCard("Healthy",        String.valueOf(healthy),       "#8bfd91"),
-            metricCard("With Warnings",  String.valueOf(withWarnings),  "#ffd54f"),
-            metricCard("God Classes",    String.valueOf(godClasses),    "#ff8a80")
+            metricCard("Total Entities", String.valueOf(total),        "#d2a8ff")
+//                .
         );
         qualityRow.getChildren().forEach(n -> HBox.setHgrow(n, Priority.ALWAYS));
         page.getChildren().add(qualityRow);

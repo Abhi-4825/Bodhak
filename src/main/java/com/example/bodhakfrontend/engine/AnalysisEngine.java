@@ -1,7 +1,8 @@
 package com.example.bodhakfrontend.engine;
 
 import com.example.bodhakfrontend.core.analysis.AnalysisContext;
-import com.example.bodhakfrontend.core.analysis.builder.DefaultAnalysisContextFactory;
+import com.example.bodhakfrontend.core.analysis.AnalysisContextManager;
+import com.example.bodhakfrontend.core.analysis.builder.AnalysisContextFactory;
 import com.example.bodhakfrontend.core.model.entity.EntityInfo;
 import com.example.bodhakfrontend.core.model.namespace.NamespaceInfo;
 import com.example.bodhakfrontend.core.model.project.ProjectInfo;
@@ -22,7 +23,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
 
 /**
  * Central analysis orchestrator.
@@ -53,7 +53,8 @@ public class AnalysisEngine {
     private final NamespaceBuilder       namespaceBuilder;
     private final ProjectInfoBuilder     projectInfoBuilder;
     private final ProjectSnapshotBuilder projectSnapshotBuilder;
-    private final DefaultAnalysisContextFactory contextFactory;
+    private final AnalysisContextFactory analysisContextFactory;
+    private final AnalysisContextManager analysisContextManager;
     private final EntityViewModelBuilder viewModelBuilder;
     private final ProjectTypeAnalyzer    projectTypeAnalyzer;
 
@@ -64,6 +65,7 @@ public class AnalysisEngine {
     private final Map<Path, List<EntityInfo>> entityPathMap  = new ConcurrentHashMap<>();
     private final Map<Path, Set<String>>      pathNamesMap   = new ConcurrentHashMap<>();
     private final List<EntityInfo>            allEntities    = new ArrayList<>();
+    private Path projectPath;
 
     /** Canonical analysis result — populated after {@code analyze()} completes. */
     private AnalysisContext analysisContext;
@@ -76,7 +78,9 @@ public class AnalysisEngine {
             LanguagePluginRegistry registry,
             EntityViewModelBuilder viewModelBuilder,
             FrameworkDetectorRegistry detectorRegistry,
-            com.example.bodhakfrontend.core.api.engine.EndpointDiscoveryEngine endpointDiscoveryEngine
+            com.example.bodhakfrontend.core.api.engine.EndpointDiscoveryEngine endpointDiscoveryEngine,
+            AnalysisContextManager analysisContextManager,
+            AnalysisContextFactory analysisContextFactory
     ) {
         this.registry              = registry;
         this.viewModelBuilder      = viewModelBuilder;
@@ -85,7 +89,8 @@ public class AnalysisEngine {
         this.namespaceBuilder      = new NamespaceBuilder();
         this.projectInfoBuilder    = new ProjectInfoBuilder(scanner, new GlobalEntryPointDetector(registry));
         this.projectSnapshotBuilder = new ProjectSnapshotBuilder();
-        this.contextFactory        = new DefaultAnalysisContextFactory();
+        this.analysisContextFactory = analysisContextFactory;
+        this.analysisContextManager = analysisContextManager;
         this.projectTypeAnalyzer   = new ProjectTypeAnalyzer(detectorRegistry);
         this.endpointDiscoveryEngine = endpointDiscoveryEngine;
     }
@@ -93,6 +98,7 @@ public class AnalysisEngine {
     // ── Full analysis ─────────────────────────────────────────────────────────
 
     public void analyze(Path projectPath) {
+        this.projectPath = projectPath;
 
         // Stage 1 — Scan files
         Set<Path> files = scanner.scan(projectPath);
@@ -143,10 +149,12 @@ public class AnalysisEngine {
                 projectTypeAnalyzer.analyze(projectInfo, allEntities);
 
         // Stage 11 — Create AnalysisContext (canonical analysis state)
-        this.analysisContext = contextFactory.create(snapshot, dependencyGraph, classificationResult);
-        //
-        DetectionContext detectionContext=new DetectionContext(allEntities,projectInfo);
-        this.apiSurface=endpointDiscoveryEngine.analyze(detectionContext,registry);
+        AnalysisContext context = analysisContextFactory.create(snapshot, dependencyGraph, classificationResult);
+        this.analysisContext = context;
+        this.analysisContextManager.replace(context);
+
+        DetectionContext detectionContext = new DetectionContext(allEntities, projectInfo);
+        this.apiSurface = endpointDiscoveryEngine.analyze(detectionContext, registry);
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
@@ -177,6 +185,28 @@ public class AnalysisEngine {
         }
     }
 
+    private void rebuildAndReplaceContext() {
+        if (projectPath == null) {
+            return;
+        }
+        Map<String, NamespaceInfo> namespaces = namespaceBuilder.build(allEntities);
+        ProjectInfo projectInfo = projectInfoBuilder.buildAll(projectPath, allEntities);
+        ProjectSnapshot snapshot = projectSnapshotBuilder.build(projectInfo, allEntities, namespaces);
+        ProjectClassificationResult classificationResult = projectTypeAnalyzer.analyze(projectInfo, allEntities);
+
+        AnalysisContext context = analysisContextFactory.create(snapshot, dependencyGraph, classificationResult);
+        this.analysisContext = context;
+
+        com.example.bodhakfrontend.engine.analysis.warning.WarningBuilder warningBuilder =
+                new com.example.bodhakfrontend.engine.analysis.warning.WarningBuilder();
+        for (com.example.bodhakfrontend.core.model.incremental.EntityViewModel vm : viewModelBuilder.getViewModelMap().values()) {
+            List<com.example.bodhakfrontend.core.model.warning.WarningRule> warnings = warningBuilder.buildWarnings(vm.toEntityInfo(), context);
+            javafx.application.Platform.runLater(() -> vm.getWarnings().setAll(warnings));
+        }
+
+        this.analysisContextManager.replace(context);
+    }
+
     // ── Public API ────────────────────────────────────────────────────────────
 
     /**
@@ -185,6 +215,10 @@ public class AnalysisEngine {
      */
     public AnalysisContext getAnalysisContext() {
         return analysisContext;
+    }
+
+    public AnalysisContextManager getAnalysisContextManager() {
+        return analysisContextManager;
     }
 
     /**
@@ -257,6 +291,8 @@ public class AnalysisEngine {
 
         viewModelBuilder.onFileCreate(newEntities);
         projectInfoBuilder.onFileCreated(file);
+
+        rebuildAndReplaceContext();
     }
 
     public void onFileDelete(Path file) {
@@ -277,6 +313,8 @@ public class AnalysisEngine {
 
         applyGraphDependencies(allEntities);
         projectInfoBuilder.onFileDeleted(file);
+
+        rebuildAndReplaceContext();
     }
 
     public void onFileModify(Path file) {
@@ -307,6 +345,8 @@ public class AnalysisEngine {
         viewModelBuilder.onFileModify(oldEntities, newEntities);
         projectInfoBuilder.onFileDeleted(file);
         projectInfoBuilder.onFileCreated(file);
+
+        rebuildAndReplaceContext();
     }
 
     public void onFolderCreate(Path folder) { scanner.onFolderCreated(folder); }
