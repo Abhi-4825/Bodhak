@@ -1,0 +1,21 @@
+id: java-desktop
+schemaVersion: 1
+displayName: Java Desktop
+family: framework
+category: ui
+
+evidence:
+  - type: BUILD_DEPENDENCY
+    aliases:
+      - org.openjfx
+      - javafx-controls
+      - javafx-fxml
+  - type: BUILD_PLUGIN
+    pattern: javafx-maven-plugin
+  - type: ANNOTATION_REFERENCE
+    pattern: FXML
+  - type: ANNOTATION_REFERENCE
+    pattern: Application
+
+capabilities:
+  - DESKTOP_UI

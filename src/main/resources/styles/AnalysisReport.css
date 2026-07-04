@@ -1,0 +1,1126 @@
+/* ============================================================
+   BODHAK — Analysis Report Dashboard
+   Cyber-Intelligence Minimalist Design System
+   ============================================================ */
+
+/* ── ROOT / BACKGROUND ─────────────────────────────────────── */
+.ar-dashboard-bg {
+    -fx-background-color: #050B11;
+}
+
+.ar-scroll-pane {
+    -fx-background: #050B11;
+    -fx-background-color: #050B11;
+    -fx-border-color: transparent;
+}
+
+.ar-scroll-pane > .viewport {
+    -fx-background-color: #050B11;
+}
+
+.ar-scroll-pane > .scroll-bar:vertical {
+    -fx-background-color: #080f15;
+    -fx-pref-width: 4px;
+}
+
+.ar-scroll-pane > .scroll-bar:vertical > .thumb {
+    -fx-background-color: #3b494c;
+    -fx-background-radius: 2;
+}
+
+.ar-scroll-pane > .scroll-bar:horizontal {
+    -fx-pref-height: 0;
+    -fx-opacity: 0;
+}
+
+/* ── GLASS PANEL (main card container) ─────────────────────── */
+.ar-glass-card {
+    -fx-background-color: rgba(8, 16, 24, 0.85);
+    -fx-border-color: rgba(0, 218, 243, 0.1);
+    -fx-border-width: 1;
+    -fx-border-radius: 16;
+    -fx-background-radius: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 16, 0, 0, 4);
+}
+
+.ar-glass-card:hover {
+    -fx-border-color: rgba(0, 218, 243, 0.22);
+}
+
+/* ── SECTION TITLE ─────────────────────────────────────────── */
+.ar-section-title {
+    -fx-font-family: "Epilogue";
+    -fx-font-size: 18px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #00daf3;
+    -fx-letter-spacing: -0.03em;
+}
+
+/* ── LABEL TINY (uppercase metadata) ───────────────────────── */
+.ar-label-tiny {
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 9px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #849494;
+    -fx-letter-spacing: 0.2em;
+}
+
+/* ── CODE VALUE (large metric numbers) ─────────────────────── */
+.ar-value-xl {
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 22px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #dce3ec;
+}
+
+.ar-value-lg {
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 18px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #dce3ec;
+}
+
+.ar-value-primary {
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 22px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #00daf3;
+}
+
+/* ── BODY TEXT ─────────────────────────────────────────────── */
+.ar-body-sm {
+    -fx-font-family: "Inter";
+    -fx-font-size: 13px;
+    -fx-text-fill: #bac9cc;
+}
+
+.ar-body-muted {
+    -fx-font-family: "Inter";
+    -fx-font-size: 12px;
+    -fx-text-fill: #849494;
+}
+
+.ar-body-primary {
+    -fx-font-family: "Inter";
+    -fx-font-size: 13px;
+    -fx-text-fill: #00daf3;
+}
+
+/* ── EXECUTIVE BANNER TILE ─────────────────────────────────── */
+.ar-exec-tile {
+    -fx-background-color: rgba(8, 16, 24, 0.85);
+    -fx-border-color: rgba(0, 218, 243, 0.1);
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 14 16 14 20;
+}
+
+.ar-exec-tile:hover {
+    -fx-border-color: rgba(0, 218, 243, 0.25);
+    -fx-background-color: rgba(0, 218, 243, 0.04);
+}
+
+.ar-exec-tile-accent-cyan {
+    -fx-border-color: rgba(0, 218, 243, 0.12);
+    -fx-border-left-width: 4;
+    -fx-border-width: 0 0 0 4;
+    -fx-border-radius: 0;
+    -fx-background-radius: 12;
+}
+
+/* The left accent bar is simulated via a separate Region node */
+.ar-accent-bar-cyan    { -fx-background-color: rgba(0, 218, 243, 0.55);   -fx-background-radius: 2 0 0 2; }
+.ar-accent-bar-blue    { -fx-background-color: rgba(124, 163, 236, 0.55); -fx-background-radius: 2 0 0 2; }
+.ar-accent-bar-amber   { -fx-background-color: rgba(254, 201, 49, 0.55);  -fx-background-radius: 2 0 0 2; }
+.ar-accent-bar-teal    { -fx-background-color: rgba(0, 218, 200, 0.55);   -fx-background-radius: 2 0 0 2; }
+.ar-accent-bar-violet  { -fx-background-color: rgba(155, 122, 240, 0.55); -fx-background-radius: 2 0 0 2; }
+.ar-accent-bar-green   { -fx-background-color: rgba(86, 214, 155, 0.55);  -fx-background-radius: 2 0 0 2; }
+.ar-accent-bar-red     { -fx-background-color: rgba(255, 75, 75, 0.55);   -fx-background-radius: 2 0 0 2; }
+
+/* Exec tile icon — dim by default */
+.ar-exec-tile-icon {
+    -fx-opacity: 0.4;
+    -fx-text-fill: #00daf3;
+    -fx-font-size: 20px;
+}
+
+/* ── PROGRESS BARS ─────────────────────────────────────────── */
+.ar-progress-track {
+    -fx-background-color: rgba(59, 73, 76, 0.35);
+    -fx-background-radius: 4;
+    -fx-pref-height: 5;
+    -fx-max-height: 5;
+    -fx-min-height: 5;
+}
+
+.ar-progress-fill-cyan {
+    -fx-background-color: #00daf3;
+    -fx-background-radius: 4;
+    -fx-effect: dropshadow(gaussian, rgba(0,218,243,0.5), 6, 0, 0, 0);
+}
+
+.ar-progress-fill-secondary {
+    -fx-background-color: #bbc8d8;
+    -fx-background-radius: 4;
+}
+
+.ar-progress-fill-amber {
+    -fx-background-color: #fec931;
+    -fx-background-radius: 4;
+}
+
+.ar-progress-fill-green {
+    -fx-background-color: #56d69b;
+    -fx-background-radius: 4;
+}
+
+.ar-progress-fill-orange {
+    -fx-background-color: #ff9956;
+    -fx-background-radius: 4;
+}
+
+/* ── CONFIDENCE BADGE ──────────────────────────────────────── */
+.ar-badge {
+    -fx-background-color: rgba(0, 218, 243, 0.12);
+    -fx-border-color: rgba(0, 218, 243, 0.25);
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 3 8 3 8;
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 9px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #00daf3;
+}
+
+/* ── STATUS BADGES ─────────────────────────────────────────── */
+.ar-badge-critical {
+    -fx-background-color: rgba(255, 75, 75, 0.18);
+    -fx-border-color: rgba(255, 75, 75, 0.35);
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 2 7 2 7;
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 9px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #FF4B4B;
+}
+
+.ar-badge-elevated {
+    -fx-background-color: rgba(254, 201, 49, 0.15);
+    -fx-border-color: rgba(254, 201, 49, 0.30);
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 2 7 2 7;
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 9px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #fec931;
+}
+
+/* ── TABLE ─────────────────────────────────────────────────── */
+.ar-table {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-table-cell-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.ar-table .column-header-background {
+    -fx-background-color: transparent;
+}
+
+.ar-table .column-header {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent rgba(59,73,76,0.3) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 0 8 10 8;
+}
+
+.ar-table .column-header .label {
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 9px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #849494;
+    -fx-letter-spacing: 0.2em;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.ar-table .table-row-cell {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent rgba(59,73,76,0.18) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 0;
+}
+
+.ar-table .table-row-cell:hover {
+    -fx-background-color: rgba(0, 218, 243, 0.04);
+}
+
+.ar-table .table-row-cell:selected {
+    -fx-background-color: rgba(0, 218, 243, 0.08);
+}
+
+.ar-table .table-cell {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-font-family: "Inter";
+    -fx-font-size: 13px;
+    -fx-text-fill: #dce3ec;
+    -fx-padding: 12 8 12 8;
+}
+
+.ar-table-namespace-cell {
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 12px;
+    -fx-text-fill: #00daf3;
+    -fx-padding: 12 8 12 8;
+}
+
+.ar-table .scroll-bar:vertical {
+    -fx-pref-width: 4px;
+    -fx-background-color: transparent;
+}
+
+.ar-table .scroll-bar:vertical > .thumb {
+    -fx-background-color: #3b494c;
+    -fx-background-radius: 2;
+}
+
+/* ── HOTSPOT ROW ────────────────────────────────────────────── */
+.ar-hotspot-row {
+    -fx-background-color: rgba(8, 16, 24, 0.6);
+    -fx-border-color: rgba(59, 73, 76, 0.4);
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 12 14 12 14;
+}
+
+.ar-hotspot-row:hover {
+    -fx-border-color: rgba(255, 75, 75, 0.35);
+    -fx-background-color: rgba(255, 75, 75, 0.03);
+}
+
+/* ── DIAGNOSTICS COUNT BOX ─────────────────────────────────── */
+.ar-diag-box-error {
+    -fx-background-color: rgba(255, 75, 75, 0.07);
+    -fx-border-color: rgba(255, 75, 75, 0.2);
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 14 10 14 10;
+}
+
+.ar-diag-box-warning {
+    -fx-background-color: rgba(254, 201, 49, 0.07);
+    -fx-border-color: rgba(254, 201, 49, 0.2);
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 14 10 14 10;
+}
+
+.ar-diag-box-info {
+    -fx-background-color: rgba(0, 218, 243, 0.07);
+    -fx-border-color: rgba(0, 218, 243, 0.2);
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 14 10 14 10;
+}
+
+/* ── FRAMEWORK ICON CIRCLE ─────────────────────────────────── */
+.ar-fw-icon-green {
+    -fx-background-color: rgba(86, 214, 155, 0.12);
+    -fx-border-color: rgba(86, 214, 155, 0.25);
+    -fx-border-width: 1;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+}
+
+.ar-fw-icon-cyan {
+    -fx-background-color: rgba(0, 218, 243, 0.12);
+    -fx-border-color: rgba(0, 218, 243, 0.25);
+    -fx-border-width: 1;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+}
+
+.ar-fw-icon-orange {
+    -fx-background-color: rgba(255, 153, 86, 0.12);
+    -fx-border-color: rgba(255, 153, 86, 0.25);
+    -fx-border-width: 1;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+}
+
+.ar-fw-icon-secondary {
+    -fx-background-color: rgba(187, 200, 216, 0.10);
+    -fx-border-color: rgba(187, 200, 216, 0.20);
+    -fx-border-width: 1;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+}
+
+/* ── PIPELINE NODE ─────────────────────────────────────────── */
+.ar-pipeline-node-active {
+    -fx-background-color: #00daf3;
+    -fx-background-radius: 999;
+    -fx-effect: dropshadow(gaussian, rgba(0,218,243,0.55), 12, 0, 0, 0);
+    -fx-min-width: 40;
+    -fx-min-height: 40;
+    -fx-pref-width: 40;
+    -fx-pref-height: 40;
+}
+
+.ar-pipeline-node-pending {
+    -fx-background-color: rgba(36, 43, 49, 0.9);
+    -fx-border-color: rgba(59, 73, 76, 0.6);
+    -fx-border-width: 2;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    -fx-opacity: 0.45;
+    -fx-min-width: 40;
+    -fx-min-height: 40;
+    -fx-pref-width: 40;
+    -fx-pref-height: 40;
+}
+
+.ar-pipeline-connector-done {
+    -fx-background-color: #00daf3;
+    -fx-pref-height: 2;
+    -fx-effect: dropshadow(gaussian, rgba(0,218,243,0.4), 4, 0, 0, 0);
+}
+
+.ar-pipeline-connector-pending {
+    -fx-background-color: rgba(59, 73, 76, 0.5);
+    -fx-pref-height: 2;
+}
+
+/* ── EMPTY STATE ────────────────────────────────────────────── */
+.ar-empty-state {
+    -fx-font-family: "Inter";
+    -fx-font-size: 13px;
+    -fx-text-fill: #849494;
+}
+
+.ar-empty-state-ok {
+    -fx-font-family: "Inter";
+    -fx-font-size: 13px;
+    -fx-text-fill: #56d69b;
+}
+
+/* ── DIVIDER ────────────────────────────────────────────────── */
+.ar-divider {
+    -fx-background-color: rgba(59, 73, 76, 0.3);
+    -fx-pref-height: 1;
+}
+
+/* ── ANALYSIS INSPECTOR OVERLAY ────────────────────────────── */
+.ar-scrim {
+    -fx-background-color: rgba(3, 7, 11, 0.68);
+}
+
+.ar-inspector-container {
+    -fx-background-color: rgba(6, 12, 18, 0.95);
+    -fx-border-color: rgba(0, 218, 243, 0.18);
+    -fx-border-width: 1;
+    -fx-border-radius: 16;
+    -fx-background-radius: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 24, 0, 0, 10);
+}
+
+.ar-close-button {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: #849494;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 4 8;
+}
+
+.ar-close-button:hover {
+    -fx-text-fill: #ff4b4b;
+}
+
+.ar-glass-card-clickable {
+    -fx-cursor: hand;
+}
+
+.ar-glass-card-clickable:hover {
+    -fx-border-color: rgba(0, 218, 243, 0.3);
+    -fx-background-color: rgba(0, 218, 243, 0.02);
+}
+
+/* ── PROJECT CLASSIFICATION REDESIGN ────────────────────────── */
+.ar-hero-overview-card {
+    -fx-background-color: rgba(21, 28, 35, 0.4);
+    -fx-border-color: rgba(132, 147, 150, 0.08);
+    -fx-border-width: 1;
+    -fx-border-radius: 24;
+    -fx-background-radius: 24;
+    -fx-padding: 24;
+}
+
+.ar-hero-pct {
+    -fx-font-family: 'Epilogue';
+    -fx-font-size: 20px;
+    -fx-font-weight: 300;
+    -fx-text-fill: #dce3ec;
+}
+
+.ar-hero-title {
+    -fx-font-family: 'Epilogue';
+    -fx-font-size: 28px;
+    -fx-font-weight: 300;
+    -fx-text-fill: #dce3ec;
+    -fx-letter-spacing: -0.02em;
+}
+
+.ar-hero-badge-primary {
+    -fx-background-color: rgba(0, 229, 255, 0.1);
+    -fx-border-color: rgba(0, 229, 255, 0.2);
+    -fx-border-width: 1;
+    -fx-border-radius: 9999;
+    -fx-background-radius: 9999;
+    -fx-text-fill: #00e5ff;
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 3 8;
+}
+
+.ar-hero-badge {
+    -fx-background-color: #2f353c;
+    -fx-border-radius: 9999;
+    -fx-background-radius: 9999;
+    -fx-text-fill: #849494;
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 3 8;
+}
+
+.ar-stat-tile {
+    -fx-background-color: rgba(8, 15, 21, 0.5);
+    -fx-border-color: rgba(132, 147, 150, 0.05);
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 12;
+}
+
+.ar-stat-tile-label {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 9px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #849494;
+    -fx-letter-spacing: 0.1em;
+}
+
+.ar-stat-tile-value {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #00e5ff;
+}
+
+.ar-candidates-box {
+    -fx-background-color: transparent;
+}
+
+.ar-candidate-row {
+    -fx-background-color: #151c23;
+    -fx-border-color: rgba(132, 147, 150, 0.05);
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 16;
+}
+
+.ar-candidate-name {
+    -fx-font-family: 'Epilogue';
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #dce3ec;
+    -fx-letter-spacing: 0.15em;
+    -fx-min-width: 150;
+}
+
+.ar-candidate-track {
+    -fx-background-color: #0d141a;
+    -fx-background-radius: 9999;
+    -fx-pref-height: 6;
+}
+
+.ar-candidate-fill {
+    -fx-background-color: #00e5ff;
+    -fx-background-radius: 9999;
+    -fx-pref-height: 6;
+    -fx-effect: dropshadow(gaussian, rgba(0, 229, 255, 0.4), 8, 0, 0, 0);
+}
+
+.ar-candidate-val {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #00e5ff;
+    -fx-min-width: 50;
+    -fx-alignment: center-right;
+}
+
+.ar-matrix-box {
+    -fx-background-color: rgba(21, 28, 35, 0.3);
+    -fx-border-color: rgba(132, 147, 150, 0.05);
+    -fx-border-width: 1;
+    -fx-border-radius: 16;
+    -fx-background-radius: 16;
+    -fx-padding: 20;
+}
+
+.ar-capability-cell {
+    -fx-padding: 4;
+}
+
+.ar-capability-active {
+    -fx-text-fill: #00e5ff;
+}
+
+.ar-capability-inactive {
+    -fx-text-fill: #849494;
+}
+
+.ar-capability-name {
+    -fx-font-family: 'Inter';
+    -fx-font-size: 13px;
+    -fx-text-fill: #bac9cc;
+}
+
+.ar-capability-pct {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 11px;
+    -fx-text-fill: #849494;
+}
+
+.ar-significance-box {
+    -fx-background-color: rgba(8, 16, 24, 0.7);
+    -fx-border-color: rgba(59, 73, 76, 0.15);
+    -fx-border-width: 1;
+    -fx-border-radius: 16;
+    -fx-background-radius: 16;
+    -fx-padding: 20;
+}
+
+.ar-feature-row {
+    -fx-padding: 4;
+}
+
+.ar-feature-val {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 12px;
+    -fx-text-fill: #00e5ff;
+    -fx-min-width: 40;
+}
+
+.ar-feature-name {
+    -fx-font-family: 'Inter';
+    -fx-font-size: 12px;
+    -fx-text-fill: #dce3ec;
+}
+
+.ar-feature-track {
+    -fx-background-color: #0d141a;
+    -fx-background-radius: 9999;
+    -fx-pref-height: 4;
+}
+
+.ar-feature-fill {
+    -fx-background-color: #00e5ff;
+    -fx-background-radius: 9999;
+    -fx-pref-height: 4;
+}
+
+/* ============================================================
+   ADDITIONS — append to analysis-report.css
+   Covers: Project Classification evidence category coding,
+           capability matrix "partial" state,
+           Framework Detection card redesign
+   ============================================================ */
+
+/* ── EVIDENCE REGISTRY — CATEGORY COLOR CODING ─────────────── */
+.ar-evidence-desc-cell {
+    -fx-font-family: "Inter";
+    -fx-font-size: 13px;
+    -fx-text-fill: #dce3ec;
+    -fx-padding: 12 8 12 8;
+}
+
+/* dots */
+.ar-cat-dot-cyan     { -fx-background-color: #00daf3; -fx-background-radius: 999; }
+.ar-cat-dot-blue     { -fx-background-color: #7ca3ec; -fx-background-radius: 999; }
+.ar-cat-dot-green    { -fx-background-color: #56d69b; -fx-background-radius: 999; }
+.ar-cat-dot-teal     { -fx-background-color: #00dac8; -fx-background-radius: 999; }
+.ar-cat-dot-amber    { -fx-background-color: #fec931; -fx-background-radius: 999; }
+.ar-cat-dot-orange   { -fx-background-color: #ff9956; -fx-background-radius: 999; }
+.ar-cat-dot-violet   { -fx-background-color: #9b7af0; -fx-background-radius: 999; }
+.ar-cat-dot-secondary{ -fx-background-color: #849494; -fx-background-radius: 999; }
+
+/* text labels */
+.ar-cat-text-cyan {
+    -fx-font-family: "JetBrains Mono"; -fx-font-size: 10px; -fx-font-weight: 700;
+    -fx-letter-spacing: 0.08em; -fx-text-fill: #00daf3;
+}
+.ar-cat-text-blue {
+    -fx-font-family: "JetBrains Mono"; -fx-font-size: 10px; -fx-font-weight: 700;
+    -fx-letter-spacing: 0.08em; -fx-text-fill: #7ca3ec;
+}
+.ar-cat-text-green {
+    -fx-font-family: "JetBrains Mono"; -fx-font-size: 10px; -fx-font-weight: 700;
+    -fx-letter-spacing: 0.08em; -fx-text-fill: #56d69b;
+}
+.ar-cat-text-teal {
+    -fx-font-family: "JetBrains Mono"; -fx-font-size: 10px; -fx-font-weight: 700;
+    -fx-letter-spacing: 0.08em; -fx-text-fill: #00dac8;
+}
+.ar-cat-text-amber {
+    -fx-font-family: "JetBrains Mono"; -fx-font-size: 10px; -fx-font-weight: 700;
+    -fx-letter-spacing: 0.08em; -fx-text-fill: #fec931;
+}
+.ar-cat-text-orange {
+    -fx-font-family: "JetBrains Mono"; -fx-font-size: 10px; -fx-font-weight: 700;
+    -fx-letter-spacing: 0.08em; -fx-text-fill: #ff9956;
+}
+.ar-cat-text-violet {
+    -fx-font-family: "JetBrains Mono"; -fx-font-size: 10px; -fx-font-weight: 700;
+    -fx-letter-spacing: 0.08em; -fx-text-fill: #9b7af0;
+}
+.ar-cat-text-secondary {
+    -fx-font-family: "JetBrains Mono"; -fx-font-size: 10px; -fx-font-weight: 700;
+    -fx-letter-spacing: 0.08em; -fx-text-fill: #849494;
+}
+
+/* ── CAPABILITY MATRIX — PARTIAL STATE ─────────────────────── */
+.ar-capability-partial {
+    -fx-text-fill: #fec931;
+}
+
+/* ── FRAMEWORK INSPECTOR — CARD REDESIGN ───────────────────── */
+.ar-fw-card {
+    -fx-background-color: rgba(21, 28, 35, 0.4);
+    -fx-border-color: rgba(132, 147, 150, 0.08);
+    -fx-border-width: 1;
+    -fx-border-radius: 14;
+    -fx-background-radius: 14;
+    -fx-padding: 16;
+}
+
+.ar-fw-card:hover {
+    -fx-border-color: rgba(0, 218, 243, 0.2);
+    -fx-background-color: rgba(0, 218, 243, 0.02);
+}
+
+.ar-fw-icon-wrap {
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+}
+
+.ar-fw-icon-glyph {
+    -fx-font-size: 18px;
+}
+
+.ar-fw-name {
+    -fx-font-family: "Epilogue";
+    -fx-font-weight: 700;
+    -fx-font-size: 16px;
+    -fx-text-fill: #e6f1f3;
+    -fx-letter-spacing: -0.01em;
+}
+
+/* confidence badges, banded */
+.ar-fw-conf-badge-high {
+    -fx-background-color: rgba(0, 218, 243, 0.12);
+    -fx-border-color: rgba(0, 218, 243, 0.25);
+    -fx-border-width: 1;
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+    -fx-padding: 4 10;
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #00daf3;
+}
+
+.ar-fw-conf-badge-mid {
+    -fx-background-color: rgba(254, 201, 49, 0.12);
+    -fx-border-color: rgba(254, 201, 49, 0.25);
+    -fx-border-width: 1;
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+    -fx-padding: 4 10;
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #fec931;
+}
+
+.ar-fw-conf-badge-low {
+    -fx-background-color: rgba(255, 75, 75, 0.12);
+    -fx-border-color: rgba(255, 75, 75, 0.25);
+    -fx-border-width: 1;
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+    -fx-padding: 4 10;
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #ff4b4b;
+}
+
+/* progress track/fills, banded */
+.ar-fw-progress-track {
+    -fx-background-color: #0d141a;
+    -fx-background-radius: 9999;
+    -fx-pref-height: 5;
+    -fx-max-height: 5;
+    -fx-min-height: 5;
+}
+
+.ar-fw-progress-fill-high {
+    -fx-background-color: #00e5ff;
+    -fx-background-radius: 9999;
+    -fx-pref-height: 5;
+    -fx-effect: dropshadow(gaussian, rgba(0, 229, 255, 0.4), 8, 0, 0, 0);
+}
+
+.ar-fw-progress-fill-mid {
+    -fx-background-color: #fec931;
+    -fx-background-radius: 9999;
+    -fx-pref-height: 5;
+    -fx-effect: dropshadow(gaussian, rgba(254, 201, 49, 0.35), 8, 0, 0, 0);
+}
+
+.ar-fw-progress-fill-low {
+    -fx-background-color: #ff4b4b;
+    -fx-background-radius: 9999;
+    -fx-pref-height: 5;
+    -fx-effect: dropshadow(gaussian, rgba(255, 75, 75, 0.35), 8, 0, 0, 0);
+}/* ============================================================
+   ADDITIONS — append to analysis-report.css
+   Covers: evidence/category color coding, taxonomy chips,
+   methodology callouts, Technology Intelligence cards,
+   Framework evidence trails and dual-metric blocks.
+   ============================================================ */
+
+/* ── EVIDENCE CATEGORY COLOR CODING (shared) ───────────────── */
+.ar-evidence-desc-cell {
+    -fx-font-family: "Inter";
+    -fx-font-size: 13px;
+    -fx-text-fill: #dce3ec;
+    -fx-padding: 12 8 12 8;
+}
+
+.ar-cat-dot-cyan     { -fx-background-color: #00daf3; -fx-background-radius: 999; }
+.ar-cat-dot-blue     { -fx-background-color: #7ca3ec; -fx-background-radius: 999; }
+.ar-cat-dot-green    { -fx-background-color: #56d69b; -fx-background-radius: 999; }
+.ar-cat-dot-teal     { -fx-background-color: #00dac8; -fx-background-radius: 999; }
+.ar-cat-dot-amber    { -fx-background-color: #fec931; -fx-background-radius: 999; }
+.ar-cat-dot-orange   { -fx-background-color: #ff9956; -fx-background-radius: 999; }
+.ar-cat-dot-violet   { -fx-background-color: #9b7af0; -fx-background-radius: 999; }
+.ar-cat-dot-secondary{ -fx-background-color: #849494; -fx-background-radius: 999; }
+
+.ar-cat-text-cyan, .ar-cat-text-blue, .ar-cat-text-green, .ar-cat-text-teal,
+.ar-cat-text-amber, .ar-cat-text-orange, .ar-cat-text-violet, .ar-cat-text-secondary {
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 10px;
+    -fx-font-weight: 700;
+    -fx-letter-spacing: 0.06em;
+}
+.ar-cat-text-cyan      { -fx-text-fill: #00daf3; }
+.ar-cat-text-blue      { -fx-text-fill: #7ca3ec; }
+.ar-cat-text-green     { -fx-text-fill: #56d69b; }
+.ar-cat-text-teal      { -fx-text-fill: #00dac8; }
+.ar-cat-text-amber     { -fx-text-fill: #fec931; }
+.ar-cat-text-orange    { -fx-text-fill: #ff9956; }
+.ar-cat-text-violet    { -fx-text-fill: #9b7af0; }
+.ar-cat-text-secondary { -fx-text-fill: #849494; }
+
+/* ── TAXONOMY CHIPS (family / capability pills) ────────────── */
+.ar-chip-cyan, .ar-chip-blue, .ar-chip-green, .ar-chip-teal,
+.ar-chip-amber, .ar-chip-orange, .ar-chip-violet, .ar-chip-secondary {
+    -fx-border-width: 1;
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+    -fx-padding: 3 9;
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 9px;
+    -fx-font-weight: 700;
+    -fx-letter-spacing: 0.06em;
+}
+.ar-chip-cyan     { -fx-background-color: rgba(0,218,243,0.12);  -fx-border-color: rgba(0,218,243,0.28);  -fx-text-fill: #00daf3; }
+.ar-chip-blue     { -fx-background-color: rgba(124,163,236,0.12);-fx-border-color: rgba(124,163,236,0.28);-fx-text-fill: #7ca3ec; }
+.ar-chip-green    { -fx-background-color: rgba(86,214,155,0.12); -fx-border-color: rgba(86,214,155,0.28); -fx-text-fill: #56d69b; }
+.ar-chip-teal     { -fx-background-color: rgba(0,218,200,0.12);  -fx-border-color: rgba(0,218,200,0.28);  -fx-text-fill: #00dac8; }
+.ar-chip-amber    { -fx-background-color: rgba(254,201,49,0.12); -fx-border-color: rgba(254,201,49,0.28); -fx-text-fill: #fec931; }
+.ar-chip-orange   { -fx-background-color: rgba(255,153,86,0.12); -fx-border-color: rgba(255,153,86,0.28); -fx-text-fill: #ff9956; }
+.ar-chip-violet   { -fx-background-color: rgba(155,122,240,0.12);-fx-border-color: rgba(155,122,240,0.28);-fx-text-fill: #9b7af0; }
+.ar-chip-secondary{ -fx-background-color: rgba(187,200,216,0.10);-fx-border-color: rgba(187,200,216,0.22);-fx-text-fill: #bbc8d8; }
+
+.ar-meta-chip {
+    -fx-background-color: rgba(132,147,150,0.08);
+    -fx-border-color: rgba(132,147,150,0.16);
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 3 8;
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 10px;
+    -fx-text-fill: #bac9cc;
+}
+
+/* ── CAPABILITY MATRIX — PARTIAL STATE ─────────────────────── */
+.ar-capability-partial {
+    -fx-text-fill: #fec931;
+}
+
+/* ── METHODOLOGY CALLOUT ────────────────────────────────────── */
+.ar-methodology-box {
+    -fx-background-color: rgba(0, 218, 243, 0.03);
+    -fx-border-color: rgba(0, 218, 243, 0.12);
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 14 16;
+}
+
+/* ── TECHNOLOGY INTELLIGENCE CARDS ─────────────────────────── */
+.ar-tech-card {
+    -fx-background-color: rgba(21, 28, 35, 0.4);
+    -fx-border-color: rgba(132, 147, 150, 0.08);
+    -fx-border-width: 1;
+    -fx-border-radius: 14;
+    -fx-background-radius: 14;
+    -fx-padding: 4;
+}
+
+.ar-tech-header {
+    -fx-padding: 12 12;
+    -fx-cursor: hand;
+}
+
+.ar-tech-header:hover {
+    -fx-background-color: rgba(0, 218, 243, 0.03);
+    -fx-background-radius: 10;
+}
+
+.ar-tech-name {
+    -fx-font-family: "Epilogue";
+    -fx-font-weight: 700;
+    -fx-font-size: 15px;
+    -fx-text-fill: #e6f1f3;
+}
+
+.ar-tech-version-chip {
+    -fx-background-color: rgba(132,147,150,0.1);
+    -fx-border-color: rgba(132,147,150,0.2);
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 1 6;
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 10px;
+    -fx-text-fill: #bac9cc;
+}
+
+.ar-tech-chevron {
+    -fx-text-fill: #849494;
+}
+
+.ar-tech-evidence-panel {
+    -fx-background-color: rgba(8, 15, 21, 0.5);
+    -fx-border-color: rgba(59, 73, 76, 0.2);
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 12;
+}
+
+.ar-tech-evidence-row {
+    -fx-padding: 4 0;
+}
+
+.ar-tech-evidence-match {
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 12px;
+    -fx-text-fill: #dce3ec;
+}
+
+/* ── FRAMEWORK CARDS ────────────────────────────────────────── */
+.ar-fw-card {
+    -fx-background-color: rgba(21, 28, 35, 0.4);
+    -fx-border-color: rgba(132, 147, 150, 0.08);
+    -fx-border-width: 1;
+    -fx-border-radius: 14;
+    -fx-background-radius: 14;
+    -fx-padding: 16;
+}
+
+.ar-fw-card:hover {
+    -fx-border-color: rgba(0, 218, 243, 0.2);
+}
+
+.ar-fw-icon-wrap { -fx-border-radius: 999; -fx-background-radius: 999; }
+.ar-fw-icon-glyph { -fx-font-size: 18px; }
+
+.ar-fw-name {
+    -fx-font-family: "Epilogue";
+    -fx-font-weight: 700;
+    -fx-font-size: 16px;
+    -fx-text-fill: #e6f1f3;
+}
+
+.ar-fw-status-detected {
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 10px;
+    -fx-font-weight: 700;
+    -fx-letter-spacing: 0.08em;
+    -fx-text-fill: #56d69b;
+}
+
+.ar-fw-status-below {
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 10px;
+    -fx-font-weight: 700;
+    -fx-letter-spacing: 0.08em;
+    -fx-text-fill: #849494;
+}
+
+.ar-fw-metric-value {
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #dce3ec;
+}
+
+/* confidence badges, banded (reused for tech + framework) */
+.ar-fw-conf-badge-high {
+    -fx-background-color: rgba(0, 218, 243, 0.12); -fx-border-color: rgba(0, 218, 243, 0.25);
+    -fx-border-width: 1; -fx-border-radius: 999; -fx-background-radius: 999; -fx-padding: 4 10;
+    -fx-font-family: "JetBrains Mono"; -fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #00daf3;
+}
+.ar-fw-conf-badge-mid {
+    -fx-background-color: rgba(254, 201, 49, 0.12); -fx-border-color: rgba(254, 201, 49, 0.25);
+    -fx-border-width: 1; -fx-border-radius: 999; -fx-background-radius: 999; -fx-padding: 4 10;
+    -fx-font-family: "JetBrains Mono"; -fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #fec931;
+}
+.ar-fw-conf-badge-low {
+    -fx-background-color: rgba(255, 75, 75, 0.12); -fx-border-color: rgba(255, 75, 75, 0.25);
+    -fx-border-width: 1; -fx-border-radius: 999; -fx-background-radius: 999; -fx-padding: 4 10;
+    -fx-font-family: "JetBrains Mono"; -fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #ff4b4b;
+}
+
+/* progress track/fills, banded (reused for tech + framework) */
+.ar-fw-progress-track {
+    -fx-background-color: #0d141a;
+    -fx-background-radius: 9999;
+    -fx-pref-height: 5; -fx-max-height: 5; -fx-min-height: 5;
+}
+.ar-fw-progress-fill-high {
+    -fx-background-color: #00e5ff; -fx-background-radius: 9999; -fx-pref-height: 5;
+    -fx-effect: dropshadow(gaussian, rgba(0, 229, 255, 0.4), 8, 0, 0, 0);
+}
+.ar-fw-progress-fill-mid {
+    -fx-background-color: #fec931; -fx-background-radius: 9999; -fx-pref-height: 5;
+    -fx-effect: dropshadow(gaussian, rgba(254, 201, 49, 0.35), 8, 0, 0, 0);
+}
+.ar-fw-progress-fill-low {
+    -fx-background-color: #ff4b4b; -fx-background-radius: 9999; -fx-pref-height: 5;
+    -fx-effect: dropshadow(gaussian, rgba(255, 75, 75, 0.35), 8, 0, 0, 0);
+}
+
+.ar-fw-evidence-toggle {
+    -fx-cursor: hand;
+    -fx-padding: 4 0;
+}
+
+.ar-fw-evidence-weight {
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #00daf3;
+    -fx-min-width: 50;
+    -fx-alignment: center-right;
+}
+
+/* Classification Inspector Upgrades */
+.ar-graph-item-chip {
+    -fx-padding: 4 8;
+    -fx-background-color: #242b31;
+    -fx-background-radius: 4;
+    -fx-font-size: 11px;
+}
+.ar-graph-arrow {
+    -fx-font-family: 'Material Symbols Outlined';
+    -fx-font-size: 20px;
+    -fx-text-fill: #3b494c;
+}
+
+.ar-reasoning-full {
+    -fx-text-fill: #00daf3;
+    -fx-font-weight: bold;
+}
+.ar-reasoning-missing-icon {
+    -fx-font-family: 'Material Symbols Outlined';
+    -fx-font-size: 14px;
+    -fx-text-fill: #849396;
+}
+
+.ar-matrix-category-label {
+    -fx-text-fill: #849396;
+    -fx-padding: 8 0 4 0;
+}
+
+.ar-tech-provided-cap-chip {
+    -fx-font-size: 10px;
+    -fx-text-fill: #bac9cc;
+    -fx-background-color: #242b31;
+    -fx-padding: 2 6 2 6;
+    -fx-background-radius: 4;
+}
+
+/* Sidebar Navigation */
+.ar-sidebar {
+    -fx-background-color: #080f15;
+    -fx-border-color: rgba(132, 147, 150, 0.1);
+    -fx-border-width: 0 1 0 0;
+    -fx-padding: 20 10 20 10;
+    -fx-spacing: 12;
+    -fx-alignment: top-center;
+}
+
+.ar-nav-item {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+    -fx-padding: 10;
+    -fx-cursor: hand;
+    -fx-alignment: center;
+}
+.ar-nav-item:hover {
+    -fx-background-color: rgba(0, 218, 243, 0.08);
+}
+.ar-nav-item-active {
+    -fx-background-color: rgba(0, 218, 243, 0.15);
+    -fx-border-color: #00daf3;
+    -fx-border-width: 0 0 0 3;
+}
+
+.ar-nav-icon {
+    -fx-font-family: 'Material Symbols Outlined';
+    -fx-font-size: 20px;
+    -fx-text-fill: #849396;
+}
+.ar-nav-item-active .ar-nav-icon {
+    -fx-text-fill: #00daf3;
+}

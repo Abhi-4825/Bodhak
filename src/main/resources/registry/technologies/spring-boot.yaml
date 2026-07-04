@@ -1,0 +1,30 @@
+id: spring-boot
+schemaVersion: 1
+displayName: Spring Boot
+family: framework
+category: web
+
+versionDetection:
+  buildDependency: spring-boot
+
+evidence:
+  - type: BUILD_DEPENDENCY
+    aliases: 
+      - spring-boot-starter-web
+      - spring-boot-starter
+      - spring-boot-starter-parent
+      - spring-boot-starter-security
+      - spring-boot-starter-data-jpa
+      - spring-boot-starter-websocket
+      - spring-boot-starter-amqp
+  - type: BUILD_PLUGIN
+    pattern: spring-boot-maven-plugin
+  - type: ANNOTATION_REFERENCE
+    pattern: SpringBootApplication
+  - type: METHOD_REFERENCE
+    pattern: SpringApplication.run
+
+capabilities:
+  - HTTP_ENDPOINT
+  - DEPENDENCY_INJECTION
+  - CONFIGURATION_MANAGEMENT

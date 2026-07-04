@@ -1,0 +1,26 @@
+id: react
+schemaVersion: 1
+displayName: React
+family: framework
+category: ui
+
+evidence:
+  - type: BUILD_DEPENDENCY
+    aliases:
+      - react
+      - react-dom
+      - react-router
+      - react-router-dom
+      - redux
+      - "@reduxjs/toolkit"
+      - zustand
+      - react-scripts
+      - "@vitejs/plugin-react"
+  - type: FILE_STRUCTURE
+    aliases:
+      - "*.jsx"
+      - "*.tsx"
+      - "components"
+
+capabilities:
+  - WEB_UI

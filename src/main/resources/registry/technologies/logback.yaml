@@ -1,0 +1,15 @@
+id: logback
+schemaVersion: 1
+displayName: Logback
+family: library
+category: logging
+
+evidence:
+  - type: BUILD_DEPENDENCY
+    aliases:
+      - logback-classic
+      - logback-core
+  - type: IMPORT_REFERENCE
+    pattern: ch.qos.logback.*
+
+capabilities: []

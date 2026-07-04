@@ -1,0 +1,313 @@
+/* ── Dependency Dashboard Stylesheet ── */
+
+.dd-dashboard-bg {
+    -fx-background-color: #0d141a; /* surface-dim */
+}
+
+/* Scroll Pane styling */
+.dd-scroll-pane {
+    -fx-background: #0d141a;
+    -fx-background-color: #0d141a;
+    -fx-border-color: transparent;
+    -fx-viewport-background-color: #0d141a;
+}
+
+/* Glass/Dashboard Cards */
+.dd-card {
+    -fx-background-color: #151c23; /* surface-container-low */
+    -fx-border-color: rgba(132, 147, 150, 0.08); /* outline-variant */
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 16;
+}
+
+.dd-card-header {
+    -fx-spacing: 8;
+    -fx-alignment: center-left;
+}
+
+.dd-card-title {
+    -fx-font-family: 'Epilogue', 'Segoe UI';
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #bac9cc; /* on-surface-variant */
+    -fx-letter-spacing: 0.1em;
+}
+
+.dd-card-icon {
+    -fx-font-size: 16px;
+}
+
+/* Sidebar Navigation */
+.dd-sidebar {
+    -fx-background-color: #080f15; /* surface-container-lowest */
+    -fx-border-color: rgba(132, 147, 150, 0.1);
+    -fx-border-width: 0 1 0 0;
+    -fx-padding: 20 10 20 10;
+    -fx-spacing: 12;
+    -fx-alignment: top-center;
+}
+
+.dd-nav-item {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+    -fx-padding: 10;
+    -fx-cursor: hand;
+    -fx-alignment: center;
+}
+.dd-nav-item:hover {
+    -fx-background-color: rgba(0, 218, 243, 0.08);
+}
+.dd-nav-item-active {
+    -fx-background-color: rgba(0, 218, 243, 0.15);
+    -fx-border-color: #00daf3;
+    -fx-border-width: 0 0 0 3;
+}
+
+.dd-nav-icon {
+    -fx-font-family: 'Material Symbols Outlined';
+    -fx-font-size: 20px;
+    -fx-text-fill: #849396;
+}
+.dd-nav-item-active .dd-nav-icon {
+    -fx-text-fill: #00daf3;
+}
+
+/* Top ribbon / Stats Strip */
+.dd-stat-tile {
+    -fx-background-color: rgba(21, 28, 35, 0.6);
+    -fx-border-color: rgba(132, 147, 150, 0.05);
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 12;
+    -fx-spacing: 4;
+}
+
+.dd-stat-label {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 9px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #849396;
+    -fx-letter-spacing: 0.1em;
+}
+
+.dd-stat-value {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #00daf3; /* primary-container tint */
+}
+
+/* Left Sidebar TreeView */
+.dd-tree-view {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+.dd-tree-view .tree-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #dce3ec;
+    -fx-font-size: 12px;
+    -fx-padding: 4 8;
+}
+.dd-tree-view .tree-cell:hover {
+    -fx-background-color: rgba(0, 218, 243, 0.05);
+}
+.dd-tree-view .tree-cell:selected {
+    -fx-background-color: rgba(0, 218, 243, 0.12);
+    -fx-text-fill: #00daf3;
+    -fx-font-weight: bold;
+}
+
+/* FXGraph Visuals */
+.dd-graph-viewport {
+    -fx-background-color: #0d141a;
+}
+
+.dd-node-focus {
+    -fx-background-color: rgba(0, 218, 243, 0.18);
+    -fx-border-color: #00daf3;
+    -fx-border-width: 2;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 8 16;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 218, 243, 0.6), 14, 0.4, 0, 0);
+}
+
+.dd-node-normal {
+    -fx-background-color: #1a2027;
+    -fx-border-color: rgba(132, 147, 150, 0.35);
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 6 12;
+}
+.dd-node-normal:hover {
+    -fx-background-color: #242b31;
+    -fx-border-color: rgba(0, 218, 243, 0.4);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 218, 243, 0.25), 8, 0.3, 0, 1);
+}
+
+.dd-node-title {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #dce3ec;
+}
+
+.dd-node-sub {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 9px;
+    -fx-text-fill: #bac9cc;
+}
+
+.dd-edge-line {
+    -fx-stroke: rgba(132, 147, 150, 0.4);
+    -fx-stroke-width: 1.5;
+}
+.dd-edge-highlight {
+    -fx-stroke: #00daf3;
+    -fx-stroke-width: 2.5;
+}
+
+/* Custom metrics / details lists */
+.dd-metric-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: #849396;
+}
+.dd-metric-val {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #dce3ec;
+}
+
+/* Scrollbars */
+.scroll-bar:vertical, .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+}
+.scroll-bar:vertical .thumb, .scroll-bar:horizontal .thumb {
+    -fx-background-color: rgba(132, 147, 150, 0.2);
+    -fx-background-radius: 4;
+}
+.scroll-bar:vertical .thumb:hover, .scroll-bar:horizontal .thumb:hover {
+    -fx-background-color: rgba(0, 218, 243, 0.3);
+}
+
+/* ── Dependency Path Finder Styles ── */
+
+.dd-path-node-card {
+    -fx-background-color: #1a2027;
+    -fx-border-color: rgba(0, 218, 243, 0.25);
+    -fx-border-width: 1.5;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 8 12;
+    -fx-min-width: 160;
+}
+.dd-path-node-card:hover {
+    -fx-background-color: #242b31;
+    -fx-border-color: #00daf3;
+}
+
+.dd-path-arrow {
+    -fx-font-size: 16px;
+    -fx-text-fill: #00daf3;
+    -fx-font-weight: bold;
+}
+
+.dd-tab-button {
+    -fx-background-color: #151c23;
+    -fx-text-fill: #849396;
+    -fx-border-color: rgba(132, 147, 150, 0.15);
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 6 12;
+    -fx-cursor: hand;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-font-family: 'Epilogue';
+}
+.dd-tab-button:hover {
+    -fx-background-color: rgba(0, 218, 243, 0.08);
+    -fx-text-fill: #dce3ec;
+}
+.dd-tab-button-active {
+    -fx-background-color: rgba(0, 218, 243, 0.15);
+    -fx-text-fill: #00daf3;
+    -fx-border-color: #00daf3;
+}
+
+.dd-combobox {
+    -fx-background-color: #151c23;
+    -fx-text-fill: #dce3ec;
+    -fx-border-color: rgba(132, 147, 150, 0.15);
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 2;
+}
+.dd-combobox .list-cell {
+    -fx-text-fill: #dce3ec;
+    -fx-background-color: #151c23;
+}
+.dd-combobox .list-cell:hover {
+    -fx-background-color: rgba(0, 218, 243, 0.08);
+}
+
+.dd-spinner {
+    -fx-background-color: #151c23;
+    -fx-border-color: rgba(132, 147, 150, 0.15);
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+.dd-spinner .text-field {
+    -fx-text-fill: #dce3ec;
+    -fx-background-color: #151c23;
+}
+
+.dd-table-view {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(132, 147, 150, 0.1);
+    -fx-border-width: 1 0 0 0;
+}
+.dd-table-row {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(132, 147, 150, 0.05);
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 8 6;
+}
+.dd-table-row:hover {
+    -fx-background-color: rgba(132, 147, 150, 0.04);
+}
+
+.dd-button-cyan {
+    -fx-background-color: #00daf3;
+    -fx-text-fill: #0d141a;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-background-radius: 6;
+    -fx-padding: 8 16;
+    -fx-cursor: hand;
+}
+.dd-button-cyan:hover {
+    -fx-background-color: #4bf6ff;
+}
+
+.dd-badge-green {
+    -fx-font-size: 9px;
+    -fx-text-fill: #00e676;
+    -fx-background-color: rgba(0, 230, 118, 0.1);
+    -fx-padding: 2 6;
+    -fx-background-radius: 4;
+}
+
+.dd-badge-red {
+    -fx-font-size: 9px;
+    -fx-text-fill: #ec407a;
+    -fx-background-color: rgba(236, 64, 122, 0.1);
+    -fx-padding: 2 6;
+    -fx-background-radius: 4;
+}
+

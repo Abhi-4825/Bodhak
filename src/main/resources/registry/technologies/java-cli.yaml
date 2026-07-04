@@ -1,0 +1,17 @@
+id: java-cli
+schemaVersion: 1
+displayName: Java CLI
+family: framework
+category: cli
+
+evidence:
+  - type: BUILD_DEPENDENCY
+    aliases:
+      - commons-cli
+      - picocli
+      - jcommander
+  - type: METHOD_DECLARATION
+    pattern: main
+
+capabilities:
+  - CLI

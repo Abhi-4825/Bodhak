@@ -1,0 +1,30 @@
+id: fastapi
+schemaVersion: 1
+displayName: FastAPI
+family: framework
+category: web
+
+evidence:
+  - type: BUILD_DEPENDENCY
+    aliases:
+      - fastapi
+      - uvicorn
+      - sqlalchemy
+      - tortoise-orm
+  - type: ANNOTATION_REFERENCE
+    aliases:
+      - app.get
+      - app.post
+      - app.put
+      - app.delete
+      - router.get
+      - router.post
+  - type: FILE_STRUCTURE
+    aliases:
+      - alembic.ini
+      - routers
+      - routes
+
+capabilities:
+  - HTTP_ENDPOINT
+  - DEPENDENCY_INJECTION

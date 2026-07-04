@@ -1,0 +1,21 @@
+id: lombok
+schemaVersion: 1
+displayName: Lombok
+family: library
+category: utility
+
+evidence:
+  - type: ANNOTATION_REFERENCE
+    pattern: Getter
+  - type: ANNOTATION_REFERENCE
+    pattern: Setter
+  - type: ANNOTATION_REFERENCE
+    pattern: Data
+  - type: ANNOTATION_REFERENCE
+    pattern: Builder
+  - type: ANNOTATION_REFERENCE
+    pattern: AllArgsConstructor
+  - type: ANNOTATION_REFERENCE
+    pattern: NoArgsConstructor
+
+capabilities: []

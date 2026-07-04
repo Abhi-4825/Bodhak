@@ -1,0 +1,21 @@
+id: junit
+schemaVersion: 1
+displayName: JUnit
+family: library
+category: testing
+
+evidence:
+  - type: BUILD_DEPENDENCY
+    aliases:
+      - junit-jupiter-api
+      - junit-jupiter-engine
+      - junit
+  - type: ANNOTATION_REFERENCE
+    pattern: Test
+  - type: ANNOTATION_REFERENCE
+    pattern: BeforeEach
+  - type: ANNOTATION_REFERENCE
+    pattern: AfterEach
+
+capabilities:
+  - TESTING
