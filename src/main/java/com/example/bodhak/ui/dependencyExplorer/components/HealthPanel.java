@@ -42,23 +42,23 @@ public class HealthPanel extends VBox {
         HBox row = new HBox(8);
         row.setAlignment(Pos.CENTER_LEFT);
 
-        Label dot = new Label("fiber_manual_record");
-        dot.setStyle("-fx-font-family: 'Material Symbols Outlined'; -fx-font-size: 10px;");
+        Label dot = new Label("●");
+        dot.setStyle("-fx-font-size: 10px;");
         dot.setMinWidth(Region.USE_PREF_SIZE);
         
         // Listen to state changes to switch dot colors based on warning flags
         isWarning.addListener((obs, old, warning) -> {
             if (warning) {
-                dot.setStyle("-fx-font-family: 'Material Symbols Outlined'; -fx-font-size: 10px; -fx-text-fill: " + warningColorHex + ";");
+                dot.setStyle("-fx-font-size: 10px; -fx-text-fill: " + warningColorHex + ";");
             } else {
-                dot.setStyle("-fx-font-family: 'Material Symbols Outlined'; -fx-font-size: 10px; -fx-text-fill: #00e676;");
+                dot.setStyle("-fx-font-size: 10px; -fx-text-fill: #00e676;");
             }
         });
         // initial dot color
         if (isWarning.get()) {
-            dot.setStyle("-fx-font-family: 'Material Symbols Outlined'; -fx-font-size: 10px; -fx-text-fill: " + warningColorHex + ";");
+            dot.setStyle("-fx-font-size: 10px; -fx-text-fill: " + warningColorHex + ";");
         } else {
-            dot.setStyle("-fx-font-family: 'Material Symbols Outlined'; -fx-font-size: 10px; -fx-text-fill: #00e676;");
+            dot.setStyle("-fx-font-size: 10px; -fx-text-fill: #00e676;");
         }
 
         Label name = new Label(labelStr);

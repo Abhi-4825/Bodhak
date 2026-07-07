@@ -86,7 +86,7 @@ public class ProjectSurfacesInspector extends AnalysisInspectorContent {
             Label name = new Label(s.name());
             name.setStyle("-fx-font-family: 'Epilogue'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #e6f1f3;");
 
-            Label detail = new Label(s.detail().equals("Placeholder") ? "Static analyzer resolved capability matching." : s.detail());
+            Label detail = new Label(s.detected() ? s.detail() : "Capability not detected in project sources.");
             detail.setStyle("-fx-font-family: 'Inter'; -fx-font-size: 12px; -fx-text-fill: #849494;");
 
             textCol.getChildren().addAll(name, detail);

@@ -1124,3 +1124,83 @@
 .ar-nav-item-active .ar-nav-icon {
     -fx-text-fill: #00daf3;
 }
+
+/* Hide scrollbars for no-scroll-table */
+.no-scroll-table .scroll-bar {
+    -fx-opacity: 0;
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
+    -fx-max-width: 0;
+    -fx-max-height: 0;
+}
+
+/* Dark cyber checkbox styles */
+.ar-inspector-content .check-box {
+    -fx-text-fill: #bac9cc;
+}
+.ar-inspector-content .check-box .box {
+    -fx-background-color: #11171d;
+    -fx-border-color: rgba(26, 38, 48, 0.8);
+    -fx-border-width: 1;
+    -fx-background-radius: 3;
+    -fx-border-radius: 3;
+}
+.ar-inspector-content .check-box:selected .box {
+    -fx-background-color: #00daf3;
+    -fx-border-color: #00daf3;
+}
+.ar-inspector-content .check-box:selected .mark {
+    -fx-background-color: #050B11;
+}
+
+/* Dark cyber slider styles */
+.ar-inspector-content .slider .track {
+    -fx-background-color: #11171d;
+    -fx-border-color: rgba(26, 38, 48, 0.8);
+    -fx-border-width: 1;
+    -fx-pref-height: 6px;
+    -fx-background-radius: 3px;
+}
+.ar-inspector-content .slider .thumb {
+    -fx-background-color: #00daf3;
+    -fx-background-radius: 8px;
+    -fx-pref-width: 14px;
+    -fx-pref-height: 14px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 218, 243, 0.4), 6, 0.3, 0, 0);
+}
+
+/* Text field and ComboBox */
+.ar-inspector-content .text-field {
+    -fx-background-color: #11171d;
+    -fx-text-fill: #e6f1f3;
+    -fx-prompt-text-fill: #55676b;
+    -fx-border-color: rgba(26, 38, 48, 0.8);
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+.ar-inspector-content .combo-box {
+    -fx-background-color: #11171d;
+    -fx-text-fill: #e6f1f3;
+    -fx-border-color: rgba(26, 38, 48, 0.8);
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+.ar-inspector-content .combo-box .list-cell {
+    -fx-text-fill: #e6f1f3;
+    -fx-background-color: #11171d;
+}
+.ar-inspector-content .combo-box-popup .list-view {
+    -fx-background-color: #11171d;
+    -fx-border-color: rgba(26, 38, 48, 0.8);
+    -fx-border-width: 1;
+}
+.ar-inspector-content .combo-box-popup .list-view .list-cell {
+    -fx-text-fill: #e6f1f3;
+    -fx-background-color: #11171d;
+}
+.ar-inspector-content .combo-box-popup .list-view .list-cell:hover {
+    -fx-background-color: rgba(0, 218, 243, 0.1);
+    -fx-text-fill: #00daf3;
+}

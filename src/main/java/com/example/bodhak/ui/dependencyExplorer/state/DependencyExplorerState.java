@@ -14,6 +14,7 @@ public class DependencyExplorerState {
     private final PathState pathState = new PathState();
     private final BreakdownState breakdownState = new BreakdownState();
     private final HealthState healthState = new HealthState();
+    private final CyclesState cyclesState = new CyclesState();
 
     private final ObjectProperty<EntityInfo> selectedEntity = new SimpleObjectProperty<>();
     private final ObjectProperty<AnalysisContext> analysisContext = new SimpleObjectProperty<>();
@@ -27,6 +28,7 @@ public class DependencyExplorerState {
             if (newVal != null) {
                 executiveSummaryState.update(newVal);
                 entityBrowserState.update(newVal);
+                cyclesState.update(newVal);
                 
                 // Keep selected entity valid or default to first
                 EntityInfo current = selectedEntity.get();
@@ -42,6 +44,7 @@ public class DependencyExplorerState {
                 }
             } else {
                 selectedEntity.set(null);
+                cyclesState.clear();
             }
         });
     }
@@ -82,4 +85,5 @@ public class DependencyExplorerState {
     public PathState getPathState() { return pathState; }
     public BreakdownState getBreakdownState() { return breakdownState; }
     public HealthState getHealthState() { return healthState; }
+    public CyclesState getCyclesState() { return cyclesState; }
 }

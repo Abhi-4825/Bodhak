@@ -109,9 +109,6 @@ public class SelectedEntityPanel extends ScrollPane {
         // 5. Used By List
         VBox usedByBox = buildDependencyList("USED BY", detailsState.getUsedBy(), false);
 
-        // 6. Reference Distribution Chart
-        ReferenceDistributionCard donutCard = new ReferenceDistributionCard(state.getBreakdownState());
-
         content.getChildren().addAll(
                 sectionTitle,
                 identityBox,
@@ -120,9 +117,7 @@ public class SelectedEntityPanel extends ScrollPane {
                 createSeparator(),
                 dependsOnBox,
                 createSeparator(),
-                usedByBox,
-                createSeparator(),
-                donutCard
+                usedByBox
         );
     }
 
@@ -163,8 +158,8 @@ public class SelectedEntityPanel extends ScrollPane {
                         isDependsOn ? item : detailsState.nameProperty().get()
                 );
 
-                Label dirIcon = new Label(isDependsOn ? "arrow_forward" : "arrow_back");
-                dirIcon.setStyle("-fx-font-family: 'Material Symbols Outlined'; -fx-font-size: 14px; -fx-text-fill: " + (isDependsOn ? "#00daf3" : "#00e676") + ";");
+                Label dirIcon = new Label(isDependsOn ? "→" : "←");
+                dirIcon.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: " + resolveColor(rowData.type) + ";");
                 dirIcon.setMinWidth(Region.USE_PREF_SIZE);
                 
                 int lastDot = item.lastIndexOf('.');
@@ -173,7 +168,7 @@ public class SelectedEntityPanel extends ScrollPane {
                 name.setStyle("-fx-text-fill: #dce3ec; -fx-font-size: 12px; -fx-font-weight: bold;");
 
                 Label refType = new Label(rowData.type);
-                refType.setStyle("-fx-text-fill: #849396; -fx-font-size: 9px; -fx-background-color: rgba(132, 147, 150, 0.08); -fx-padding: 1 4; -fx-background-radius: 3;");
+                refType.setStyle("-fx-text-fill: " + resolveColor(rowData.type) + "; -fx-font-size: 9px; -fx-background-color: rgba(132, 147, 150, 0.08); -fx-padding: 1 4; -fx-background-radius: 3;");
 
                 Region spacer = new Region();
                 HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -182,7 +177,7 @@ public class SelectedEntityPanel extends ScrollPane {
                 count.setStyle("-fx-text-fill: #849396; -fx-font-size: 10px; -fx-font-family: 'JetBrains Mono';");
 
                 Label arrow = new Label("→");
-                arrow.setStyle("-fx-text-fill: #00daf3; -fx-font-size: 12px;");
+                arrow.setStyle("-fx-text-fill: " + resolveColor(rowData.type) + "; -fx-font-size: 12px;");
 
                 row.getChildren().addAll(dirIcon, name, refType, spacer, count, arrow);
                 
@@ -231,8 +226,8 @@ public class SelectedEntityPanel extends ScrollPane {
                     isDependsOn ? item : detailsState.nameProperty().get()
             );
 
-            Label dirIcon = new Label(isDependsOn ? "arrow_forward" : "arrow_back");
-            dirIcon.setStyle("-fx-font-family: 'Material Symbols Outlined'; -fx-font-size: 14px; -fx-text-fill: " + (isDependsOn ? "#00daf3" : "#00e676") + ";");
+            Label dirIcon = new Label(isDependsOn ? "→" : "←");
+            dirIcon.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: " + resolveColor(rowData.type) + ";");
             dirIcon.setMinWidth(Region.USE_PREF_SIZE);
             
             int lastDot = item.lastIndexOf('.');
@@ -241,7 +236,7 @@ public class SelectedEntityPanel extends ScrollPane {
             name.setStyle("-fx-text-fill: #dce3ec; -fx-font-size: 12px; -fx-font-weight: bold;");
 
             Label refType = new Label(rowData.type);
-            refType.setStyle("-fx-text-fill: #849396; -fx-font-size: 9px; -fx-background-color: rgba(132, 147, 150, 0.08); -fx-padding: 1 4; -fx-background-radius: 3;");
+            refType.setStyle("-fx-text-fill: " + resolveColor(rowData.type) + "; -fx-font-size: 9px; -fx-background-color: rgba(132, 147, 150, 0.08); -fx-padding: 1 4; -fx-background-radius: 3;");
 
             Region spacer = new Region();
             HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -250,7 +245,7 @@ public class SelectedEntityPanel extends ScrollPane {
             count.setStyle("-fx-text-fill: #849396; -fx-font-size: 10px; -fx-font-family: 'JetBrains Mono';");
 
             Label arrow = new Label("→");
-            arrow.setStyle("-fx-text-fill: #00daf3; -fx-font-size: 12px;");
+            arrow.setStyle("-fx-text-fill: " + resolveColor(rowData.type) + "; -fx-font-size: 12px;");
 
             row.getChildren().addAll(dirIcon, name, refType, spacer, count, arrow);
             

@@ -42,7 +42,13 @@ public class AnalysisPipeline {
     public PipelineContext analyze(List<Path> files) {
         PipelineContext pipelineContext = new PipelineContext();
 
+        com.example.bodhak.orchestration.progress.ProgressPublisher.publish(
+            new com.example.bodhak.orchestration.progress.AnalysisProgressEvents.ParsingStarted(files.size())
+        );
+
+        int count = 0;
         for (Path file : files) {
+            count++;
             Optional<LanguageFrontend> frontendOpt = frontendRegistry.forFile(file);
             if (frontendOpt.isPresent()) {
                 try {
@@ -54,6 +60,11 @@ public class AnalysisPipeline {
                     System.err.println("Pipeline failed parsing " + file + ": " + e.getMessage());
                 }
             }
+            com.example.bodhak.orchestration.progress.ProgressPublisher.publish(
+                new com.example.bodhak.orchestration.progress.AnalysisProgressEvents.CompilationUnitParsed(
+                    file, file.getFileName().toString(), count, files.size()
+                )
+            );
         }
 
         // Execute passes

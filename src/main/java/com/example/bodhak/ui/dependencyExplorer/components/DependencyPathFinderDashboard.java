@@ -19,6 +19,7 @@ import javafx.geometry.Side;
 import javafx.scene.chart.PieChart;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.Node;
 
 import java.util.*;
 
@@ -72,6 +73,21 @@ public class DependencyPathFinderDashboard extends ScrollPane {
 
     // Route Stats Grid
     private final VBox statsGrid = new VBox(8);
+
+    private GridPane metricsGrid;
+    private final StackPane selectorRowContainer = new StackPane();
+    private final HBox selectorRowHBox = new HBox(16);
+    private final VBox selectorRowVBox = new VBox(16);
+    private VBox routeCard;
+    private VBox optionsCard;
+    private VBox statisticsCard;
+
+    private final StackPane bottomRowContainer = new StackPane();
+    private final HBox bottomRowHBox = new HBox(16);
+    private final VBox bottomRowVBox = new VBox(16);
+    private VBox tableCard;
+    private VBox chartCard;
+    private VBox actionsCard;
 
     public DependencyPathFinderDashboard(DependencyExplorerState state) {
         this.state = state;
@@ -165,9 +181,11 @@ public class DependencyPathFinderDashboard extends ScrollPane {
         header.getChildren().addAll(titleBox, spacer, searchField);
 
         // 2. Metrics Ribbon
-        GridPane metricsGrid = new GridPane();
+        metricsGrid = new GridPane();
         metricsGrid.setHgap(12);
         metricsGrid.setVgap(12);
+
+        // Columns Constraint will be set dynamically inside adaptLayout
 
         metricsGrid.add(createMetricTile("TOTAL PATHS FOUND", totalPathsMetric, "Between selected entities"), 0, 0);
         metricsGrid.add(createMetricTile("SHORTEST PATH LENGTH", shortestPathMetric, "Minimum hops"), 1, 0);
@@ -176,17 +194,8 @@ public class DependencyPathFinderDashboard extends ScrollPane {
         metricsGrid.add(createMetricTile("CONNECTED", connectedMetric, "Entities are connected"), 4, 0);
         metricsGrid.add(createMetricTile("SEARCH TIME", searchTimeMetric, "Query execution time"), 5, 0);
 
-        for (int i = 0; i < 6; i++) {
-            ColumnConstraints cc = new ColumnConstraints();
-            cc.setPercentWidth(16.6);
-            metricsGrid.getColumnConstraints().add(cc);
-        }
-
         // 3. Route Selector Box & Options Row
-        HBox selectorRow = new HBox(16);
-        
-        // FROM / TO Selector Card
-        VBox routeCard = new VBox(10);
+        routeCard = new VBox(10);
         routeCard.getStyleClass().add("dd-card");
         HBox.setHgrow(routeCard, Priority.ALWAYS);
 
@@ -216,7 +225,7 @@ public class DependencyPathFinderDashboard extends ScrollPane {
         routeCard.getChildren().addAll(routeTitle, selectContainer);
 
         // Path Options Card
-        VBox optionsCard = new VBox(10);
+        optionsCard = new VBox(10);
         optionsCard.getStyleClass().add("dd-card");
         optionsCard.setMinWidth(250);
 
@@ -262,7 +271,7 @@ public class DependencyPathFinderDashboard extends ScrollPane {
         optionsCard.getChildren().addAll(optionsTitle, optionsGrid, findPathsBtn);
 
         // Path Statistics Card
-        VBox statisticsCard = new VBox(10);
+        statisticsCard = new VBox(10);
         statisticsCard.getStyleClass().add("dd-card");
         statisticsCard.setMinWidth(260);
 
@@ -273,8 +282,6 @@ public class DependencyPathFinderDashboard extends ScrollPane {
         updateStatsGrid(0, 0, 0, 0, 0, 0, 0);
 
         statisticsCard.getChildren().addAll(statsTitle, statsGrid);
-
-        selectorRow.getChildren().addAll(routeCard, optionsCard, statisticsCard);
 
         // 4. Path Visualizer Card
         visualizerCard.getStyleClass().add("dd-card");
@@ -342,11 +349,7 @@ public class DependencyPathFinderDashboard extends ScrollPane {
         visualizerCard.getChildren().addAll(visualizerLayout, loadingOverlay);
 
         // 5. Bottom Row: Table, Donut Chart, Quick Actions
-        HBox bottomRow = new HBox(16);
-        bottomRow.setMinHeight(300);
-
-        // Breakdown Table (Left)
-        VBox tableCard = new VBox(10);
+        tableCard = new VBox(10);
         tableCard.getStyleClass().add("dd-card");
         HBox.setHgrow(tableCard, Priority.ALWAYS);
 
@@ -364,7 +367,7 @@ public class DependencyPathFinderDashboard extends ScrollPane {
         tableCard.getChildren().addAll(tableTitle, tableScroll);
 
         // Donut Chart Card (Center-Right)
-        VBox chartCard = new VBox(10);
+        chartCard = new VBox(10);
         chartCard.getStyleClass().add("dd-card");
         chartCard.setPrefWidth(300);
         chartCard.setMinWidth(300);
@@ -394,7 +397,7 @@ public class DependencyPathFinderDashboard extends ScrollPane {
         chartCard.getChildren().addAll(chartTitle, chartStack, legendBox);
 
         // Quick Actions Card (Far-Right)
-        VBox actionsCard = new VBox(12);
+        actionsCard = new VBox(12);
         actionsCard.getStyleClass().add("dd-card");
         actionsCard.setMinWidth(260);
 
@@ -412,9 +415,19 @@ public class DependencyPathFinderDashboard extends ScrollPane {
 
         actionsCard.getChildren().addAll(actionsTitle, actionList);
 
-        bottomRow.getChildren().addAll(tableCard, chartCard, actionsCard);
+        selectorRowHBox.setAlignment(Pos.TOP_LEFT);
+        selectorRowVBox.setAlignment(Pos.TOP_LEFT);
+        bottomRowHBox.setAlignment(Pos.TOP_LEFT);
+        bottomRowVBox.setAlignment(Pos.TOP_LEFT);
 
-        mainLayout.getChildren().addAll(header, metricsGrid, selectorRow, visualizerCard, bottomRow);
+        mainLayout.getChildren().addAll(header, metricsGrid, selectorRowContainer, visualizerCard, bottomRowContainer);
+
+        // Adapt Layout initially
+        adaptLayout(1400);
+
+        widthProperty().addListener((obs, oldVal, newVal) -> {
+            adaptLayout(newVal.doubleValue());
+        });
 
         // Setup activeTab change listener
         activeTab.addListener((obs, old, tab) -> renderSelectedTab());
@@ -1015,6 +1028,169 @@ public class DependencyPathFinderDashboard extends ScrollPane {
         toEntity.set(to);
         if (from != null && to != null) {
             calculatePaths();
+        }
+    }
+
+    private void adaptLayout(double width) {
+        // --- 1. Metrics Grid Responsiveness ---
+        metricsGrid.getChildren().clear();
+        metricsGrid.getColumnConstraints().clear();
+        metricsGrid.getRowConstraints().clear();
+
+        Node card1 = createMetricTile("TOTAL PATHS FOUND", totalPathsMetric, "Between selected entities");
+        Node card2 = createMetricTile("SHORTEST PATH LENGTH", shortestPathMetric, "Minimum hops");
+        Node card3 = createMetricTile("DEEPEST CHAIN LENGTH", longestPathMetric, "SCC DAG path depth");
+        Node card4 = createMetricTile("AVERAGE PATH LENGTH", avgPathMetric, "Across all paths");
+        Node card5 = createMetricTile("CONNECTED", connectedMetric, "Entities are connected");
+        Node card6 = createMetricTile("SEARCH TIME", searchTimeMetric, "Query execution time");
+
+        if (width > 1200) {
+            // Wide Mode: 6 columns, 1 row
+            for (int i = 0; i < 6; i++) {
+                ColumnConstraints cc = new ColumnConstraints();
+                cc.setPercentWidth(100.0 / 6.0);
+                metricsGrid.getColumnConstraints().add(cc);
+            }
+            metricsGrid.add(card1, 0, 0);
+            metricsGrid.add(card2, 1, 0);
+            metricsGrid.add(card3, 2, 0);
+            metricsGrid.add(card4, 3, 0);
+            metricsGrid.add(card5, 4, 0);
+            metricsGrid.add(card6, 5, 0);
+        } else if (width > 850) {
+            // Medium Mode: 3 columns, 2 rows
+            for (int i = 0; i < 3; i++) {
+                ColumnConstraints cc = new ColumnConstraints();
+                cc.setPercentWidth(100.0 / 3.0);
+                metricsGrid.getColumnConstraints().add(cc);
+            }
+            metricsGrid.add(card1, 0, 0);
+            metricsGrid.add(card2, 1, 0);
+            metricsGrid.add(card3, 2, 0);
+            metricsGrid.add(card4, 0, 1);
+            metricsGrid.add(card5, 1, 1);
+            metricsGrid.add(card6, 2, 1);
+        } else {
+            // Narrow Mode: 2 columns, 3 rows
+            for (int i = 0; i < 2; i++) {
+                ColumnConstraints cc = new ColumnConstraints();
+                cc.setPercentWidth(100.0 / 2.0);
+                metricsGrid.getColumnConstraints().add(cc);
+            }
+            metricsGrid.add(card1, 0, 0);
+            metricsGrid.add(card2, 1, 0);
+            metricsGrid.add(card3, 0, 1);
+            metricsGrid.add(card4, 1, 1);
+            metricsGrid.add(card5, 0, 2);
+            metricsGrid.add(card6, 1, 2);
+        }
+
+        // --- 2. Selector Row Responsiveness ---
+        if (width > 1150) {
+            // Wide Mode: side-by-side HBox
+            if (selectorRowHBox.getChildren().isEmpty()) {
+                selectorRowVBox.getChildren().clear();
+                
+                routeCard.setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(routeCard, Priority.ALWAYS);
+                optionsCard.setMinWidth(250); HBox.setHgrow(optionsCard, Priority.NEVER);
+                statisticsCard.setMinWidth(260); HBox.setHgrow(statisticsCard, Priority.NEVER);
+
+                selectorRowHBox.getChildren().addAll(routeCard, optionsCard, statisticsCard);
+            }
+            if (selectorRowContainer.getChildren().isEmpty() || selectorRowContainer.getChildren().get(0) != selectorRowHBox) {
+                selectorRowContainer.getChildren().clear();
+                selectorRowContainer.getChildren().add(selectorRowHBox);
+            }
+        } else if (width > 850) {
+            // Medium Mode: routeCard side-by-side with VBox(optionsCard + statisticsCard)
+            selectorRowHBox.getChildren().clear();
+            selectorRowVBox.getChildren().clear();
+
+            VBox optionsStatsVBox = new VBox(16);
+            HBox.setHgrow(optionsStatsVBox, Priority.NEVER);
+            optionsStatsVBox.setPrefWidth(280);
+            
+            routeCard.setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(routeCard, Priority.ALWAYS);
+            
+            optionsCard.setMaxWidth(Double.MAX_VALUE); VBox.setVgrow(optionsCard, Priority.ALWAYS);
+            statisticsCard.setMaxWidth(Double.MAX_VALUE); VBox.setVgrow(statisticsCard, Priority.ALWAYS);
+            optionsStatsVBox.getChildren().addAll(optionsCard, statisticsCard);
+
+            selectorRowHBox.getChildren().addAll(routeCard, optionsStatsVBox);
+            selectorRowContainer.getChildren().clear();
+            selectorRowContainer.getChildren().add(selectorRowHBox);
+        } else {
+            // Narrow Mode: routeCard, optionsCard, statisticsCard stacked vertically
+            if (selectorRowVBox.getChildren().isEmpty()) {
+                selectorRowHBox.getChildren().clear();
+
+                routeCard.setMaxWidth(Double.MAX_VALUE); VBox.setVgrow(routeCard, Priority.ALWAYS);
+                optionsCard.setMaxWidth(Double.MAX_VALUE); VBox.setVgrow(optionsCard, Priority.ALWAYS);
+                statisticsCard.setMaxWidth(Double.MAX_VALUE); VBox.setVgrow(statisticsCard, Priority.ALWAYS);
+
+                selectorRowVBox.getChildren().addAll(routeCard, optionsCard, statisticsCard);
+            }
+            if (selectorRowContainer.getChildren().isEmpty() || selectorRowContainer.getChildren().get(0) != selectorRowVBox) {
+                selectorRowContainer.getChildren().clear();
+                selectorRowContainer.getChildren().add(selectorRowVBox);
+            }
+        }
+
+        // --- 3. Bottom Row Responsiveness ---
+        if (width > 1150) {
+            // Wide Mode: side-by-side HBox
+            bottomRowContainer.setMinHeight(300);
+            bottomRowContainer.setPrefHeight(300);
+            if (bottomRowHBox.getChildren().isEmpty()) {
+                bottomRowVBox.getChildren().clear();
+                
+                tableCard.setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(tableCard, Priority.ALWAYS);
+                chartCard.setMinWidth(300); HBox.setHgrow(chartCard, Priority.NEVER);
+                actionsCard.setMinWidth(260); HBox.setHgrow(actionsCard, Priority.NEVER);
+
+                bottomRowHBox.getChildren().addAll(tableCard, chartCard, actionsCard);
+            }
+            if (bottomRowContainer.getChildren().isEmpty() || bottomRowContainer.getChildren().get(0) != bottomRowHBox) {
+                bottomRowContainer.getChildren().clear();
+                bottomRowContainer.getChildren().add(bottomRowHBox);
+            }
+        } else if (width > 850) {
+            // Medium Mode: tableCard side-by-side with VBox(chartCard + actionsCard)
+            bottomRowContainer.setMinHeight(Region.USE_COMPUTED_SIZE);
+            bottomRowContainer.setPrefHeight(Region.USE_COMPUTED_SIZE);
+            bottomRowHBox.getChildren().clear();
+            bottomRowVBox.getChildren().clear();
+
+            VBox chartActionsVBox = new VBox(16);
+            HBox.setHgrow(chartActionsVBox, Priority.NEVER);
+            chartActionsVBox.setPrefWidth(280);
+            
+            tableCard.setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(tableCard, Priority.ALWAYS);
+            
+            chartCard.setMaxWidth(Double.MAX_VALUE); VBox.setVgrow(chartCard, Priority.ALWAYS);
+            actionsCard.setMaxWidth(Double.MAX_VALUE); VBox.setVgrow(actionsCard, Priority.ALWAYS);
+            chartActionsVBox.getChildren().addAll(chartCard, actionsCard);
+
+            bottomRowHBox.getChildren().addAll(tableCard, chartActionsVBox);
+            bottomRowContainer.getChildren().clear();
+            bottomRowContainer.getChildren().add(bottomRowHBox);
+        } else {
+            // Narrow Mode: tableCard, chartCard, actionsCard stacked vertically
+            bottomRowContainer.setMinHeight(Region.USE_COMPUTED_SIZE);
+            bottomRowContainer.setPrefHeight(Region.USE_COMPUTED_SIZE);
+            if (bottomRowVBox.getChildren().isEmpty()) {
+                bottomRowHBox.getChildren().clear();
+
+                tableCard.setMaxWidth(Double.MAX_VALUE); VBox.setVgrow(tableCard, Priority.ALWAYS);
+                chartCard.setMaxWidth(Double.MAX_VALUE); VBox.setVgrow(chartCard, Priority.ALWAYS);
+                actionsCard.setMaxWidth(Double.MAX_VALUE); VBox.setVgrow(actionsCard, Priority.ALWAYS);
+
+                bottomRowVBox.getChildren().addAll(tableCard, chartCard, actionsCard);
+            }
+            if (bottomRowContainer.getChildren().isEmpty() || bottomRowContainer.getChildren().get(0) != bottomRowVBox) {
+                bottomRowContainer.getChildren().clear();
+                bottomRowContainer.getChildren().add(bottomRowVBox);
+            }
         }
     }
 }

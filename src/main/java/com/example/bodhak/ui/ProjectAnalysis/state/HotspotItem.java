@@ -87,6 +87,7 @@ public record HotspotItem(
         return flags.stream()
                 .map(flag -> switch (flag) {
                     case HIGH_COUPLING -> "High Coupling";
+                    case HIGH_INSTABILITY -> "High Instability";
                     case HIGH_FAN_IN -> "High Fan-In";
                     case HIGH_FAN_OUT -> "High Fan-Out";
                     case OVERSIZED_ENTITY -> "Oversized Entity";

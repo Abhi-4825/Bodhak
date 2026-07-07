@@ -55,7 +55,7 @@ public class NamespaceOverviewCard extends VBox {
 
     @SuppressWarnings("unchecked")
     private void setupTable() {
-        table.getStyleClass().add("ar-table");
+        table.getStyleClass().addAll("ar-table", "no-scroll-table");
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         table.setPlaceholder(buildEmptyState());
         table.setFixedCellSize(46);
@@ -80,7 +80,10 @@ public class NamespaceOverviewCard extends VBox {
         TableColumn<NamespaceEntry, Integer> fiCol  = numCol("FAN-IN",   "fanIn",   70);
 
         table.getColumns().addAll(nsCol, entCol, locCol, foCol, fiCol);
-        table.setItems(state.getNamespaces());
+        
+        // Limit namespaces to at most 6 items
+        updateTableItems();
+        state.getNamespaces().addListener((javafx.collections.ListChangeListener<NamespaceEntry>) c -> updateTableItems());
 
         // Hover row styling via row factory
         table.setRowFactory(tv -> {
@@ -88,6 +91,15 @@ public class NamespaceOverviewCard extends VBox {
             row.getStyleClass().add("ar-table-row");
             return row;
         });
+    }
+
+    private void updateTableItems() {
+        var all = state.getNamespaces();
+        var limited = javafx.collections.FXCollections.<NamespaceEntry>observableArrayList();
+        for (int i = 0; i < Math.min(6, all.size()); i++) {
+            limited.add(all.get(i));
+        }
+        table.setItems(limited);
     }
 
     private Callback<TableColumn<NamespaceEntry, String>, TableCell<NamespaceEntry, String>> namespaceCellFactory() {

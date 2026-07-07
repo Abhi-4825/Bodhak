@@ -21,8 +21,7 @@ public class ExecutiveSummaryStrip extends HBox {
                 buildTile("SEMANTIC REFERENCES", state.semanticReferenceCountProperty().asString(), "All reference kinds", "dd-stat-tile"),
                 buildTile("CIRCULAR DEPENDENCIES", state.circularDependenciesCountProperty().asString(), "In strongly connected components", "dd-stat-tile"),
                 buildTile("AVG FAN-OUT", Bindings.format("%.1f", state.averageFanOutProperty()), "Per entity", "dd-stat-tile"),
-                buildTile("MAX DEPTH", state.maxDepthProperty().asString(), "Dependency chain depth", "dd-stat-tile"),
-                buildTile("HEALTH", state.healthRatingProperty(), "No critical issues", "dd-stat-tile")
+                buildTile("MAX DEPTH", state.maxDepthProperty().asString(), "Dependency chain depth", "dd-stat-tile")
         );
 
         // Make all tiles grow equally

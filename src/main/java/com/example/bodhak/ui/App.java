@@ -91,6 +91,8 @@ public class App extends Application {
     private ProgressBar progressBar;
 
     private File projectFolder;
+    private BorderPane root;
+    private StackPane windowStack;
 
     // Per-tab workspace state manager
     private TabStateManager tabStateManager;
@@ -99,8 +101,9 @@ public class App extends Application {
     public void start(Stage stage) throws Exception {
         PlaceHolderUi placeHolder = new PlaceHolderUi();
 
-        BorderPane root = new BorderPane();
-        mainScene = new Scene(root);
+        root = new BorderPane();
+        windowStack = new StackPane(root);
+        mainScene = new Scene(windowStack);
         applyTheme(mainScene);
         stage.setScene(mainScene);
         stage.setTitle("Project Analyser");
@@ -372,11 +375,12 @@ public class App extends Application {
         projectAnalysisUi.setAnalysisState(projectAnalysisState);
         overviewPanel.setAnalysisState(projectAnalysisState);
 
+        // Register window container to overlay manager
+        com.example.bodhak.orchestration.progress.LoadingOverlayManager.getInstance().setWindowStack(windowStack, root);
+
         Task<AppController> loadTask = new Task<>() {
             @Override
             protected AppController call() {
-                updateMessage("Initialising plugins…");
-                updateProgress(-1, 0); // Trigger indeterminate animation
                 com.example.bodhak.context.state.AppState appState = new com.example.bodhak.context.state.AppState(
                     projectAnalysisState,
                     context -> {},
@@ -392,34 +396,24 @@ public class App extends Application {
                 try { ctx.getRegistry().register(new PythonLanguageFrontend()); }
                 catch (Exception e) { System.out.println("[Boot] No Python support: " + e.getMessage()); }
 
-                updateMessage("Scanning project…");
                 ctx.getEngine().analyze(folder.toPath());
-                updateMessage("Done.");
                 return ctx;
             }
         };
 
-        // Show progress via labels (not bound directly so we control visibility)
-        progressLabel.textProperty().bind(loadTask.messageProperty());
-        progressBar.progressProperty().bind(loadTask.progressProperty());
-        progressBar.setVisible(true);
-        progressLabel.setVisible(true);
-
         loadTask.setOnSucceeded(e -> {
-            progressLabel.textProperty().unbind();
-            progressBar.progressProperty().unbind();
-            progressBar.setVisible(false);
-            progressLabel.setVisible(false);
-            progressLabel.setText("");
             initAfterLoad(folder, loadTask.getValue());
-
         });
 
         loadTask.setOnFailed(e -> {
-            progressLabel.textProperty().unbind();
-            progressBar.progressProperty().unbind();
-            progressLabel.setText("Load failed — check logs.");
-            loadTask.getException().printStackTrace();
+            Throwable ex = loadTask.getException();
+            if (ex != null) {
+                ex.printStackTrace();
+            }
+            String msg = (ex != null && ex.getMessage() != null) ? ex.getMessage() : "Unknown error occurred during background loading.";
+            com.example.bodhak.orchestration.progress.ProgressPublisher.publish(
+                new com.example.bodhak.orchestration.progress.AnalysisProgressEvents.AnalysisFailed(msg)
+            );
         });
 
         new Thread(loadTask, "Project-Loader-Thread").start();
@@ -435,10 +429,6 @@ public class App extends Application {
 
         // ── 1. Create a fresh per-project UIStore ─────────────────────────────
         uiStore = new UIStore();
-
-        // Bind the global progress indicators to the current project's store
-        progressBar.progressProperty().bind(uiStore.progressFractionProperty());
-        progressLabel.textProperty().bind(uiStore.progressLabelProperty());
 
         // Seed the store with the initial analysis result (on FX thread — called
         // from loadTask.setOnSucceeded which runs on FX thread)

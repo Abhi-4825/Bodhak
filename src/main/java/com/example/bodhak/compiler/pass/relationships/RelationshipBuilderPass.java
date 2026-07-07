@@ -67,6 +67,11 @@ public class RelationshipBuilderPass implements CompilerPass {
             }
         }
 
+        // Reference Database Built Event
+        com.example.bodhak.orchestration.progress.ProgressPublisher.publish(
+            new com.example.bodhak.orchestration.progress.AnalysisProgressEvents.ReferenceDatabaseBuilt(database.getAllReferences().size())
+        );
+
         // Store database and table in PipelineContext
         context.setAttribute("reference_database", database);
         context.setAttribute("symbol_table", symbolTable);
@@ -101,8 +106,18 @@ public class RelationshipBuilderPass implements CompilerPass {
             }
         }
 
+        // Dependency Graph Built Event
+        com.example.bodhak.orchestration.progress.ProgressPublisher.publish(
+            new com.example.bodhak.orchestration.progress.AnalysisProgressEvents.DependencyGraphBuilt(adjacencyList.size())
+        );
+
         // Phase 3: Detect circular dependencies globally
         Set<Set<String>> sccs = findCircularGroups(adjacencyList);
+
+        // Graph Index Built Event
+        com.example.bodhak.orchestration.progress.ProgressPublisher.publish(
+            new com.example.bodhak.orchestration.progress.AnalysisProgressEvents.GraphIndexBuilt()
+        );
 
         // Phase 4: Enrich entity info instances with projected relationships
         for (CompilationUnit cu : context.getCompilationUnits()) {

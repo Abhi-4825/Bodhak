@@ -46,7 +46,7 @@ public class DashboardGrid extends VBox {
     private com.example.bodhak.ui.analysisReport.reference.ProjectHealthCard healthCard;
     private com.example.bodhak.ui.analysisReport.entity.EntityMetricsCard entityMetricsCard;
     private com.example.bodhak.ui.analysisReport.compilationUnit.CompilationUnitOverviewCard compilationUnitCard;
-    private com.example.bodhak.ui.analysisReport.dependency.DependencyOverviewCard dependencyCard;
+
     private com.example.bodhak.ui.analysisReport.risk.RiskHotspotsCard riskCard;
     private com.example.bodhak.ui.analysisReport.diagnostic.DiagnosticsSummaryCard diagnosticsCard;
     private com.example.bodhak.ui.analysisReport.compiler.CompilerPipelineCard pipelineCard;
@@ -75,7 +75,6 @@ public class DashboardGrid extends VBox {
         healthCard = new com.example.bodhak.ui.analysisReport.reference.ProjectHealthCard(state.getExecutiveSummaryState(), state.getDiagnosticsSummaryState());
         entityMetricsCard = new com.example.bodhak.ui.analysisReport.entity.EntityMetricsCard(state.getEntityMetricsState());
         compilationUnitCard = new com.example.bodhak.ui.analysisReport.compilationUnit.CompilationUnitOverviewCard(state.getCompilationUnitOverviewState());
-        dependencyCard = new com.example.bodhak.ui.analysisReport.dependency.DependencyOverviewCard(state.getDependencyOverviewState());
         riskCard = new com.example.bodhak.ui.analysisReport.risk.RiskHotspotsCard(state.getRiskHotspotsState());
         diagnosticsCard = new com.example.bodhak.ui.analysisReport.diagnostic.DiagnosticsSummaryCard(state.getDiagnosticsSummaryState());
         pipelineCard = new com.example.bodhak.ui.analysisReport.compiler.CompilerPipelineCard(state.getCompilerPipelineState());
@@ -113,7 +112,6 @@ public class DashboardGrid extends VBox {
         setupCardClick(entityMetricsCard, () -> new com.example.bodhak.ui.analysisReport.entity.EntityMetricsInspector());
         setupCardClick(compilationUnitCard, () -> new com.example.bodhak.ui.analysisReport.compilationUnit.CompilationUnitOverviewInspector());
         setupCardClick(semanticFlowCard, () -> new com.example.bodhak.ui.analysisReport.reference.SemanticFlowInspector());
-        setupCardClick(dependencyCard, () -> new com.example.bodhak.ui.analysisReport.dependency.DependencyInspector());
         setupCardClick(healthCard, () -> new com.example.bodhak.ui.analysisReport.reference.ProjectHealthInspector());
         setupCardClick(riskCard, () -> new com.example.bodhak.ui.analysisReport.risk.RiskHotspotsInspector());
         setupCardClick(diagnosticsCard, () -> new com.example.bodhak.ui.analysisReport.diagnostic.DiagnosticsInspector());
@@ -165,9 +163,9 @@ public class DashboardGrid extends VBox {
         HBox.setHgrow(frameworkCard, Priority.ALWAYS);
 
         // Row 3: Surfaces + Dependency Overview
-        HBox row3 = buildRow(surfacesCard, dependencyCard);
+        HBox row3 = buildRow(surfacesCard);
         HBox.setHgrow(surfacesCard, Priority.ALWAYS);
-        HBox.setHgrow(dependencyCard, Priority.ALWAYS);
+
 
         // Row 4: Namespace (7/12 weight) + [Semantic + Health] (5/12 weight)
         VBox rightCol4 = new VBox(16);
@@ -183,10 +181,10 @@ public class DashboardGrid extends VBox {
         HBox.setHgrow(entityMetricsCard, Priority.ALWAYS);
         HBox.setHgrow(compilationUnitCard, Priority.ALWAYS);
 
-        // Row 6: Risk Hotspots + Diagnostics
-        HBox row6 = buildRow(riskCard, diagnosticsCard);
+        // Row 6: Risk Hotspots
+        HBox row6 = buildRow(riskCard);
 
-        getChildren().addAll(execBanner, row2, row3, row4, row5, row6, pipelineCard);
+        getChildren().addAll(execBanner, row2, row3, row4, row5, row6);
     }
 
     private void buildMediumLayout() {
@@ -194,7 +192,7 @@ public class DashboardGrid extends VBox {
         HBox row2 = buildRow(classificationCard, frameworkCard);
 
         // Row 3: Surfaces + Dependency (Side-by-side)
-        HBox row3 = buildRow(surfacesCard, dependencyCard);
+        HBox row3 = buildRow(surfacesCard);
 
         // Row 4: Namespace Overview takes full width
         VBox row4 = new VBox(namespaceCard);
@@ -209,10 +207,7 @@ public class DashboardGrid extends VBox {
         // Row 7: Risk Hotspots
         VBox row7 = new VBox(riskCard);
 
-        // Row 8: Live Diagnostics
-        VBox row8 = new VBox(diagnosticsCard);
-
-        getChildren().addAll(execBanner, row2, row3, row4, row5, row6, row7, row8, pipelineCard);
+        getChildren().addAll(execBanner, row2, row3, row4, row5, row6, row7);
     }
 
     private void buildNarrowLayout() {
@@ -222,15 +217,13 @@ public class DashboardGrid extends VBox {
                 classificationCard,
                 frameworkCard,
                 surfacesCard,
-                dependencyCard,
+
                 namespaceCard,
                 semanticFlowCard,
                 healthCard,
                 entityMetricsCard,
                 compilationUnitCard,
-                riskCard,
-                diagnosticsCard,
-                pipelineCard
+                riskCard
         );
     }
 

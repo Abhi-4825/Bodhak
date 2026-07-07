@@ -18,6 +18,19 @@ public class DependencyExplorerDashboard extends ScrollPane {
     private TextField searchField;
     private ContextMenu searchPopup;
 
+    private final StackPane bottomRowContainer = new StackPane();
+    private final HBox bottomRowHBox = new HBox(16);
+    private final VBox bottomRowVBox = new VBox(12);
+    private PathPanel pathPanel;
+    
+    private final StackPane middleRowContainer = new StackPane();
+    private final HBox middleRowHBox = new HBox(16);
+    private final VBox middleRowVBox = new VBox(12);
+    private ReferenceIntelligencePanel breakdownPanel;
+    private EntityCharacteristicsPanel characteristicsPanel;
+    
+    private SplitPane workspaceSplit;
+
     public DependencyExplorerDashboard(DependencyExplorerState state) {
         this.state = state;
         initialise();
@@ -114,7 +127,7 @@ public class DependencyExplorerDashboard extends ScrollPane {
         ExecutiveSummaryStrip summaryStrip = new ExecutiveSummaryStrip(state.getExecutiveSummaryState());
 
         // 3. Workspace SplitPane
-        SplitPane workspaceSplit = new SplitPane();
+        workspaceSplit = new SplitPane();
         workspaceSplit.setStyle("-fx-background-color: transparent; -fx-box-border: transparent;");
         VBox.setVgrow(workspaceSplit, Priority.ALWAYS);
 
@@ -132,41 +145,88 @@ public class DependencyExplorerDashboard extends ScrollPane {
         graphView.setMinHeight(450);
         VBox.setVgrow(graphView, Priority.ALWAYS);
 
-        // Bottom row inside center column: Path, Breakdown, Health
-        HBox bottomRow = new HBox(16);
-        bottomRow.setMinHeight(180);
-        bottomRow.setPrefHeight(180);
-
-        PathPanel pathPanel = new PathPanel(state);
+        pathPanel = new PathPanel(state);
         HBox.setHgrow(pathPanel, Priority.ALWAYS);
 
-        // We will rename SemanticBreakdownPanel to ReferenceIntelligencePanel in Task 5
-        ReferenceIntelligencePanel breakdownPanel = new ReferenceIntelligencePanel(state.getBreakdownState());
+        breakdownPanel = new ReferenceIntelligencePanel(state.getBreakdownState());
         HBox.setHgrow(breakdownPanel, Priority.ALWAYS);
 
-        HealthPanel healthPanel = new HealthPanel(state.getHealthState());
-        HBox.setHgrow(healthPanel, Priority.ALWAYS);
+        characteristicsPanel = new EntityCharacteristicsPanel(state);
+        HBox.setHgrow(characteristicsPanel, Priority.ALWAYS);
 
-        bottomRow.getChildren().addAll(pathPanel, breakdownPanel, healthPanel);
-        centerCol.getChildren().addAll(graphView, bottomRow);
-
-        // Column 3: Right Sidebar (Selected Entity + Donut Chart)
-        VBox rightCol = new VBox(16);
-        rightCol.setMinWidth(350);
-        rightCol.setMaxWidth(600);
-        SplitPane.setResizableWithParent(rightCol, false);
-
+        HBox centre = new HBox();
         SelectedEntityPanel detailsPanel = new SelectedEntityPanel(state);
         VBox.setVgrow(detailsPanel, Priority.ALWAYS);
+        centre.getChildren().addAll(graphView, detailsPanel);
 
-        rightCol.getChildren().addAll(detailsPanel);
+        centerCol.getChildren().addAll(centre, middleRowContainer, bottomRowContainer);
 
         // Add items to SplitPane
-        workspaceSplit.getItems().addAll(browserPanel, centerCol, rightCol);
-        
-        // Define initial divider positions
-        workspaceSplit.setDividerPositions(0.22, 0.75);
+        workspaceSplit.getItems().addAll(browserPanel, centerCol);
+
+        // Adapt layout initially
+        adaptLayout(1400);
+
+        widthProperty().addListener((obs, oldVal, newVal) -> {
+            adaptLayout(newVal.doubleValue());
+        });
 
         mainLayout.getChildren().addAll(header, summaryStrip, workspaceSplit);
+    }
+
+    private void adaptLayout(double width) {
+        // --- 1. Middle Row (Breakdown + Characteristics) ---
+        if (width > 1250) {
+            if (middleRowHBox.getChildren().isEmpty()) {
+                middleRowVBox.getChildren().clear();
+                middleRowHBox.getChildren().addAll(breakdownPanel, characteristicsPanel);
+                HBox.setHgrow(breakdownPanel, Priority.ALWAYS);
+                HBox.setHgrow(characteristicsPanel, Priority.ALWAYS);
+            }
+            if (middleRowContainer.getChildren().isEmpty() || middleRowContainer.getChildren().get(0) != middleRowHBox) {
+                middleRowContainer.getChildren().clear();
+                middleRowContainer.getChildren().add(middleRowHBox);
+            }
+        } else {
+            if (middleRowVBox.getChildren().isEmpty()) {
+                middleRowHBox.getChildren().clear();
+                middleRowVBox.getChildren().addAll(breakdownPanel, characteristicsPanel);
+                VBox.setVgrow(breakdownPanel, Priority.ALWAYS);
+                VBox.setVgrow(characteristicsPanel, Priority.ALWAYS);
+            }
+            if (middleRowContainer.getChildren().isEmpty() || middleRowContainer.getChildren().get(0) != middleRowVBox) {
+                middleRowContainer.getChildren().clear();
+                middleRowContainer.getChildren().add(middleRowVBox);
+            }
+        }
+
+        // --- 2. Bottom Row (Path Panel only) ---
+        if (width > 1250) {
+            bottomRowContainer.setMinHeight(100);
+            bottomRowContainer.setPrefHeight(100);
+            if (bottomRowHBox.getChildren().isEmpty()) {
+                bottomRowVBox.getChildren().clear();
+                bottomRowHBox.getChildren().addAll(pathPanel);
+                HBox.setHgrow(pathPanel, Priority.ALWAYS);
+            }
+            if (bottomRowContainer.getChildren().isEmpty() || bottomRowContainer.getChildren().get(0) != bottomRowHBox) {
+                bottomRowContainer.getChildren().clear();
+                bottomRowContainer.getChildren().add(bottomRowHBox);
+            }
+            workspaceSplit.setDividerPositions(0.22);
+        } else {
+            bottomRowContainer.setMinHeight(Region.USE_COMPUTED_SIZE);
+            bottomRowContainer.setPrefHeight(Region.USE_COMPUTED_SIZE);
+            if (bottomRowVBox.getChildren().isEmpty()) {
+                bottomRowHBox.getChildren().clear();
+                bottomRowVBox.getChildren().addAll(pathPanel);
+                VBox.setVgrow(pathPanel, Priority.ALWAYS);
+            }
+            if (bottomRowContainer.getChildren().isEmpty() || bottomRowContainer.getChildren().get(0) != bottomRowVBox) {
+                bottomRowContainer.getChildren().clear();
+                bottomRowContainer.getChildren().add(bottomRowVBox);
+            }
+            workspaceSplit.setDividerPositions(0.18);
+        }
     }
 }

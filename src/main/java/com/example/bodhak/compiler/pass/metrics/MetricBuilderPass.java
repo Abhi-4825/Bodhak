@@ -24,7 +24,10 @@ public class MetricBuilderPass implements CompilerPass {
     @Override
     public void execute(PipelineContext context) {
         for (CompilationUnit cu : context.getCompilationUnits()) {
-            if (cu.getIntermediateRepresentation() == null) continue;
+            if (cu.getIntermediateRepresentation() == null) {
+                cu.setAggregatedMetrics(new Metrics(100, 1, 0, 0, 0, 0, 0));
+                continue;
+            }
 
             List<EntityInfo> enrichedEntities = new ArrayList<>();
             for (EntityInfo entity : cu.getEntities()) {
@@ -44,7 +47,62 @@ public class MetricBuilderPass implements CompilerPass {
             }
             cu.getEntities().clear();
             cu.getEntities().addAll(enrichedEntities);
+
+            // Compute and set aggregated metrics for this compilation unit
+            int cuLoc = 0;
+            int cuComplexity = 0;
+            int cuNesting = 0;
+            int cuParams = 0;
+            int cuCognitive = 0;
+            long cuMethods = 0;
+            long cuConstructors = 0;
+
+            for (EntityInfo entity : cu.getEntities()) {
+                Metrics m = entity.getMetrics();
+                if (m != null) {
+                    if (entity.getKind() == com.example.bodhak.model.entity.EntityKind.CLASS || 
+                        entity.getKind() == com.example.bodhak.model.entity.EntityKind.INTERFACE ||
+                        entity.getKind() == com.example.bodhak.model.entity.EntityKind.RECORD) {
+                        cuLoc += m.linesOfCode();
+                    } else if (cuLoc == 0) {
+                        cuLoc = Math.max(cuLoc, m.linesOfCode());
+                    }
+                    cuComplexity = Math.max(cuComplexity, m.cyclomaticComplexity());
+                    cuNesting = Math.max(cuNesting, m.nestingDepth());
+                    cuParams += m.parameterCount();
+                    cuCognitive += m.cognitiveComplexity();
+                    cuMethods += m.methodCount();
+                    cuConstructors += m.constructorCount();
+                }
+            }
+            if (cuLoc == 0) {
+                cuLoc = 100; // default fallback if no classes found
+            }
+            if (cuComplexity == 0) {
+                cuComplexity = 1;
+            }
+            cu.setAggregatedMetrics(new Metrics(
+                cuLoc,
+                cuComplexity,
+                cuNesting,
+                cuParams,
+                cuCognitive,
+                cuMethods,
+                cuConstructors
+            ));
         }
+
+        int totalEntities = 0;
+        long totalLoc = 0;
+        for (CompilationUnit cu : context.getCompilationUnits()) {
+            totalEntities += cu.getEntities().size();
+            for (EntityInfo e : cu.getEntities()) {
+                totalLoc += e.getMetrics().linesOfCode();
+            }
+        }
+        com.example.bodhak.orchestration.progress.ProgressPublisher.publish(
+            new com.example.bodhak.orchestration.progress.AnalysisProgressEvents.MetricsComputed(totalEntities, totalLoc)
+        );
     }
 
     private Metrics computeMetricsForEntity(IRNode root, EntityInfo entity) {

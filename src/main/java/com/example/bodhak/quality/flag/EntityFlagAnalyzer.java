@@ -29,7 +29,7 @@ public class EntityFlagAnalyzer {
         }
 
         if (isHighlyCoupled(entity)) {
-            flags.add(EntityFlag.HIGH_COUPLING);
+            flags.add(EntityFlag.HIGH_INSTABILITY);
         }
 
         if (!entity.getCircularGroups().isEmpty()) {
@@ -84,16 +84,26 @@ public class EntityFlagAnalyzer {
         return absolute && relative;
     }
 
-    private boolean isHighlyCoupled(
-            EntityInfo entity
-    ) {
+    private boolean isHighlyCoupled(EntityInfo entity) {
+        int fanOut = entity.getDependsOn().size();
+        int fanIn = entity.getUsedBy().size();
+        int totalCoupling = fanIn + fanOut;
 
-        return entity.getDependsOn().size()
-                >= Math.max(
-                thresholds.minHighCoupling(),
-                baselines.p90FanOut()
-        );
+        // Prevent division by zero for isolated classes
+        if (totalCoupling == 0) {
+            return false;
+        }
+
+        // Instability ranges from 0.0 (completely stable) to 1.0 (completely unstable)
+        double instability = (double) fanOut / totalCoupling;
+
+        // Define coupling as: high absolute outgoing dependencies combined with high instability
+        boolean isFragile = fanOut >= Math.max(thresholds.minFanOut(), baselines.p90FanOut());
+        boolean isHighlyUnstable = instability > 0.7; // 70%+ of its connections are outgoing
+
+        return isFragile && isHighlyUnstable;
     }
+
 
     private boolean isHighFanIn(
             EntityInfo entity

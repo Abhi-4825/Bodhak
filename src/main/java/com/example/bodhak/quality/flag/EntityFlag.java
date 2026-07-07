@@ -4,9 +4,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 
 public enum EntityFlag {
 
+    // Force recompile to clear stale compiler cache
     OVERSIZED_ENTITY,
 
     HIGH_COUPLING,
+
+    HIGH_INSTABILITY,
 
     CIRCULAR_DEPENDENCY,
 

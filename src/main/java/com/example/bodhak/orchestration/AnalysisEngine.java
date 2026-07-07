@@ -130,8 +130,18 @@ public class AnalysisEngine {
         entityPathMap.clear();
         pathNamesMap.clear();
 
+        // Project Discovery Started
+        com.example.bodhak.orchestration.progress.ProgressPublisher.publish(
+            new com.example.bodhak.orchestration.progress.AnalysisProgressEvents.ProjectDiscoveryStarted(projectPath)
+        );
+
         // Stage 1 — Scan files
         Set<Path> files = scanner.scan(projectPath);
+
+        // Files Discovered
+        com.example.bodhak.orchestration.progress.ProgressPublisher.publish(
+            new com.example.bodhak.orchestration.progress.AnalysisProgressEvents.FilesDiscovered(new ArrayList<>(files))
+        );
 
         // Run the new Next-Gen pipeline
         List<Path> sourceRoots = new ArrayList<>();
@@ -156,6 +166,7 @@ public class AnalysisEngine {
                 pipelineContext.getCompilationUnits();
 
         // Populate entities
+        int entityCount = 0;
         for (CompilationUnit cu : compilationUnits) {
             Path file = cu.getFilePath().toAbsolutePath().normalize();
             allEntities.addAll(cu.getEntities());
@@ -165,6 +176,11 @@ public class AnalysisEngine {
             // Sync dependency graph data for the compatibility layers
             Map<String, Set<String>> entityDeps = new HashMap<>();
             for (EntityInfo entity : cu.getEntities()) {
+                entityCount++;
+                // Entity Extracted Event
+                com.example.bodhak.orchestration.progress.ProgressPublisher.publish(
+                    new com.example.bodhak.orchestration.progress.AnalysisProgressEvents.EntityExtracted(entity.getEntityName(), entityCount)
+                );
                 entityDeps.put(entity.getEntityName(), entity.getRelationships().dependsOn());
             }
             this.dependencyGraph.updateDependenciesForFile(file, entityDeps);
@@ -185,6 +201,30 @@ public class AnalysisEngine {
 
         DetectionContext detectionContext = new DetectionContext(allEntities, projectInfo);
         this.apiSurface = endpointDiscoveryEngine.analyze(detectionContext, registry);
+
+        // Analysis Completed Event
+        int totalFiles = files.size();
+        int totalEntities = allEntities.size();
+        int totalRefs = 0;
+        ReferenceDatabase refDb =
+            (ReferenceDatabase) pipelineContext.getAttribute("reference_database");
+        if (refDb != null) {
+            totalRefs = refDb.getAllReferences().size();
+        }
+        int totalNamespaces = this.analysisContextManager.getCurrentContext().getNamespaces().size();
+        int totalFrameworks = 0;
+        ProjectClassificationResult classResult =
+            (ProjectClassificationResult) pipelineContext.getAttribute("project_classification");
+        if (classResult != null && classResult.detectedFrameworks() != null) {
+            totalFrameworks = classResult.detectedFrameworks().size();
+        }
+        int totalMetrics = totalEntities * 5;
+
+        com.example.bodhak.orchestration.progress.ProgressPublisher.publish(
+            new com.example.bodhak.orchestration.progress.AnalysisProgressEvents.AnalysisCompleted(
+                totalFiles, totalEntities, totalRefs, totalNamespaces, totalFrameworks, totalMetrics
+            )
+        );
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────

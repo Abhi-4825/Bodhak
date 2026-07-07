@@ -20,6 +20,9 @@ public class ProjectClassifierPass implements CompilerPass {
 
     @Override
     public void execute(PipelineContext context) {
+        com.example.bodhak.orchestration.progress.ProgressPublisher.publish(
+            new com.example.bodhak.orchestration.progress.AnalysisProgressEvents.TechnologyDetectionStarted()
+        );
         Map<ProjectType, Double> typeScores = new HashMap<>();
         
         boolean hasRoutes = false;

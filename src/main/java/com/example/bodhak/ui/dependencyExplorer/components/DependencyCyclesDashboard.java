@@ -4,6 +4,7 @@ import com.example.bodhak.context.AnalysisContext;
 import com.example.bodhak.context.SemanticGraphIndex;
 import com.example.bodhak.model.entity.EntityInfo;
 import com.example.bodhak.ui.dependencyExplorer.state.DependencyExplorerState;
+import com.example.bodhak.ui.dependencyExplorer.state.CyclesState;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -26,10 +27,6 @@ public class DependencyCyclesDashboard extends ScrollPane {
     private final Consumer<String> tabSwitcher;
     private final BiConsumer<EntityInfo, EntityInfo> pathFinderTrigger;
 
-    private SemanticGraphIndex graphIndex = null;
-    private final List<EntityPath> cycles = new ArrayList<>();
-    private EntityPath selectedCycle = null;
-
     // Top Metrics
     private final StringProperty totalCyclesMetric = new SimpleStringProperty("0");
     private final StringProperty affectedEntitiesMetric = new SimpleStringProperty("0");
@@ -51,15 +48,47 @@ public class DependencyCyclesDashboard extends ScrollPane {
     private final Label cycleListTitle = new Label("CYCLE LIST (0)");
     private final TextField searchField = new TextField();
 
+    private GridPane metricsGrid;
+    private final StackPane contentLayoutContainer = new StackPane();
+    private final HBox contentHBox = new HBox(16);
+    private final VBox contentVBox = new VBox(16);
+    
+    private final VBox detailContainer = new VBox(16);
+    private final HBox detailTopRow = new HBox(16);
+    private final HBox detailBottomRow = new HBox(16);
+
+    private VBox leftCol;
+    private VBox centerCol;
+    private VBox rightCol;
+
     // Center Detail panel
     private final Label detailTitleLabel = new Label("SELECT A CYCLE TO VIEW DETAILS");
     private final Label detailBadgeEntities = new Label("0 Entities");
     private final Label detailBadgeImpact = new Label("Low Impact");
     private final VBox flowchartCardsBox = new VBox(8);
     private final Pane flowchartArrowPane = new Pane();
+    private Node registeredFirstCard = null;
+    private Node registeredLastCard = null;
+    private final javafx.beans.value.ChangeListener<Object> redrawListener = (obs, oldVal, newVal) -> drawRedReturnLine();
     private final VBox suggestedBreakpointsBox = new VBox(8);
+    
+    // Root Cause Analysis fields
+    private final Label primaryCauseLabel = new Label("—");
+    private final Label secondaryCauseLabel = new Label("—");
+    private final Label introducedByLabel = new Label("—");
+    private final Label cyclePatternLabel = new Label("—");
+
+    // Cycle Impact fields
+    private final Label entitiesAffectedLabel = new Label("0");
+    private final Label namespacesAffectedLabel = new Label("0");
+    private final Label compUnitsAffectedLabel = new Label("0");
+    private final Label archRiskLabel = new Label("MEDIUM");
+    private final ProgressBar refactorCostBar = new ProgressBar(0.0);
+    private final Label refactorCostLabel = new Label("0%");
     private final Label warningLabel = new Label("Break any link in this cycle to eliminate circular dependency.");
-    private final Button btnViewBreakSuggestions = new Button("View Break Suggestions (0)");
+
+    private VBox rootCauseCard;
+    private VBox impactCard;
 
     public DependencyCyclesDashboard(DependencyExplorerState state, Consumer<String> tabSwitcher, BiConsumer<EntityInfo, EntityInfo> pathFinderTrigger) {
         this.state = state;
@@ -80,115 +109,73 @@ public class DependencyCyclesDashboard extends ScrollPane {
         mainLayout.setStyle("-fx-background-color: #0d141a;");
         setContent(mainLayout);
 
-        // Listen for context updates
-        state.analysisContextProperty().addListener((obs, oldVal, context) -> {
-            if (context != null) {
-                graphIndex = context.getSemanticGraphIndex();
-                loadCycles(context);
-            } else {
-                graphIndex = null;
-                cycles.clear();
-                selectedCycle = null;
-                updateUI();
+        // Bind metrics properties directly to CyclesState properties
+        totalCyclesMetric.bind(state.getCyclesState().totalCyclesMetricProperty());
+        affectedEntitiesMetric.bind(state.getCyclesState().affectedEntitiesMetricProperty());
+        maxCycleLengthMetric.bind(state.getCyclesState().maxCycleLengthMetricProperty());
+        strongComponentsMetric.bind(state.getCyclesState().strongComponentsMetricProperty());
+        cycleDensityMetric.bind(state.getCyclesState().cycleDensityMetricProperty());
+        cycleHealthMetric.bind(state.getCyclesState().cycleHealthMetricProperty());
+
+        // Bind metrics panel detail fields
+        cycleLengthMetric.bind(state.getCyclesState().cycleLengthMetricProperty());
+        internalDepsMetric.bind(state.getCyclesState().internalDepsMetricProperty());
+        externalDepsMetric.bind(state.getCyclesState().externalDepsMetricProperty());
+        instabilityMetric.bind(state.getCyclesState().instabilityMetricProperty());
+        impactScoreMetric.bind(state.getCyclesState().impactScoreMetricProperty());
+
+        // Bind root cause details directly to CyclesState properties
+        primaryCauseLabel.textProperty().bind(state.getCyclesState().primaryCauseProperty());
+        secondaryCauseLabel.textProperty().bind(state.getCyclesState().secondaryCauseProperty());
+        introducedByLabel.textProperty().bind(state.getCyclesState().introducedByProperty());
+        cyclePatternLabel.textProperty().bind(state.getCyclesState().cyclePatternProperty());
+
+        // Bind impact details directly to CyclesState properties
+        entitiesAffectedLabel.textProperty().bind(state.getCyclesState().entitiesAffectedProperty());
+        namespacesAffectedLabel.textProperty().bind(state.getCyclesState().namespacesAffectedProperty());
+        compUnitsAffectedLabel.textProperty().bind(state.getCyclesState().compUnitsAffectedProperty());
+        archRiskLabel.textProperty().bind(state.getCyclesState().archRiskProperty());
+        refactorCostBar.progressProperty().bind(state.getCyclesState().refactorCostProgressProperty());
+        refactorCostLabel.textProperty().bind(state.getCyclesState().refactorCostLabelProperty());
+
+        // Bind Arch Risk Color to risk changes
+        state.getCyclesState().archRiskProperty().addListener((obs, oldVal, risk) -> {
+            String riskColor = "#ffa726";
+            if ("CRITICAL".equals(risk)) {
+                riskColor = "#ff4b4b";
+            } else if ("HIGH".equals(risk)) {
+                riskColor = "#ec407a";
+            } else if ("LOW".equals(risk)) {
+                riskColor = "#00e676";
             }
+            archRiskLabel.setStyle("-fx-text-fill: " + riskColor + "; -fx-font-weight: bold; -fx-font-size: 11px;");
         });
 
-        // Trigger load if context already loaded
-        if (state.analysisContextProperty().get() != null) {
-            graphIndex = state.analysisContextProperty().get().getSemanticGraphIndex();
-            loadCycles(state.analysisContextProperty().get());
-        }
+        // Listen for cycle list changes
+        state.getCyclesState().getCycles().addListener((javafx.collections.ListChangeListener<EntityPath>) c -> {
+            int total = state.getCyclesState().getCycles().size();
+            cycleListTitle.setText("CYCLE LIST (" + total + ")");
+            populateCycleList(searchField.getText());
+        });
+
+        // Listen for selected cycle changes to rebuild/redraw the UI
+        state.getCyclesState().selectedCycleProperty().addListener((obs, oldVal, newVal) -> {
+            populateDetailView();
+        });
+
+        // Initial setup
+        int total = state.getCyclesState().getCycles().size();
+        cycleListTitle.setText("CYCLE LIST (" + total + ")");
+        populateCycleList(searchField.getText());
+        populateDetailView();
 
         buildDashboard();
     }
 
-    private void loadCycles(AnalysisContext context) {
-        cycles.clear();
-        if (context.getDependencyGraph() == null || graphIndex == null) {
-            updateUI();
-            return;
-        }
-
-        Set<Set<String>> circularGroups = context.getDependencyGraph().snapshot().circularGroups();
-        for (Set<String> scc : circularGroups) {
-            if (scc.size() > 1) {
-                EntityPath path = PathQueryEngine.extractCycleFromSCC(graphIndex, scc);
-                if (path != null && !path.getEntities().isEmpty()) {
-                    cycles.add(path);
-                }
-            }
-        }
-
-        // Sort cycles by size descending
-        cycles.sort((c1, c2) -> Integer.compare(c2.getEntities().size(), c1.getEntities().size()));
-
-        if (!cycles.isEmpty()) {
-            selectedCycle = cycles.get(0);
-        } else {
-            selectedCycle = null;
-        }
-
-        updateUI();
-    }
-
-    private void updateUI() {
-        Platform.runLater(() -> {
-            int total = cycles.size();
-            totalCyclesMetric.set(String.valueOf(total));
-            strongComponentsMetric.set(String.valueOf(total));
-
-            Set<String> affected = new HashSet<>();
-            int maxLen = 0;
-            for (EntityPath p : cycles) {
-                affected.addAll(p.getEntities());
-                if (p.getHops() > maxLen) {
-                    maxLen = p.getHops();
-                }
-            }
-            affectedEntitiesMetric.set(String.valueOf(affected.size()));
-            maxCycleLengthMetric.set(String.valueOf(maxLen));
-
-            // Density calculation
-            if (graphIndex != null && graphIndex.getEntityCount() > 0) {
-                int totalEdges = 0;
-                for (int i = 0; i < graphIndex.getEntityCount(); i++) {
-                    totalEdges += graphIndex.getForwardEdges(i).length;
-                }
-                int cycleEdges = 0;
-                for (EntityPath p : cycles) {
-                    cycleEdges += p.getHops();
-                }
-                double density = totalEdges > 0 ? (cycleEdges / (double) totalEdges) * 100 : 0.0;
-                cycleDensityMetric.set(String.format("%.2f%%", density));
-            } else {
-                cycleDensityMetric.set("0.00%");
-            }
-
-            // Health
-            if (total == 0) {
-                cycleHealthMetric.set("Healthy");
-            } else if (total < 5) {
-                cycleHealthMetric.set("Needs Attention");
-            } else {
-                cycleHealthMetric.set("Critical");
-            }
-
-            cycleListTitle.setText("CYCLE LIST (" + total + ")");
-            populateCycleList(searchField.getText());
-            populateDetailView();
-        });
-    }
-
     private void buildDashboard() {
-        // 1. Top Metrics row
-        GridPane metricsGrid = new GridPane();
+        metricsGrid = new GridPane();
         metricsGrid.setHgap(12);
         metricsGrid.setVgap(12);
-        for (int i = 0; i < 6; i++) {
-            ColumnConstraints cc = new ColumnConstraints();
-            cc.setPercentWidth(100.0 / 6.0);
-            metricsGrid.getColumnConstraints().add(cc);
-        }
 
         metricsGrid.add(createMetricCard("TOTAL CYCLES", totalCyclesMetric, "Circular dependency groups"), 0, 0);
         metricsGrid.add(createMetricCard("AFFECTED ENTITIES", affectedEntitiesMetric, "Entities involved in cycles"), 1, 0);
@@ -197,28 +184,183 @@ public class DependencyCyclesDashboard extends ScrollPane {
         metricsGrid.add(createMetricCard("CYCLE DENSITY", cycleDensityMetric, "Of total dependencies"), 4, 0);
         metricsGrid.add(createMetricCard("CYCLE HEALTH", cycleHealthMetric, "Review and refactor cycles"), 5, 0);
 
-        // 2. Main content area (Split into 3 columns)
-        HBox contentBox = new HBox(16);
-        contentBox.setAlignment(Pos.TOP_LEFT);
-
-        // Left Column: List
-        VBox leftCol = buildLeftColumn();
+        leftCol = buildLeftColumn();
         leftCol.setPrefWidth(280);
         leftCol.setMinWidth(280);
         HBox.setHgrow(leftCol, Priority.NEVER);
 
-        // Center Column: Details Flowchart
-        VBox centerCol = buildCenterColumn();
+        centerCol = buildCenterColumn();
         HBox.setHgrow(centerCol, Priority.ALWAYS);
 
-        // Right Column: Info, Suggestions, Actions
-        VBox rightCol = buildRightColumn();
+        rightCol = buildRightColumn();
         rightCol.setPrefWidth(300);
         rightCol.setMinWidth(300);
         HBox.setHgrow(rightCol, Priority.NEVER);
 
-        contentBox.getChildren().addAll(leftCol, centerCol, rightCol);
-        mainLayout.getChildren().addAll(metricsGrid, contentBox);
+        rootCauseCard = buildRootCauseCard();
+        impactCard = buildImpactCard();
+
+        // Content configurations HBox/VBox
+        contentHBox.setAlignment(Pos.TOP_LEFT);
+        contentVBox.setAlignment(Pos.TOP_LEFT);
+        
+        contentHBox.setMaxWidth(Double.MAX_VALUE);
+        contentVBox.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(contentHBox, Priority.ALWAYS);
+        VBox.setVgrow(contentVBox, Priority.ALWAYS);
+        
+        contentLayoutContainer.setMaxWidth(Double.MAX_VALUE);
+        VBox.setVgrow(contentLayoutContainer, Priority.ALWAYS);
+
+        mainLayout.getChildren().addAll(metricsGrid, contentLayoutContainer);
+
+        // Adapt Layout initially
+        adaptLayout(1400);
+
+        widthProperty().addListener((obs, oldVal, newVal) -> {
+            adaptLayout(newVal.doubleValue());
+        });
+    }
+
+    private void adaptLayout(double width) {
+        // --- 1. Metrics Grid Responsiveness ---
+        metricsGrid.getChildren().clear();
+        metricsGrid.getColumnConstraints().clear();
+        metricsGrid.getRowConstraints().clear();
+
+        Node card1 = createMetricCard("TOTAL CYCLES", totalCyclesMetric, "Circular dependency groups");
+        Node card2 = createMetricCard("AFFECTED ENTITIES", affectedEntitiesMetric, "Entities involved in cycles");
+        Node card3 = createMetricCard("MAX CYCLE LENGTH", maxCycleLengthMetric, "Longest cycle contains N entities");
+        Node card4 = createMetricCard("STRONG COMPONENTS", strongComponentsMetric, "Strongly connected components");
+        Node card5 = createMetricCard("CYCLE DENSITY", cycleDensityMetric, "Of total dependencies");
+        Node card6 = createMetricCard("CYCLE HEALTH", cycleHealthMetric, "Review and refactor cycles");
+
+        if (width > 1200) {
+            // Wide Mode: 6 columns, 1 row
+            for (int i = 0; i < 6; i++) {
+                ColumnConstraints cc = new ColumnConstraints();
+                cc.setPercentWidth(100.0 / 6.0);
+                metricsGrid.getColumnConstraints().add(cc);
+            }
+            metricsGrid.add(card1, 0, 0);
+            metricsGrid.add(card2, 1, 0);
+            metricsGrid.add(card3, 2, 0);
+            metricsGrid.add(card4, 3, 0);
+            metricsGrid.add(card5, 4, 0);
+            metricsGrid.add(card6, 5, 0);
+        } else if (width > 850) {
+            // Medium Mode: 3 columns, 2 rows
+            for (int i = 0; i < 3; i++) {
+                ColumnConstraints cc = new ColumnConstraints();
+                cc.setPercentWidth(100.0 / 3.0);
+                metricsGrid.getColumnConstraints().add(cc);
+            }
+            metricsGrid.add(card1, 0, 0);
+            metricsGrid.add(card2, 1, 0);
+            metricsGrid.add(card3, 2, 0);
+            metricsGrid.add(card4, 0, 1);
+            metricsGrid.add(card5, 1, 1);
+            metricsGrid.add(card6, 2, 1);
+        } else {
+            // Narrow Mode: 2 columns, 3 rows
+            for (int i = 0; i < 2; i++) {
+                ColumnConstraints cc = new ColumnConstraints();
+                cc.setPercentWidth(100.0 / 2.0);
+                metricsGrid.getColumnConstraints().add(cc);
+            }
+            metricsGrid.add(card1, 0, 0);
+            metricsGrid.add(card2, 1, 0);
+            metricsGrid.add(card3, 0, 1);
+            metricsGrid.add(card4, 1, 1);
+            metricsGrid.add(card5, 0, 2);
+            metricsGrid.add(card6, 1, 2);
+        }
+
+        // --- 2. Main Columns Responsiveness ---
+        detailContainer.setMaxWidth(Double.MAX_VALUE);
+        VBox.setVgrow(detailContainer, Priority.ALWAYS);
+        HBox.setHgrow(detailContainer, Priority.ALWAYS);
+
+        detailTopRow.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(detailTopRow, Priority.ALWAYS);
+
+        detailBottomRow.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(detailBottomRow, Priority.ALWAYS);
+
+        if (width > 1150) {
+            // Wide Mode: side-by-side
+            contentHBox.getChildren().clear();
+            contentVBox.getChildren().clear();
+            detailContainer.getChildren().clear();
+            detailTopRow.getChildren().clear();
+            detailBottomRow.getChildren().clear();
+            
+            leftCol.setPrefWidth(280); leftCol.setMinWidth(280); HBox.setHgrow(leftCol, Priority.NEVER);
+            
+            centerCol.setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(centerCol, Priority.ALWAYS);
+            rightCol.setPrefWidth(300); rightCol.setMinWidth(300); HBox.setHgrow(rightCol, Priority.NEVER);
+            detailTopRow.getChildren().addAll(centerCol, rightCol);
+
+            rootCauseCard.setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(rootCauseCard, Priority.ALWAYS);
+            impactCard.setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(impactCard, Priority.ALWAYS);
+            detailBottomRow.getChildren().addAll(rootCauseCard, impactCard);
+
+            detailContainer.getChildren().addAll(detailTopRow, detailBottomRow);
+            contentHBox.getChildren().addAll(leftCol, detailContainer);
+
+            if (contentLayoutContainer.getChildren().isEmpty() || contentLayoutContainer.getChildren().get(0) != contentHBox) {
+                contentLayoutContainer.getChildren().clear();
+                contentLayoutContainer.getChildren().add(contentHBox);
+            }
+        } else if (width > 850) {
+            // Medium Mode: leftCol side-by-side with VBox(centerCol + rightCol + bottomRow)
+            contentHBox.getChildren().clear();
+            contentVBox.getChildren().clear();
+            detailContainer.getChildren().clear();
+            detailTopRow.getChildren().clear();
+            detailBottomRow.getChildren().clear();
+
+            leftCol.setPrefWidth(260); leftCol.setMinWidth(260); HBox.setHgrow(leftCol, Priority.NEVER);
+            
+            VBox centerRightVBox = new VBox(16);
+            centerRightVBox.setMaxWidth(Double.MAX_VALUE);
+            VBox.setVgrow(centerRightVBox, Priority.ALWAYS);
+            centerCol.setMaxWidth(Double.MAX_VALUE); VBox.setVgrow(centerCol, Priority.ALWAYS);
+            rightCol.setMaxWidth(Double.MAX_VALUE); VBox.setVgrow(rightCol, Priority.ALWAYS);
+            centerRightVBox.getChildren().addAll(centerCol, rightCol);
+
+            rootCauseCard.setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(rootCauseCard, Priority.ALWAYS);
+            impactCard.setMaxWidth(Double.MAX_VALUE); HBox.setHgrow(impactCard, Priority.ALWAYS);
+            detailBottomRow.getChildren().addAll(rootCauseCard, impactCard);
+
+            detailContainer.getChildren().addAll(centerRightVBox, detailBottomRow);
+            contentHBox.getChildren().addAll(leftCol, detailContainer);
+
+            if (contentLayoutContainer.getChildren().isEmpty() || contentLayoutContainer.getChildren().get(0) != contentHBox) {
+                contentLayoutContainer.getChildren().clear();
+                contentLayoutContainer.getChildren().add(contentHBox);
+            }
+        } else {
+            // Narrow Mode: leftCol, centerCol, rightCol, rootCauseCard, impactCard stacked vertically
+            contentHBox.getChildren().clear();
+            contentVBox.getChildren().clear();
+            detailContainer.getChildren().clear();
+            detailTopRow.getChildren().clear();
+            detailBottomRow.getChildren().clear();
+
+            leftCol.setMaxWidth(Double.MAX_VALUE); VBox.setVgrow(leftCol, Priority.ALWAYS);
+            centerCol.setMaxWidth(Double.MAX_VALUE); VBox.setVgrow(centerCol, Priority.ALWAYS);
+            rightCol.setMaxWidth(Double.MAX_VALUE); VBox.setVgrow(rightCol, Priority.ALWAYS);
+            rootCauseCard.setMaxWidth(Double.MAX_VALUE); VBox.setVgrow(rootCauseCard, Priority.ALWAYS);
+            impactCard.setMaxWidth(Double.MAX_VALUE); VBox.setVgrow(impactCard, Priority.ALWAYS);
+
+            contentVBox.getChildren().addAll(leftCol, centerCol, rightCol, rootCauseCard, impactCard);
+
+            if (contentLayoutContainer.getChildren().isEmpty() || contentLayoutContainer.getChildren().get(0) != contentVBox) {
+                contentLayoutContainer.getChildren().clear();
+                contentLayoutContainer.getChildren().add(contentVBox);
+            }
+        }
     }
 
     private VBox createMetricCard(String title, StringProperty valueProp, String subtitle) {
@@ -289,8 +431,9 @@ public class DependencyCyclesDashboard extends ScrollPane {
         cycleListViewBox.getChildren().clear();
         String lowerQuery = query == null ? "" : query.toLowerCase().trim();
 
-        for (int i = 0; i < cycles.size(); i++) {
-            EntityPath path = cycles.get(i);
+        var cyclesList = state.getCyclesState().getCycles();
+        for (int i = 0; i < cyclesList.size(); i++) {
+            EntityPath path = cyclesList.get(i);
             String cycleName = "Cycle #" + (i + 1);
             int entitiesCount = path.getEntities().size() - 1; // last repeats first
 
@@ -348,15 +491,14 @@ public class DependencyCyclesDashboard extends ScrollPane {
 
             card.getChildren().addAll(topRow, lblPreview);
 
-            if (selectedCycle == path) {
+            if (state.getCyclesState().selectedCycleProperty().get() == path) {
                 card.setStyle("-fx-background-color: rgba(0, 218, 243, 0.05); -fx-border-color: #00daf3; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 10; -fx-cursor: hand;");
             }
 
             final EntityPath targetPath = path;
             card.setOnMouseClicked(e -> {
-                selectedCycle = targetPath;
-                populateCycleList(searchField.getText());
-                populateDetailView();
+                state.getCyclesState().selectedCycleProperty().set(targetPath);
+                state.getCyclesState().updateSelectedCycleMetrics(state.analysisContextProperty().get(), targetPath);
             });
 
             cycleListViewBox.getChildren().add(card);
@@ -425,41 +567,7 @@ public class DependencyCyclesDashboard extends ScrollPane {
 
         // Dynamic Polyline drawing overlay listener
         flowchartCardsBox.layoutBoundsProperty().addListener((obs, oldVal, newVal) -> {
-            flowchartArrowPane.getChildren().clear();
-            if (flowchartCardsBox.getChildren().isEmpty()) return;
-
-            Node firstCard = null;
-            Node lastCard = null;
-            for (Node child : flowchartCardsBox.getChildren()) {
-                if (child instanceof VBox && child.getStyleClass().contains("dd-path-node-card")) {
-                    if (firstCard == null) firstCard = child;
-                    lastCard = child;
-                }
-            }
-
-            if (firstCard == null || lastCard == null || firstCard == lastCard) return;
-
-            double startY = firstCard.getLayoutY() + firstCard.getBoundsInParent().getHeight() / 2;
-            double endY = lastCard.getLayoutY() + lastCard.getBoundsInParent().getHeight() / 2;
-
-            Polyline redLine = new Polyline();
-            redLine.getPoints().addAll(
-                0.0, endY,
-                30.0, endY,
-                30.0, startY,
-                0.0, startY
-            );
-            redLine.setStyle("-fx-stroke: #e74c3c; -fx-stroke-width: 2; -fx-fill: transparent;");
-
-            Polyline arrowhead = new Polyline();
-            arrowhead.getPoints().addAll(
-                8.0, startY - 5.0,
-                0.0, startY,
-                8.0, startY + 5.0
-            );
-            arrowhead.setStyle("-fx-stroke: #e74c3c; -fx-stroke-width: 2; -fx-fill: transparent;");
-
-            flowchartArrowPane.getChildren().addAll(redLine, arrowhead);
+            drawRedReturnLine();
         });
 
         ScrollPane centerScroll = new ScrollPane(flowchartHBox);
@@ -480,18 +588,21 @@ public class DependencyCyclesDashboard extends ScrollPane {
         warningLabel.setStyle("-fx-text-fill: #bac9cc; -fx-font-size: 11px;");
         HBox.setHgrow(warningLabel, Priority.ALWAYS);
 
-        btnViewBreakSuggestions.setStyle("-fx-background-color: rgba(231, 76, 60, 0.1); -fx-text-fill: #e74c3c; -fx-border-color: rgba(231, 76, 60, 0.2); -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 6 12; -fx-font-size: 10px; -fx-cursor: hand;");
+//        btnViewBreakSuggestions.setStyle("-fx-background-color: rgba(231, 76, 60, 0.1); -fx-text-fill: #e74c3c; -fx-border-color: rgba(231, 76, 60, 0.2); -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 6 12; -fx-font-size: 10px; -fx-cursor: hand;");
 
-        bottomBanner.getChildren().addAll(warningIcon, warningLabel, btnViewBreakSuggestions);
+        bottomBanner.getChildren().addAll(warningIcon, warningLabel);
 
         col.getChildren().addAll(header, descBanner, legendRow, centerScroll, bottomBanner);
         return col;
     }
 
     private void populateDetailView() {
+        AnalysisContext context = state.analysisContextProperty().get();
+        SemanticGraphIndex graphIndex = context != null ? context.getSemanticGraphIndex() : null;
         flowchartCardsBox.getChildren().clear();
         suggestedBreakpointsBox.getChildren().clear();
 
+        EntityPath selectedCycle = state.getCyclesState().selectedCycleProperty().get();
         if (selectedCycle == null) {
             detailTitleLabel.setText("NO CYCLES DETECTED");
             detailBadgeEntities.setVisible(false);
@@ -499,7 +610,8 @@ public class DependencyCyclesDashboard extends ScrollPane {
             return;
         }
 
-        int index = cycles.indexOf(selectedCycle) + 1;
+        var cyclesList = state.getCyclesState().getCycles();
+        int index = cyclesList.indexOf(selectedCycle) + 1;
         detailTitleLabel.setText("CYCLE #" + index + " - DETAIL VIEW");
         
         int nEntities = selectedCycle.getEntities().size() - 1;
@@ -528,38 +640,40 @@ public class DependencyCyclesDashboard extends ScrollPane {
                 flowchartCardsBox.getChildren().add(truncateLabel);
 
                 Label arrow = new Label("↓");
-                arrow.setStyle("-fx-text-fill: #00daf3; -fx-font-size: 14px; -fx-padding: 4 0;");
+                arrow.setStyle("-fx-text-fill: #00daf3; -fx-font-size: 14px; -fx-padding: 2 0;");
                 flowchartCardsBox.getChildren().add(arrow);
-
-                i = totalNodes - 51;
+                
+                i = totalNodes - 50; // skip intermediate nodes
                 continue;
             }
 
-            String nodeName = nodes.get(i);
-            int lastDot = nodeName.lastIndexOf('.');
-            String simple = lastDot == -1 ? nodeName : nodeName.substring(lastDot + 1);
-            String pkg = lastDot == -1 ? "" : nodeName.substring(0, lastDot);
+            String node = nodes.get(i);
+            String simple = node.substring(node.lastIndexOf('.') + 1);
+            String pkg = node.substring(0, Math.max(0, node.lastIndexOf('.')));
 
-            VBox nodeCard = new VBox(2);
+            VBox nodeCard = new VBox(4);
             nodeCard.getStyleClass().add("dd-path-node-card");
-            nodeCard.setStyle("-fx-background-color: #12181f; -fx-border-color: rgba(132, 147, 150, 0.08); -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 10; -fx-pref-width: 280; -fx-max-width: 280;");
-
-            HBox top = new HBox(6);
+            nodeCard.setPadding(new Insets(10, 12, 10, 12));
+            nodeCard.setStyle("-fx-background-color: #12181f; -fx-border-color: rgba(132, 147, 150, 0.08); -fx-border-radius: 8; -fx-background-radius: 8;");
+            
+            HBox top = new HBox(8);
             top.setAlignment(Pos.CENTER_LEFT);
-            Label lblNum = new Label(String.valueOf(i + 1));
-            lblNum.setStyle("-fx-text-fill: #00daf3; -fx-font-weight: bold; -fx-font-size: 10px; -fx-padding: 0 4 0 0;");
-
+            Label lblNum = new Label((i + 1) + ".");
+            lblNum.setStyle("-fx-text-fill: #849396; -fx-font-weight: bold; -fx-font-size: 11px;");
             Label lblName = new Label(simple);
-            lblName.setStyle("-fx-text-fill: #dce3ec; -fx-font-weight: bold; -fx-font-size: 11px;");
-
+            lblName.setStyle("-fx-text-fill: #dce3ec; -fx-font-weight: bold; -fx-font-size: 11px; -fx-font-family: 'JetBrains Mono';");
             Pane spacer = new Pane();
             HBox.setHgrow(spacer, Priority.ALWAYS);
 
-            Label kindChip = new Label(nodeName.toLowerCase().contains("package") ? "PACKAGE" : "CLASS");
-            if (kindChip.getText().equals("PACKAGE")) {
-                kindChip.setStyle("-fx-font-size: 7px; -fx-text-fill: #e67e22; -fx-background-color: rgba(230, 126, 34, 0.1); -fx-padding: 1 4; -fx-background-radius: 3;");
-            } else {
-                kindChip.setStyle("-fx-font-size: 7px; -fx-text-fill: #00daf3; -fx-background-color: rgba(0, 218, 243, 0.1); -fx-padding: 1 4; -fx-background-radius: 3;");
+            Label kindChip = new Label("class");
+            kindChip.setStyle("-fx-text-fill: #849396; -fx-background-color: rgba(132, 147, 150, 0.05); -fx-font-size: 8px; -fx-padding: 2 6; -fx-background-radius: 4;");
+            
+            // Map node info to JavaFX component references if this is the start or end card
+            if (i == 0) {
+                registeredFirstCard = nodeCard;
+            }
+            if (i == totalNodes - 1) {
+                registeredLastCard = nodeCard;
             }
 
             top.getChildren().addAll(lblNum, lblName, spacer, kindChip);
@@ -577,45 +691,12 @@ public class DependencyCyclesDashboard extends ScrollPane {
             }
         }
 
-        // Metrics calculations
-        cycleLengthMetric.set(String.valueOf(nEntities));
-        
-        int internalDeps = 0;
-        int externalDeps = 0;
-        Set<String> cycleNodeSet = new HashSet<>(nodes);
-        if (graphIndex != null) {
-            for (String node : cycleNodeSet) {
-                int id = graphIndex.getEntityId(node);
-                if (id != -1) {
-                    for (int targetId : graphIndex.getForwardEdges(id)) {
-                        String targetName = graphIndex.getEntityName(targetId);
-                        if (cycleNodeSet.contains(targetName)) {
-                            internalDeps++;
-                        } else {
-                            externalDeps++;
-                        }
-                    }
-                }
-            }
-        }
-        internalDepsMetric.set(String.valueOf(internalDeps));
-        externalDepsMetric.set(String.valueOf(externalDeps));
-
-        double instability = (internalDeps + externalDeps) > 0 ? (double) externalDeps / (internalDeps + externalDeps) : 0.0;
-        instabilityMetric.set(String.format("%.2f", instability));
-
-        double impact = (nEntities / 50.0);
-        if (impact > 1.0) impact = 1.0;
-        impactScoreMetric.set(String.format("%s (%.2f)", nEntities >= 20 ? "High" : (nEntities >= 6 ? "Medium" : "Low"), impact));
-
         // Generate Suggested Breakpoints
         List<String[]> edgeList = new ArrayList<>();
         for (int i = 0; i < nodes.size() - 1; i++) {
             edgeList.add(new String[]{nodes.get(i), nodes.get(i+1)});
         }
-        // Limit to 4 suggestions
         int limit = Math.min(4, edgeList.size());
-        btnViewBreakSuggestions.setText("View Break Suggestions (" + limit + ")");
         for (int i = 0; i < limit; i++) {
             String[] edge = edgeList.get(i);
             String fromSimple = edge[0].substring(edge[0].lastIndexOf('.') + 1);
@@ -624,6 +705,8 @@ public class DependencyCyclesDashboard extends ScrollPane {
             String severity = i == 0 ? "High Impact" : (i == 1 ? "Medium Impact" : "Low Impact");
             suggestedBreakpointsBox.getChildren().add(createBreakpointItem(fromSimple + " → " + toSimple, refType, severity));
         }
+
+        Platform.runLater(this::drawRedReturnLine);
     }
 
     private HBox createBreakpointItem(String edgeText, String pattern, String severity) {
@@ -699,40 +782,90 @@ public class DependencyCyclesDashboard extends ScrollPane {
 
         breakCard.getChildren().addAll(lblBreakTitle, breakScroll, btnViewAll);
 
-        // 3. Quick Actions card
-        VBox actionCard = new VBox(12);
-        actionCard.getStyleClass().add("dd-card");
-        Label lblActTitle = new Label("QUICK ACTIONS");
-        lblActTitle.getStyleClass().add("dd-card-title");
-        lblActTitle.setStyle("-fx-text-fill: #bac9cc; -fx-font-weight: bold;");
-
-        VBox actionsList = new VBox(8);
-        
-        Button btnShowPF = createActionButton("Show in Path Finder");
-        btnShowPF.setOnAction(e -> {
-            if (selectedCycle != null && selectedCycle.getEntities().size() > 1 && state.analysisContextProperty().get() != null) {
-                List<String> list = selectedCycle.getEntities();
-                AnalysisContext context = state.analysisContextProperty().get();
-                context.findEntity(list.get(0)).ifPresent(from -> {
-                    context.findEntity(list.get(1)).ifPresent(to -> {
-                        pathFinderTrigger.accept(from, to);
-                        tabSwitcher.accept("Path Finder");
-                    });
-                });
-            }
-        });
-
-        Button btnShowMatrix = createActionButton("Show in Matrix");
-        btnShowMatrix.setOnAction(e -> tabSwitcher.accept("Matrix"));
-
-        Button btnAnalyze = createActionButton("Analyze Impact");
-        Button btnViewScc = createActionButton("View Strongly Connected Component");
-
-        actionsList.getChildren().addAll(btnShowPF, btnShowMatrix, btnAnalyze, btnViewScc);
-        actionCard.getChildren().addAll(lblActTitle, actionsList);
-
-        col.getChildren().addAll(metricsCard, breakCard, actionCard);
+        col.getChildren().addAll(metricsCard, breakCard);
         return col;
+    }
+
+    private VBox buildRootCauseCard() {
+        VBox card = new VBox(12);
+        card.getStyleClass().add("dd-card");
+        Label lblRootCauseTitle = new Label("ROOT CAUSE ANALYSIS");
+        lblRootCauseTitle.getStyleClass().add("dd-card-title");
+        lblRootCauseTitle.setStyle("-fx-text-fill: #bac9cc; -fx-font-weight: bold;");
+        
+        VBox rcContent = new VBox(8);
+        rcContent.getChildren().addAll(
+            createDetailTextRow("Primary Cause", primaryCauseLabel),
+            createSeparatorLine(),
+            createDetailTextRow("Secondary Cause", secondaryCauseLabel),
+            createSeparatorLine(),
+            createDetailTextRow("Introduced By", introducedByLabel),
+            createSeparatorLine(),
+            createDetailTextRow("Cycle Pattern", cyclePatternLabel)
+        );
+        card.getChildren().addAll(lblRootCauseTitle, rcContent);
+        HBox.setHgrow(card, Priority.ALWAYS);
+        return card;
+    }
+
+    private VBox buildImpactCard() {
+        VBox card = new VBox(12);
+        card.getStyleClass().add("dd-card");
+        Label lblImpactTitle = new Label("CYCLE IMPACT");
+        lblImpactTitle.getStyleClass().add("dd-card-title");
+        lblImpactTitle.setStyle("-fx-text-fill: #bac9cc; -fx-font-weight: bold;");
+        
+        VBox impactRows = new VBox(8);
+        impactRows.getChildren().addAll(
+            createDetailTextRow("Entities affected", entitiesAffectedLabel),
+            createDetailTextRow("Namespaces", namespacesAffectedLabel),
+            createDetailTextRow("Compilation Units", compUnitsAffectedLabel),
+            createDetailTextRow("Architecture Risk", archRiskLabel),
+            createCostProgressBarRow()
+        );
+        card.getChildren().addAll(lblImpactTitle, impactRows);
+        HBox.setHgrow(card, Priority.ALWAYS);
+        return card;
+    }
+
+
+
+
+    private VBox createDetailTextRow(String label, Label val) {
+        VBox row = new VBox(4);
+        Label lbl = new Label(label);
+        lbl.setStyle("-fx-text-fill: #849396; -fx-font-size: 10px; -fx-font-weight: bold;");
+        
+        val.setStyle("-fx-text-fill: #dce3ec; -fx-font-size: 11px; -fx-font-family: 'JetBrains Mono';");
+        val.setWrapText(true);
+        val.setMinWidth(0);
+        
+        row.getChildren().addAll(lbl, val);
+        return row;
+    }
+
+    private Region createSeparatorLine() {
+        Region hr = new Region();
+        hr.setStyle("-fx-background-color: rgba(132, 147, 150, 0.1); -fx-min-height: 1; -fx-max-height: 1;");
+        return hr;
+    }
+
+    private VBox createCostProgressBarRow() {
+        VBox row = new VBox(6);
+        
+        HBox labelRow = new HBox(8);
+        Label lbl = new Label("Estimated Refactoring Cost");
+        lbl.setStyle("-fx-text-fill: #849396; -fx-font-size: 10px; -fx-font-weight: bold;");
+        Pane spacer = new Pane();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        refactorCostLabel.setStyle("-fx-text-fill: #00daf3; -fx-font-weight: bold; -fx-font-size: 11px; -fx-font-family: 'JetBrains Mono';");
+        labelRow.getChildren().addAll(lbl, spacer, refactorCostLabel);
+        
+        refactorCostBar.setMaxWidth(Double.MAX_VALUE);
+        refactorCostBar.setStyle("-fx-accent: #00daf3; -fx-control-inner-background: #12181f; -fx-background-color: transparent; -fx-pref-height: 8;");
+        
+        row.getChildren().addAll(labelRow, refactorCostBar);
+        return row;
     }
 
     private HBox createDetailMetricRow(String label, StringProperty valueProp) {
@@ -756,5 +889,73 @@ public class DependencyCyclesDashboard extends ScrollPane {
         btn.setOnMouseEntered(e -> btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #00daf3; -fx-padding: 6 0; -fx-alignment: center-left; -fx-font-size: 11px; -fx-cursor: hand;"));
         btn.setOnMouseExited(e -> btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #bac9cc; -fx-padding: 6 0; -fx-alignment: center-left; -fx-font-size: 11px; -fx-cursor: hand;"));
         return btn;
+    }
+
+    private void drawRedReturnLine() {
+        flowchartArrowPane.getChildren().clear();
+        if (flowchartCardsBox.getChildren().isEmpty()) return;
+
+        Node firstCard = null;
+        Node lastCard = null;
+        for (Node child : flowchartCardsBox.getChildren()) {
+            if (child instanceof VBox && child.getStyleClass().contains("dd-path-node-card")) {
+                if (firstCard == null) firstCard = child;
+                lastCard = child;
+            }
+        }
+
+        if (firstCard == null || lastCard == null || firstCard == lastCard) return;
+
+        double startY = firstCard.getLayoutY() + firstCard.getBoundsInParent().getHeight() / 2;
+        double endY = lastCard.getLayoutY() + lastCard.getBoundsInParent().getHeight() / 2;
+
+        // If startY and endY are both 0 (meaning layout pass hasn't completed yet), defer
+        if (startY == 0 && endY == 0) {
+            Platform.runLater(this::drawRedReturnLine);
+            return;
+        }
+
+        // Setup property listeners for dynamic coordinate updates
+        if (registeredFirstCard != firstCard || registeredLastCard != lastCard) {
+            if (registeredFirstCard != null) {
+                registeredFirstCard.layoutYProperty().removeListener(redrawListener);
+                registeredFirstCard.boundsInParentProperty().removeListener(redrawListener);
+            }
+            if (registeredLastCard != null) {
+                registeredLastCard.layoutYProperty().removeListener(redrawListener);
+                registeredLastCard.boundsInParentProperty().removeListener(redrawListener);
+            }
+
+            registeredFirstCard = firstCard;
+            registeredLastCard = lastCard;
+
+            if (firstCard != null) {
+                firstCard.layoutYProperty().addListener(redrawListener);
+                firstCard.boundsInParentProperty().addListener(redrawListener);
+            }
+            if (lastCard != null) {
+                lastCard.layoutYProperty().addListener(redrawListener);
+                lastCard.boundsInParentProperty().addListener(redrawListener);
+            }
+        }
+
+        Polyline redLine = new Polyline();
+        redLine.getPoints().addAll(
+            0.0, endY,
+            30.0, endY,
+            30.0, startY,
+            0.0, startY
+        );
+        redLine.setStyle("-fx-stroke: #e74c3c; -fx-stroke-width: 2; -fx-fill: transparent;");
+
+        Polyline arrowhead = new Polyline();
+        arrowhead.getPoints().addAll(
+            8.0, startY - 5.0,
+            0.0, startY,
+            8.0, startY + 5.0
+        );
+        arrowhead.setStyle("-fx-stroke: #e74c3c; -fx-stroke-width: 2; -fx-fill: transparent;");
+
+        flowchartArrowPane.getChildren().addAll(redLine, arrowhead);
     }
 }
