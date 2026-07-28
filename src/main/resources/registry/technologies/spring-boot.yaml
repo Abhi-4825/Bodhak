@@ -3,6 +3,8 @@ schemaVersion: 1
 displayName: Spring Boot
 family: framework
 category: web
+godClassLocThreshold: 1000
+highCouplingFanOutThreshold: 20
 
 versionDetection:
   buildDependency: spring-boot

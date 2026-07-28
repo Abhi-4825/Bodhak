@@ -4,8 +4,8 @@
 
 .root {
     -fx-font-family: "Inter";
-    -fx-background-color: #0e1415;
-    -fx-text-fill: #dde4e5;
+    -fx-background-color: #0d141a;
+    -fx-text-fill: #dce3ec;
 }
 
 /* =========================
@@ -1622,9 +1622,9 @@
     -fx-font-size: 13px;
 }
 
-/* =====================================================================
-   SOURCE INTELLIGENCE PREVIEW CARD
-   ===================================================================== */
+/* ==========================================================================
+   ANUVIYA - ARCHITECTURAL MINIMALIST DARK THEME
+   ========================================================================== */
 
 .source-preview-card {
     -fx-background-color: #07111A;
@@ -1766,4 +1766,383 @@
     -fx-border-width: 1;
     -fx-border-radius: 4;
     -fx-effect: dropshadow(gaussian, rgba(0,229,255,0.3), 8, 0.3, 0, 0);
+}
+
+/* =========================
+   INTELLIGENCE HUB RIGHT PANEL - CYBER-INTELLIGENCE MINIMALIST
+   ========================= */
+
+.hub-root {
+    -fx-background-color: #0d141a;
+    -fx-spacing: 16;
+    -fx-padding: 16;
+}
+
+.hub-title-box {
+    -fx-alignment: center-left;
+    -fx-spacing: 10;
+    -fx-padding: 0 0 10 0;
+    -fx-border-color: rgba(0, 218, 243, 0.15);
+    -fx-border-width: 0 0 1 0;
+}
+
+.hub-title {
+    -fx-text-fill: #00daf3;
+    -fx-font-family: "JetBrains Mono", monospace;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 0.2em;
+}
+
+.hub-icon {
+    -fx-text-fill: #00daf3;
+    -fx-font-size: 16px;
+}
+
+.hub-card {
+    -fx-background-color: rgba(5, 11, 17, 0.9);
+    -fx-background-radius: 8;
+    -fx-border-color: rgba(132, 147, 150, 0.15);
+    -fx-border-width: 1;
+    -fx-padding: 14;
+    -fx-spacing: 12;
+}
+
+.hub-card-title {
+    -fx-text-fill: #bac9cc;
+    -fx-font-family: "JetBrains Mono", monospace;
+    -fx-font-size: 9px;
+    -fx-font-weight: 800;
+    -fx-letter-spacing: 0.1em;
+}
+
+/* PROJECT OVERVIEW */
+.overview-grid {
+    -fx-hgap: 12;
+    -fx-vgap: 8;
+}
+
+.overview-label {
+    -fx-text-fill: #849396;
+    -fx-font-size: 12px;
+}
+
+.overview-value {
+    -fx-text-fill: #dce3ec;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+}
+
+.status-ready {
+    -fx-text-fill: #00e5ff;
+}
+
+/* ENTITY COMPOSITION GRID */
+.composition-grid {
+    -fx-hgap: 10;
+    -fx-vgap: 10;
+}
+
+.composition-box {
+    -fx-background-color: #151c23;
+    -fx-background-radius: 6;
+    -fx-padding: 10 12;
+    -fx-alignment: center-left;
+    -fx-spacing: 4;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+}
+
+.composition-box-classes { -fx-border-color: rgba(0, 218, 243, 0.25); }
+.composition-box-functions { -fx-border-color: rgba(192, 132, 252, 0.25); }
+.composition-box-interfaces { -fx-border-color: rgba(251, 146, 60, 0.25); }
+.composition-box-enums { -fx-border-color: rgba(74, 222, 128, 0.25); }
+.composition-box-modules { -fx-border-color: rgba(45, 212, 191, 0.25); }
+.composition-box-packages { -fx-border-color: rgba(250, 204, 21, 0.25); }
+
+.composition-label-box {
+    -fx-alignment: center-left;
+    -fx-spacing: 6;
+}
+
+.composition-icon {
+    -fx-font-size: 11px;
+}
+
+.composition-icon-classes { -fx-text-fill: #00daf3; }
+.composition-icon-functions { -fx-text-fill: #c084fc; }
+.composition-icon-interfaces { -fx-text-fill: #fb923c; }
+.composition-icon-enums { -fx-text-fill: #4ade80; }
+.composition-icon-modules { -fx-text-fill: #2dd4bf; }
+.composition-icon-packages { -fx-text-fill: #facc15; }
+
+.composition-name {
+    -fx-text-fill: #bac9cc;
+    -fx-font-family: "JetBrains Mono", monospace;
+    -fx-font-size: 9px;
+    -fx-font-weight: 800;
+}
+
+.composition-value {
+    -fx-text-fill: #dce3ec;
+    -fx-font-family: "Epilogue", sans-serif;
+    -fx-font-size: 20px;
+    -fx-font-weight: 800;
+}
+
+/* TECHNOLOGIES */
+.tech-badge {
+    -fx-text-fill: #f8fafc;
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-padding: 4 10;
+    -fx-background-radius: 12;
+}
+
+.tech-fastapi { -fx-background-color: rgba(45, 212, 191, 0.15); -fx-border-color: rgba(45, 212, 191, 0.3); -fx-border-width: 1; -fx-border-radius: 12; -fx-text-fill: #2dd4bf; }
+.tech-sqlalchemy { -fx-background-color: rgba(0, 218, 243, 0.15); -fx-border-color: rgba(0, 218, 243, 0.3); -fx-border-width: 1; -fx-border-radius: 12; -fx-text-fill: #00daf3; }
+.tech-pydantic { -fx-background-color: rgba(192, 132, 252, 0.15); -fx-border-color: rgba(192, 132, 252, 0.3); -fx-border-width: 1; -fx-border-radius: 12; -fx-text-fill: #c084fc; }
+.tech-jwt { -fx-background-color: rgba(251, 146, 60, 0.15); -fx-border-color: rgba(251, 146, 60, 0.3); -fx-border-width: 1; -fx-border-radius: 12; -fx-text-fill: #fb923c; }
+.tech-alembic { -fx-background-color: rgba(74, 222, 128, 0.15); -fx-border-color: rgba(74, 222, 128, 0.3); -fx-border-width: 1; -fx-border-radius: 12; -fx-text-fill: #4ade80; }
+.tech-pytest { -fx-background-color: rgba(250, 204, 21, 0.15); -fx-border-color: rgba(250, 204, 21, 0.3); -fx-border-width: 1; -fx-border-radius: 12; -fx-text-fill: #facc15; }
+.tech-generic-1 { -fx-background-color: rgba(244, 63, 94, 0.15); -fx-border-color: rgba(244, 63, 94, 0.3); -fx-border-width: 1; -fx-border-radius: 12; -fx-text-fill: #f43f5e; }
+.tech-generic-2 { -fx-background-color: rgba(236, 72, 153, 0.15); -fx-border-color: rgba(236, 72, 153, 0.3); -fx-border-width: 1; -fx-border-radius: 12; -fx-text-fill: #ec4899; }
+
+/* ENTITY EXPLORER */
+.search-field {
+    -fx-background-color: #0d141a;
+    -fx-text-fill: #dce3ec;
+    -fx-prompt-text-fill: #849396;
+    -fx-background-radius: 6;
+    -fx-border-color: #3b494c;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-padding: 6 10;
+}
+
+.search-field:focused {
+    -fx-border-color: #00daf3;
+}
+
+.filter-btn {
+    -fx-background-color: #151c23;
+    -fx-text-fill: #bac9cc;
+    -fx-background-radius: 6;
+    -fx-border-color: #3b494c;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-padding: 6 10;
+    -fx-cursor: hand;
+}
+
+.filter-btn:hover {
+    -fx-text-fill: #00daf3;
+    -fx-border-color: #00daf3;
+}
+
+.explorer-tab-bar {
+    -fx-spacing: 4;
+}
+
+.explorer-tab-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #849396;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 6 10;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+}
+
+.explorer-tab-btn:hover {
+    -fx-text-fill: #dce3ec;
+}
+
+.explorer-tab-btn-active {
+    -fx-background-color: #151c23;
+    -fx-text-fill: #00daf3;
+    -fx-background-radius: 4;
+    -fx-border-color: rgba(0, 218, 243, 0.3);
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+}
+
+.explorer-tree {
+    -fx-background-color: transparent;
+    -fx-pref-height: 250;
+    -fx-border-color: rgba(132, 147, 150, 0.15);
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+}
+
+.tree-node-name {
+    -fx-text-fill: #dce3ec;
+    -fx-font-size: 11px;
+    -fx-font-weight: 500;
+}
+
+.tree-node-icon {
+    -fx-font-size: 10px;
+}
+
+.tree-kind-badge {
+    -fx-font-size: 8px;
+    -fx-font-weight: bold;
+    -fx-padding: 1 5;
+    -fx-background-radius: 2;
+}
+
+.tree-dep-label {
+    -fx-text-fill: #849396;
+    -fx-font-size: 9px;
+}
+
+/* SELECTED ENTITY */
+.entity-header-box {
+    -fx-alignment: center-left;
+    -fx-spacing: 12;
+}
+
+.avatar-circle {
+    -fx-alignment: center;
+    -fx-min-size: 36;
+    -fx-max-size: 36;
+    -fx-background-color: rgba(0, 218, 243, 0.1);
+    -fx-border-color: rgba(0, 218, 243, 0.3);
+    -fx-border-width: 1;
+    -fx-background-radius: 18;
+    -fx-border-radius: 18;
+}
+
+.avatar-letter {
+    -fx-text-fill: #00daf3;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.entity-title-name {
+    -fx-text-fill: #dce3ec;
+    -fx-font-family: "Epilogue", sans-serif;
+    -fx-font-size: 14px;
+    -fx-font-weight: 800;
+}
+
+.entity-fqn {
+    -fx-text-fill: #849396;
+    -fx-font-size: 10px;
+}
+
+.metrics-grid {
+    -fx-hgap: 8;
+    -fx-vgap: 8;
+}
+
+.mini-metric-box {
+    -fx-background-color: #151c23;
+    -fx-background-radius: 6;
+    -fx-padding: 8;
+    -fx-alignment: center;
+    -fx-spacing: 2;
+}
+
+.mini-metric-title {
+    -fx-text-fill: #849396;
+    -fx-font-family: "JetBrains Mono", monospace;
+    -fx-font-size: 9px;
+    -fx-font-weight: 800;
+}
+
+.mini-metric-value {
+    -fx-text-fill: #dce3ec;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.entity-action-bar {
+    -fx-spacing: 8;
+}
+
+.btn-action-outline {
+    -fx-background-color: transparent;
+    -fx-text-fill: #bac9cc;
+    -fx-border-color: #3b494c;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 6 10;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.btn-action-outline:hover {
+    -fx-text-fill: #00daf3;
+    -fx-border-color: #00daf3;
+}
+
+.btn-action-primary {
+    -fx-background-color: #00daf3;
+    -fx-text-fill: #001f24;
+    -fx-background-radius: 6;
+    -fx-padding: 8 12;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.btn-action-primary:hover {
+    -fx-background-color: #00e5ff;
+}
+
+/* QUICK NAVIGATION */
+.nav-grid {
+    -fx-hgap: 8;
+    -fx-vgap: 8;
+}
+
+.btn-nav-outline {
+    -fx-background-color: transparent;
+    -fx-text-fill: #bac9cc;
+    -fx-border-color: #3b494c;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 8 12;
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-cursor: hand;
+}
+
+.btn-nav-outline:hover {
+    -fx-text-fill: #00daf3;
+    -fx-border-color: #00daf3;
+    -fx-background-color: rgba(0, 218, 243, 0.05);
+}
+
+.badge-class { -fx-background-color: rgba(0, 218, 243, 0.15); -fx-text-fill: #00daf3; }
+.badge-record { -fx-background-color: rgba(56, 189, 248, 0.15); -fx-text-fill: #38bdf8; }
+.badge-rest { -fx-background-color: rgba(45, 212, 191, 0.15); -fx-text-fill: #2dd4bf; }
+.badge-interface { -fx-background-color: rgba(251, 146, 60, 0.15); -fx-text-fill: #fb923c; }
+.badge-enum { -fx-background-color: rgba(74, 222, 128, 0.15); -fx-text-fill: #4ade80; }
+.badge-function { -fx-background-color: rgba(192, 132, 252, 0.15); -fx-text-fill: #c084fc; }
+.badge-module { -fx-background-color: rgba(250, 204, 21, 0.15); -fx-text-fill: #facc15; }
+.badge-generic { -fx-background-color: rgba(132, 147, 150, 0.15); -fx-text-fill: #bac9cc; }
+
+/* PieChart Styling */
+.lang-pie-chart {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.lang-pie-chart .chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+.lang-pie-chart .chart-content {
+    -fx-padding: 0;
+}
+
+.lang-pie-chart .chart-pie {
+    -fx-border-color: #0d141a;
+    -fx-border-width: 1.5;
 }

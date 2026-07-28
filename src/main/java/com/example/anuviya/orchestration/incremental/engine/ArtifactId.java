@@ -1,0 +1,18 @@
+package com.example.anuviya.orchestration.incremental.engine;
+
+public enum ArtifactId {
+    PARSED_IR,
+    COMPILATION_UNIT,
+    SYMBOL_TABLE,
+    ENTITY_INDEX,
+    RELATIONSHIP_GRAPH,
+    REFERENCE_DATABASE,
+    NAMESPACE_INDEX,
+    PROJECT_ROOTS,
+    PROJECT_INFO,
+    PROJECT_SNAPSHOT,
+    CLASSIFICATION_RESULT,
+    QUALITY_REPORT,
+    DIAGNOSTIC_REPORT,
+    ANALYSIS_CONTEXT
+}

@@ -1,0 +1,36 @@
+schemaVersion: 1
+id: ollama
+displayName: Ollama
+description: Free, open-source local AI runtime for running language models offline.
+category: AI_PROVIDER
+version: "0.11.7"
+kind: LOCAL
+homepage: https://ollama.com
+capabilities:
+  - inference
+  - model_download
+  - streaming
+  - keep_alive
+supportedPlatforms:
+  - windows
+  - linux
+  - mac
+package:
+  installer:
+    windows:
+      type: exe
+      url: https://github.com/ollama/ollama/releases/latest/download/OllamaSetup.exe
+      sha256: 0000000000000000000000000000000000000000000000000000000000000000
+      silentArgs:
+        - /S
+      verifyExecutable: Programs/Ollama/ollama.exe
+      verifyCommand: ollama --version
+    linux:
+      type: sh
+      url: https://ollama.com/install.sh
+      sha256: 0000000000000000000000000000000000000000000000000000000000000000
+    mac:
+      type: pkg
+      url: https://github.com/ollama/ollama/releases/latest/download/Ollama-darwin.pkg
+      sha256: 0000000000000000000000000000000000000000000000000000000000000000
+  dependencies: []

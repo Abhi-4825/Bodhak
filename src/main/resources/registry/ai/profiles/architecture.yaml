@@ -1,0 +1,15 @@
+schemaVersion: 1
+id: architecture
+displayName: Architecture Analysis
+description: Identifies architectural defects from compiler-detected structural evidence.
+requiredCapabilities:
+  - reasoning
+  - json
+minContext: 16384
+preferredTemperature: 0.15
+preferredTopP: 0.9
+recommendedModels:
+  - qwen2.5-3b
+output:
+  type: json
+  schema: architecture-analysis-v1

@@ -1,193 +1,132 @@
-# Bodhak – Intelligent Code Dependency & Analysis Tool
+<div align="center">
+  <h1>Anuviya</h1>
+  <p><strong>Compiler-Driven Code Intelligence Platform</strong></p>
+  <p>Understand, analyze, and improve codebases using compiler techniques and local AI</p>
 
-<p align="center">
-  <b>Understand complex Java codebases visually.</b><br>
-  Interactive dependency graphs • Method-level insights • Built for developers
-</p>
+  ![Java](https://img.shields.io/badge/Java-24-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
+  ![JavaFX](https://img.shields.io/badge/JavaFX-21-0095D5?style=for-the-badge)
+  ![AI](https://img.shields.io/badge/AI-Ollama-00C7B7?style=for-the-badge)
+  ![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
+  ![Status](https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge)
+</div>
 
----
+## Introduction
 
-##  Tech Stack
+Anuviya (Sanskrit for "one who enlightens") is an intelligent code analysis platform designed to help developers and architects understand complex codebases. By leveraging compiler techniques to build a rich intermediate representation (IR) of your code, it provides deep structural insights and metrics. Anuviya integrates with local AI models to offer intelligent, privacy-preserving analysis of architectural patterns, code quality, and potential improvements.
 
-![Java](https://img.shields.io/badge/Java-24-orange)
-![JavaFX](https://img.shields.io/badge/UI-JavaFX-blue)
-![Status](https://img.shields.io/badge/Status-Active%20Development-yellow)
-![Focus](https://img.shields.io/badge/Focus-Developer%20Tooling-green)
+## ✨ Key Features
 
----
+### 🔬 Compiler Pipeline
+Anuviya uses a sophisticated compiler pipeline composed of 6 ordered passes: EntityBuilder, MetricBuilder, RelationshipBuilder, ProjectRootsBuilder, ProjectClassifier, and QualityAnalysis. This pipeline builds a rich, language-neutral Intermediate Representation (IR) using the visitor pattern.
 
-##  What is Bodhak?
+### 🔌 Plugin Architecture
+The platform features a multi-language plugin architecture centered around the `LanguageFrontend` interface. It currently supports Java (via JavaParser) and Python (via Tree-sitter), making it easy to extend to other languages.
 
-**Bodhak** is a developer tool that helps you **analyze and understand Java codebases** through **interactive dependency graphs**.
-> [!TIP]
-> **Bodhak** is a Sanskrit word meaning *"one who enlightens"* or *"the indicator."*
+### 🤖 AI-Powered Analysis
+Integrates directly with local AI via Ollama (localhost:11434). Anuviya ensures privacy and security by sending verified compiler facts and structural insights to the AI engine, *not* your raw source code.
 
-It enables you to:
-- Visualize relationships between classes and methods  
-- Explore how components interact  
-- Navigate complex codebases faster  
+### 📊 Dependency Analysis
+Explore your codebase with interactive dependency graphs. Features include real-time circular dependency detection and semantic indexing for navigating complex architectural relationships.
 
----
+### 📈 Executive Dashboard
+A high-level dashboard provides project health metrics, risk assessment, and a comprehensive architectural view, giving technical leaders the insights they need at a glance.
 
-##  Why This Project Matters
+### 🏗️ Workspace Management
+Robust workspace management includes session persistence, incremental analysis through efficient file watching, and a caching layer to accelerate repetitive tasks.
 
-Understanding large codebases is one of the biggest challenges developers face.
+### 🧪 Runtime Validation
+Ensures the robustness of your applications with automated endpoint discovery and integrated Gatling load testing capabilities.
 
-Bodhak addresses this by:
-- Converting static code into **interactive visual graphs**
-- Providing **structural clarity** for debugging and refactoring
-- Laying the foundation for **AI-assisted code understanding**
+### ⚡ Quality Engine
+Automatically detects code hotspots, unused entities, and god classes. It calculates fan-in/fan-out metrics and provides actionable fix suggestions, including genetic algorithm-based optimization strategies.
 
----
+## 🏛️ Architecture Overview
 
-##  Key Features
+```mermaid
+flowchart LR
+    A[Source Code] --> B[Language Frontend]
+    B --> C[Intermediate Representation]
+    C --> D[Compiler Passes]
+    D --> E[Analysis Context]
+    E --> F[AI Engine]
+    E --> G[Quality Engine]
+    E --> H[Dependency Graph]
+    E --> I[Dashboard]
+```
 
-### Dependency Visualization
-- Class-level and method-level dependency graphs  
-- Clearly displays:
-  - `Depends On`
-  - `Used By`  
-- Helps in understanding code structure and relationships  
+## 🚀 Quick Start
 
----
+### Prerequisites
+- JDK 24+
+- Maven 3.8+
+- Ollama (Optional, required for AI features)
 
-###  Advanced Code Analysis
--  Circular dependency detection  
--  Identification of:
-  - God classes (high complexity / too many responsibilities)  
-  - Risk-prone classes  
-  - Unused classes  
+### Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Abhi-4825/Anuviya.git
+   cd Anuviya
+   ```
+2. Build the project:
+   ```bash
+   mvn clean install
+   ```
+3. Run the application:
+   ```bash
+   mvn javafx:run
+   ```
 
----
+## 📸 Screenshots
 
-###  Intelligent Refactoring Support
-- Suggests refactoring strategies for improving code quality  
-- Uses **Genetic Algorithm (GA)** concepts for optimization-based improvements  
-- Focuses on better modularity and maintainability  
+*Screenshots coming soon! We are currently finalizing the UI.*
 
----
+## 🤔 Why Anuviya?
 
-###  Interactive Exploration
-- Expand and explore class relationships dynamically  
-- Navigate through dependencies visually  
-- Designed for intuitive developer experience  
+| Feature | Anuviya | SonarQube | IntelliJ IDEA | CodeClimate |
+| :--- | :---: | :---: | :---: | :---: |
+| **Offline-First / Local** | ✅ | ✅ | ✅ | ❌ |
+| **Compiler-Based IR** | ✅ | ✅ | ✅ | ❌ |
+| **AI Explanations** | ✅ (Local) | ❌ | ✅ (Cloud) | ❌ |
+| **Plugin System** | ✅ | ✅ | ✅ | ✅ |
+| **Desktop Application** | ✅ | ❌ | ✅ | ❌ |
+| **Free & Open Source** | ✅ | ⚠️ (Limited) | ⚠️ (CE only) | ❌ |
 
----
+## 📖 Documentation
 
-###  Extensible Architecture
-- Modular design (builders, models, graph engine)  
-- Easily extendable for:
-  - New analysis techniques  
-  - AI-powered enhancements  
+| Document | Description |
+| :--- | :--- |
+| [README.md](./README.md) | Overview and quick start guide |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | Guide for contributing to Anuviya |
+| [CHANGELOG.md](./CHANGELOG.md) | Version history and release notes |
+| [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) | Community guidelines |
+| [SECURITY.md](./SECURITY.md) | Security policies and reporting |
+| [ROADMAP.md](./ROADMAP.md) | Future features and project direction |
 
----
+## 🗺️ Roadmap
 
-## Requirements
+**Completed:**
+- ✔ Compiler pipeline and IR design
+- ✔ Java and Python frontends
+- ✔ Interactive dependency graphs
+- ✔ Local AI integration (Ollama)
+- ✔ Executive dashboard
 
--  **JDK 24 (Required)**
--  JavaFX configured
--  Java project for analysis  
+**In Progress:**
+- 🚧 Real-time collaborative analysis
+- 🚧 C++ language frontend
+- 🚧 Advanced architectural refactoring suggestions
+- 🚧 Cloud sync for enterprise teams
+- 🚧 Plugin marketplace
 
->  May not run on older JDK versions.
+## 🤝 Contributing
 
----
+We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for more details on how to get started.
 
-###  How to Run
-##  Installation
+## 📄 License
 
-1.  **Clone the Repository**
-    ```bash
-    git clone https://github.com/Abhi-4825/Bodhak.git
-    cd bodhak
-    ```
-
-2.  **Environment Setup**
-    > [!IMPORTANT]
-    > This project utilizes modern Java 24 features. Ensure your IDE (IntelliJ IDEA, Eclipse, or VS Code) is configured with the **JDK 24** toolchain.
-
-3.  **Run the Application**
-    * Navigate to `src/main/java/Main.java`.
-    * Execute the file through your IDE.
-  
-4. Click **"Select Project"**  
-5. Choose your Java project folder  
-6. Wait for analysis to complete  
-7. Click **"Analyze"**  
-8. Click on classes to explore dependencies  
-
----
-
-##  Known Limitations (Honest Status)
-
-###  Incomplete Exception Handling
-- Some edge cases are not handled yet  
-- May cause unexpected crashes  
-
----
-
-###  Dependency Graph Issue
-- Root node correctly shows:
-  - `Depends On`
-  - `Used By`  
-- Other nodes may incorrectly show both  
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
 
 ---
-
-###  UI State Issue
-- Re-selecting project folder without choosing a new one:
-  - May reset project state to `null`  
-
----
-
-###  Feature Stability
-- Some features are partially implemented  
-- Method-level updates can be inconsistent  
-
----
-
-##  Current Status
-
->  Actively Developing
-
-Focused on:
-- Improving accuracy  
-- Fixing graph logic  
-- Stabilizing UI  
-
----
-
-##  Future Roadmap
-
--  AI-powered code summarization  
--  Smart refactoring suggestions  
--  Usage-based dependency insights  
--  Search & filtering  
-- Export graphs  
-
----
-
-##  Ideal Use Cases
-
-- Learning unfamiliar codebases  
-- Debugging dependency issues  
-- Visualizing architecture  
-- Academic and experimental use  
-
----
-
-##  Developer Notes
-
-This project reflects:
-- Strong understanding of **Java + JavaFX**
-- Experience with **graph-based modeling**
-- Focus on solving **real developer problems**
-- Ability to design **scalable and extensible systems**
-
----
-
-##  Final Thought
-
-Bodhak is a step toward building **intelligent developer tools**  
-that make codebases easier to understand, navigate, and improve.
-
----
+<div align="center">
+Built with ❤️ by <a href="https://github.com/Abhi-4825">Abhisek Raj</a>
+</div>

@@ -1,0 +1,5 @@
+latency:
+  unit: ms
+  warningThreshold: 300
+  criticalThreshold: 1000
+  description: Default latency thresholds for REST endpoint validations

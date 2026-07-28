@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["overallAssessment", "defects"],
+  "properties": {
+    "overallAssessment": { "type": "string" },
+    "defects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["defectType", "responsibleEntities", "severity", "explanation", "possibleFixes"],
+        "properties": {
+          "defectType": { "type": "string" },
+          "responsibleEntities": { "type": "array", "items": { "type": "string" } },
+          "severity": { "enum": ["Critical", "High", "Medium", "Low"] },
+          "explanation": { "type": "string" },
+          "possibleFixes": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

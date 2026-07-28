@@ -1,0 +1,22 @@
+id: spring-security
+schemaVersion: 1
+displayName: Spring Security
+family: framework
+category: security
+evidence:
+  - type: BUILD_DEPENDENCY
+    aliases:
+      - spring-boot-starter-security
+      - spring-security-core
+      - spring-security-web
+      - spring-security-config
+  - type: ANNOTATION_REFERENCE
+    pattern: EnableWebSecurity
+  - type: TYPE_REFERENCE
+    pattern: SecurityFilterChain
+  - type: TYPE_REFERENCE
+    pattern: WebSecurityConfigurerAdapter
+
+capabilities:
+  - AUTHENTICATION_BASIC
+  - SECURITY_FILTER_CHAIN

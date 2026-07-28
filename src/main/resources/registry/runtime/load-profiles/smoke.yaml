@@ -1,0 +1,6 @@
+id: smoke
+name: Smoke Test Profile
+users: 5
+rampUp: 5 # 5 seconds in seconds
+duration: 30 # 30 seconds in seconds
+description: Low-concurrency smoke test load profile

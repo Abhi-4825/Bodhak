@@ -1,0 +1,6 @@
+id: stress
+name: Stress Test Profile
+users: 300
+rampUp: 120 # 2 minutes in seconds
+duration: 300 # 5 minutes in seconds
+description: High-concurrency stress testing load profile

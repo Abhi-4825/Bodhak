@@ -1,0 +1,319 @@
+/* Cyber-Intelligence Minimalist Workspace Home CSS */
+
+.workspace-home-root {
+    -fx-background-color: radial-gradient(center 50% 50%, radius 70%, #0d141a, #050b11);
+    -fx-padding: 30;
+}
+
+.workspace-home-container {
+    -fx-alignment: top-center;
+    -fx-spacing: 25;
+}
+
+.workspace-home-header {
+    -fx-padding: 10 0 20 0;
+    -fx-alignment: center-left;
+}
+
+.workspace-home-title {
+    -fx-font-family: 'Epilogue';
+    -fx-font-size: 26px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #DDE4E5;
+    -fx-letter-spacing: -0.05em;
+}
+
+.workspace-home-subtitle {
+    -fx-font-family: 'Epilogue';
+    -fx-font-size: 10px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #849494;
+    -fx-letter-spacing: 0.2em;
+}
+
+/* Sidebar navigation */
+
+.workspace-home-sidebar {
+    -fx-background-color: rgba(13, 20, 26, 0.4);
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(82, 231, 242, 0.1);
+    -fx-border-width: 1;
+    -fx-border-radius: 16;
+    -fx-padding: 15;
+    -fx-spacing: 10;
+}
+
+.sidebar-tab-btn {
+    -fx-background-color: transparent;
+    -fx-font-family: 'Epilogue';
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #849494;
+    -fx-alignment: center-left;
+    -fx-max-width: infinity;
+    -fx-padding: 10 15 10 15;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.sidebar-tab-btn:hover {
+    -fx-background-color: rgba(82, 231, 242, 0.05);
+    -fx-text-fill: #DDE4E5;
+}
+
+.sidebar-tab-btn-active {
+    -fx-background-color: rgba(0, 218, 243, 0.1);
+    -fx-text-fill: #00daf3;
+}
+
+/* Project Card styles */
+
+.project-card {
+    -fx-background-color: rgba(13, 20, 26, 0.7);
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(82, 231, 242, 0.08);
+    -fx-border-width: 1;
+    -fx-border-radius: 16;
+    -fx-padding: 20;
+    -fx-spacing: 12;
+}
+
+.project-card:hover {
+    -fx-border-color: rgba(82, 231, 242, 0.25);
+    -fx-translate-y: -2px;
+}
+
+.project-card-title {
+    -fx-font-family: 'Epilogue';
+    -fx-font-size: 16px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #DDE4E5;
+}
+
+.project-card-meta {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 11px;
+    -fx-text-fill: #849396;
+}
+
+.project-card-details {
+    -fx-font-family: 'Inter';
+    -fx-font-size: 13px;
+    -fx-text-fill: #849494;
+}
+
+.project-card-health-label {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #849494;
+}
+
+.project-card-health-val-good {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #22c55e;
+}
+
+.project-card-health-val-warning {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #eab308;
+}
+
+.project-card-health-val-critical {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #FF4B4B;
+}
+
+.project-card-delta-text {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 10px;
+    -fx-text-fill: #eab308;
+}
+
+.project-card-btn-continue {
+    -fx-background-color: #00daf3;
+    -fx-text-fill: #00363d;
+    -fx-font-family: 'Epilogue';
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-padding: 8 16 8 16;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.project-card-btn-continue:hover {
+    -fx-background-color: #c3f5ff;
+}
+
+.project-card-btn-reanalyze {
+    -fx-background-color: transparent;
+    -fx-text-fill: #00daf3;
+    -fx-border-color: rgba(0, 218, 243, 0.3);
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-font-family: 'Epilogue';
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-padding: 8 16 8 16;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.project-card-btn-reanalyze:hover {
+    -fx-background-color: rgba(82, 231, 242, 0.05);
+}
+
+.reanalysis-badge {
+    -fx-background-color: rgba(234, 179, 8, 0.1);
+    -fx-text-fill: #eab308;
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-padding: 3 8 3 8;
+    -fx-background-radius: 4;
+}
+
+/* Action Area & Side panels */
+
+.action-card {
+    -fx-background-color: rgba(13, 20, 26, 0.4);
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(82, 231, 242, 0.1);
+    -fx-border-width: 1;
+    -fx-border-radius: 16;
+    -fx-padding: 20;
+    -fx-spacing: 12;
+}
+
+.action-card-title {
+    -fx-font-family: 'Epilogue';
+    -fx-font-size: 14px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #DDE4E5;
+    -fx-letter-spacing: 0.05em;
+}
+
+.action-card-btn {
+    -fx-background-color: rgba(82, 231, 242, 0.05);
+    -fx-text-fill: #DDE4E5;
+    -fx-border-color: rgba(82, 231, 242, 0.1);
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-font-family: 'Epilogue';
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-padding: 10;
+    -fx-max-width: infinity;
+    -fx-alignment: center-left;
+    -fx-cursor: hand;
+}
+
+.action-card-btn:hover {
+    -fx-background-color: rgba(82, 231, 242, 0.12);
+    -fx-border-color: rgba(0, 218, 243, 0.4);
+}
+
+.status-indicator-dot-green {
+    -fx-fill: #22c55e;
+}
+
+.status-indicator-dot-yellow {
+    -fx-fill: #eab308;
+}
+
+.status-indicator-dot-red {
+    -fx-fill: #FF4B4B;
+}
+
+/* Search bar */
+
+.workspace-search-bar {
+    -fx-background-color: rgba(8, 16, 24, 0.4);
+    -fx-text-fill: #DDE4E5;
+    -fx-prompt-text-fill: #566465;
+    -fx-border-color: rgba(82, 231, 242, 0.1);
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 11px;
+    -fx-padding: 8 12 8 12;
+}
+
+.workspace-search-bar:focused {
+    -fx-border-color: #00daf3;
+}
+
+/* Timeline widget */
+
+.timeline-title-date {
+    -fx-font-family: 'Epilogue';
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #00daf3;
+    -fx-letter-spacing: 0.05em;
+    -fx-padding: 10 0 5 0;
+}
+
+.timeline-item-box {
+    -fx-background-color: rgba(13, 20, 26, 0.3);
+    -fx-background-radius: 8;
+    -fx-padding: 8 12 8 12;
+    -fx-spacing: 10;
+    -fx-alignment: center-left;
+    -fx-cursor: hand;
+}
+
+.timeline-item-box:hover {
+    -fx-background-color: rgba(82, 231, 242, 0.05);
+}
+
+.timeline-item-text {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 11px;
+    -fx-text-fill: #DDE4E5;
+}
+
+.timeline-item-time {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 10px;
+    -fx-text-fill: #566465;
+}
+
+/* ScrollPane Custom Styling */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .track {
+    -fx-background-color: rgba(13, 20, 26, 0.4);
+    -fx-background-radius: 4px;
+}
+
+.scroll-pane .thumb {
+    -fx-background-color: rgba(0, 218, 243, 0.25);
+    -fx-background-radius: 4px;
+}
+
+.scroll-pane .thumb:hover {
+    -fx-background-color: rgba(0, 218, 243, 0.5);
+}
+
+.scroll-pane .increment-button,
+.scroll-pane .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+

@@ -1,0 +1,19 @@
+id: jwt
+schemaVersion: 1
+displayName: JSON Web Token (JWT)
+family: library
+category: security
+evidence:
+  - type: BUILD_DEPENDENCY
+    aliases:
+      - jjwt-api
+      - jjwt-impl
+      - java-jwt
+      - spring-security-oauth2-jose
+  - type: TYPE_REFERENCE
+    pattern: JwtAuthenticationFilter
+  - type: TYPE_REFERENCE
+    pattern: JwtTokenProvider
+
+capabilities:
+  - AUTHENTICATION_JWT

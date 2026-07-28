@@ -1,0 +1,228 @@
+package com.example.anuviya.ui.overviewButton;
+
+
+import com.example.anuviya.model.entity.EntityViewModel;
+import com.example.anuviya.ui.DependencyGraphWindow;
+import com.example.anuviya.ui.helper.UiFeatures;
+import javafx.application.Platform;
+import javafx.collections.SetChangeListener;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.util.Duration;
+
+import java.util.*;
+
+public class ClassDependencyView {
+
+    private final Map<String, EntityViewModel> vmMap;
+    private final UiFeatures uiFeatures;
+
+    private final TreeView<Object> treeView = new TreeView<>();
+    private EntityViewModel currentVm;
+
+
+
+    public ClassDependencyView(
+            UiFeatures uiFeatures,
+            Map<String, EntityViewModel> vmMap
+    ) {
+        this.uiFeatures = uiFeatures;
+        this.vmMap = vmMap;
+
+        treeView.setShowRoot(false);
+        configureCells();
+        configureClicks();
+
+
+    }
+
+
+    public VBox show(String entityName) {
+
+        EntityViewModel vm = vmMap.get(entityName);
+        if (vm == null) {
+            treeView.setRoot(
+                    new TreeItem<>("Entity not found: " + entityName)
+            );
+        } else {
+            bindTo(vm);
+            rebuild();
+        }
+
+
+        Button visualizeBtn = new Button("Visualize");
+        visualizeBtn.setOnAction(e -> {
+            DependencyGraphWindow.show(entityName,vmMap);
+        });
+
+        HBox bottomBar = new HBox(visualizeBtn);
+        bottomBar.setAlignment(Pos.CENTER_RIGHT);
+        bottomBar.setPadding(new Insets(10));
+
+        VBox vBox = new VBox();
+        vBox.getChildren().addAll(treeView,bottomBar);
+        return vBox;
+
+
+    }
+
+
+    private void bindTo(EntityViewModel vm) {
+        if (currentVm != null) {
+            currentVm.getDependsOn().removeListener(depListener);
+            currentVm.getUsedBy().removeListener(depListener);
+        }
+        currentVm = vm;
+        // bind new
+        vm.getDependsOn().addListener(depListener);
+        vm.getUsedBy().addListener(depListener);
+    }
+
+    private final SetChangeListener<String> depListener = change -> {
+        // rebuild must happen on FX thread
+        Platform.runLater(this::rebuild);
+    };
+
+    private void rebuild() {
+        if (currentVm == null) return;
+        TreeItem<Object> root = new TreeItem<>("ROOT");
+        root.setExpanded(true);
+        TreeItem<Object> classNode = new TreeItem<>(currentVm);
+        classNode.setExpanded(true);
+        // depends on
+        TreeItem<Object> dependsOnNode = new TreeItem<>("Depends On");
+        Set<String> visited = new HashSet<>();
+        List<String> depsSnapshot =
+                new ArrayList<>(currentVm.getDependsOn());
+
+        for (String dep : depsSnapshot) {
+            EntityViewModel depVm = vmMap.get(dep);
+            if (depVm != null) {
+                TreeItem<Object> depItem = new TreeItem<>(depVm);
+                dependsOnNode.getChildren().add(depItem);
+                buildTransitive(depItem, depVm, visited);
+            }
+        }
+
+        if (dependsOnNode.getChildren().isEmpty()) {
+            dependsOnNode.getChildren().add(
+                    new TreeItem<>("— None")
+            );
+        }
+
+        // used by
+        TreeItem<Object> usedByNode = new TreeItem<>("Used By");
+        List<String> usedBySnapshot =
+                new ArrayList<>(currentVm.getUsedBy());
+        for (String user : usedBySnapshot) {
+            EntityViewModel userVm = vmMap.get(user);
+            if (userVm != null) {
+                usedByNode.getChildren().add(
+                        new TreeItem<>(userVm)
+                );
+            }
+        }
+        if (usedByNode.getChildren().isEmpty()) {
+            usedByNode.getChildren().add(
+                    new TreeItem<>("— None")
+            );
+        }
+        classNode.getChildren().addAll(dependsOnNode, usedByNode);
+        root.getChildren().add(classNode);
+        treeView.setRoot(root);
+    }
+
+    private void buildTransitive(
+            TreeItem<Object> parent,
+            EntityViewModel vm,
+            Set<String> visited
+    ) {
+        if (!visited.add(vm.getName())) return;
+        for (String dep : vm.getDependsOn()) {
+            EntityViewModel depVm = vmMap.get(dep);
+            if (depVm != null) {
+                TreeItem<Object> child = new TreeItem<>(depVm);
+                parent.getChildren().add(child);
+                buildTransitive(child, depVm, visited);
+            }
+        }
+    }
+
+    private void configureCells() {
+
+        treeView.setCellFactory(tv -> new TreeCell<>() {
+
+            private EntityViewModel boundVm;
+
+            @Override
+            protected void updateItem(Object item, boolean empty) {
+                super.updateItem(item, empty);
+
+                textProperty().unbind();
+                setText(null);
+                setTooltip(null);
+                getStyleClass().remove("health-tree-risky");
+
+                if (empty || item == null) return;
+
+                if (item instanceof String s) {
+                    setText(s);
+                    return;
+                }
+                if (item instanceof EntityViewModel vm) {
+                    boundVm = vm;
+                    textProperty().bind(vm.simpleNameProperty());
+
+                    if (!vm.getCircularDependencyGroups().isEmpty()) {
+                        getStyleClass().add("health-tree-risky");
+                        Tooltip tip =
+                                new Tooltip(buildCycleTooltip(vm));
+                        tip.setShowDelay(Duration.millis(400));
+                        setTooltip(tip);
+                    }
+                }
+            }
+        });
+    }
+
+
+    private void configureClicks() {
+        treeView.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                TreeItem<Object> item =
+                        treeView.getSelectionModel().getSelectedItem();
+                if (item == null) return;
+
+                Object value = item.getValue();
+                if (value instanceof EntityViewModel vm) {
+                    uiFeatures.openAndHighlight(
+                            vm.getName(),
+                            vm.getBeginLine(),
+                            vm.getBeginColumn(),
+                            vm.getSourceFile()
+                    );
+                }
+            }
+        });
+    }
+
+
+
+    private String buildCycleTooltip(EntityViewModel vm) {
+        StringBuilder sb =
+                new StringBuilder("🔁 Circular Dependency\n\n");
+
+        for (Set<String> cycle : vm.getCircularDependencyGroups()) {
+            Iterator<String> it = cycle.iterator();
+            while (it.hasNext()) {
+                sb.append(it.next());
+                if (it.hasNext()) sb.append(" → ");
+            }
+            sb.append("\n\n");
+        }
+        return sb.toString();
+    }
+}

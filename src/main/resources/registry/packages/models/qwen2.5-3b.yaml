@@ -1,0 +1,30 @@
+schemaVersion: 1
+id: qwen2.5-3b
+displayName: Qwen 2.5 3B
+description: Compact reasoning model optimized for architecture and code analysis.
+category: AI_MODEL
+version: "2.5"
+license: apache-2.0
+contextLength: 16384
+requiredRamGb: 8
+requiredVramGb: 4
+capabilities:
+  - reasoning
+  - json
+  - code
+recommendedTasks:
+  - architecture
+  - scalability
+preferredTemperature: 0.15
+preferredTopP: 0.9
+package:
+  download:
+    ollama:
+      command: pull qwen2.5:3b
+    lmstudio:
+      repository: qwen/qwen2.5-3b
+  verification:
+    expectedSizeGb: 2.1
+  dependencies:
+    - id: ollama
+      versionConstraint: ">= 0.10.0"

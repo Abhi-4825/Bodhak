@@ -1,0 +1,189 @@
+/* Cyber-Intelligence Minimalist Startup Overlay Styling */
+
+.startup-overlay {
+    -fx-background-color: radial-gradient(center 50% 50%, radius 70%, #0d141a, #050b11);
+}
+
+.startup-card {
+    -fx-background-color: rgba(13, 20, 26, 0.90);
+    -fx-background-radius: 24;
+    -fx-border-color: rgba(82, 231, 242, 0.1);
+    -fx-border-width: 1;
+    -fx-border-radius: 24;
+}
+
+.brand-title {
+    -fx-font-family: 'Epilogue';
+    -fx-font-size: 24px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #DDE4E5;
+    -fx-letter-spacing: -0.05em;
+}
+
+.brand-subtitle {
+    -fx-font-family: 'Epilogue';
+    -fx-font-size: 10px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #849494;
+    -fx-letter-spacing: 0.2em;
+}
+
+.progress-segment-inactive {
+    -fx-background-color: rgba(82, 231, 242, 0.1);
+    -fx-background-radius: 2;
+}
+
+.progress-segment-active {
+    -fx-background-color: #00daf3;
+    -fx-background-radius: 2;
+}
+
+/* Timeline steps */
+
+.boot-icon-pending {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 14px;
+    -fx-text-fill: #3b494c;
+}
+
+.boot-icon-running {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 14px;
+    -fx-text-fill: #00daf3;
+}
+
+.boot-icon-completed {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 14px;
+    -fx-text-fill: #22c55e;
+    -fx-font-weight: bold;
+}
+
+.boot-text-pending {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 11px;
+    -fx-text-fill: #849396;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 0.05em;
+}
+
+.boot-text-running {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 11px;
+    -fx-text-fill: #dce3ec;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 0.05em;
+}
+
+.boot-text-completed {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 11px;
+    -fx-text-fill: #849396;
+    -fx-font-weight: normal;
+    -fx-letter-spacing: 0.05em;
+}
+
+.boot-status-pending {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 0.1em;
+    -fx-text-fill: #3b494c;
+}
+
+.boot-status-running {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 0.1em;
+    -fx-text-fill: #00daf3;
+}
+
+.boot-status-completed {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 0.1em;
+    -fx-text-fill: rgba(34, 197, 94, 0.6);
+}
+
+.terminal-status {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 11px;
+    -fx-text-fill: #849396;
+}
+
+/* Info grid panels */
+
+.info-block {
+    -fx-background-color: rgba(8, 16, 24, 0.4);
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(82, 231, 242, 0.1);
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+}
+
+.info-block-label {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 9px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #849494;
+    -fx-letter-spacing: 0.1em;
+}
+
+.info-block-val {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 11px;
+    -fx-text-fill: #DDE4E5;
+}
+
+.info-block-status-offline {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #FF4B4B;
+}
+
+.info-block-status-ready {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #22c55e;
+}
+
+.status-panel {
+    -fx-background-color: rgba(8, 16, 24, 0.4);
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(82, 231, 242, 0.1);
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+}
+
+.status-panel-label {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 9px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #849494;
+    -fx-letter-spacing: 0.1em;
+}
+
+.status-panel-val-ready {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 9px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #22c55e;
+}
+
+.status-panel-val-initializing {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 9px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #FF4B4B;
+}
+
+.decorator-label {
+    -fx-font-family: 'JetBrains Mono';
+    -fx-font-size: 9px;
+    -fx-text-fill: #566465;
+    -fx-letter-spacing: 0.1em;
+}
