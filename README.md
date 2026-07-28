@@ -128,5 +128,5 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 ---
 <div align="center">
-Built with ❤️ by <a href="https://github.com/Abhi-4825">Abhisek Raj</a>
+Built with ❤️ by <a href="https://github.com/Abhi-4825">Abhishek Raj</a>
 </div>
