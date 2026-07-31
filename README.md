@@ -12,7 +12,7 @@
 
 ## Introduction
 
-Anuviya (Sanskrit for "one who enlightens") is an intelligent code analysis platform designed to help developers and architects understand complex codebases. By leveraging compiler techniques to build a rich intermediate representation (IR) of your code, it provides deep structural insights and metrics. Anuviya integrates with local AI models to offer intelligent, privacy-preserving analysis of architectural patterns, code quality, and potential improvements.
+Anuviya ("Anvya" a Sanskrit word meaning Connection) is an intelligent code analysis platform designed to help developers and architects understand complex codebases. By leveraging compiler techniques to build a rich intermediate representation (IR) of your code, it provides deep structural insights and metrics. Anuviya integrates with local AI models to offer intelligent, privacy-preserving analysis of architectural patterns, code quality, and potential improvements.
 
 ## ✨ Key Features
 
@@ -77,8 +77,28 @@ flowchart LR
    ```
 
 ## 📸 Screenshots
+## 📸 Screenshots
 
-*Screenshots coming soon! We are currently finalizing the UI.*
+<p align="center">
+  <img src="assets/screenshots/upload%20.png" width="45%">
+  <img src="assets/screenshots/analyzing.png" width="45%">
+</p>
+
+<p align="center">
+  <img src="assets/screenshots/quick%20Analysis.png" width="45%">
+  <img src="assets/screenshots/quickOptimization.png" width="45%">
+</p>
+
+<p align="center">
+  <img src="assets/screenshots/AnalysisReport%20Dashboard%20.png" width="45%">
+  <img src="assets/screenshots/dependency.png" width="45%">
+</p>
+
+<p align="center">
+  <img src="assets/screenshots/Cycles.png" width="45%">
+  <img src="assets/screenshots/Evidence-Based%20Ai%20defect.png" width="45%">
+</p>
+
 
 ## 🤔 Why Anuviya?
 
