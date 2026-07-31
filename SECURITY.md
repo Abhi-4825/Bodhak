@@ -22,7 +22,7 @@ We provide security updates for the following versions:
 
 If you discover a security vulnerability within Anuviya, please do not disclose it publicly. Instead, please report it via email to:
 
-**abhisekraj.dev@gmail.com**
+**abhisekr18j@gmail.com**
 
 Please include:
 - A description of the vulnerability.
