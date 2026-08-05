@@ -79,7 +79,6 @@ public class App extends Application {
     private HomeScreen homeScreen = new HomeScreen();
     private Button optimizeBtn;
     private Label progressLabel;
-    private ProgressBar progressBar;
 
     private File projectFolder;
     private BorderPane root;
@@ -114,7 +113,6 @@ public class App extends Application {
         startupOverlay.startSequence();
 
         progressLabel = new Label();
-        progressBar = new ProgressBar(0);
 
         // ── Code editor pane ──────────────────────────────────────────────────
         codeTabPane = new TabPane();
@@ -348,7 +346,7 @@ public class App extends Application {
             () -> showWorkspaceHome(stage),
             f -> loadProject(f, stage)
         ));
-        root.setBottom(homeScreen.createBottomBar(progressBar, progressLabel));
+        root.setBottom(homeScreen.createBottomBar());
         
         // Show Editor Workspace
         root.setCenter(workspaceRouter.getRoot());
@@ -527,7 +525,6 @@ public class App extends Application {
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     private void stopCurrentProject() {
-        if (progressBar != null)   { progressBar.progressProperty().unbind(); }
         if (progressLabel != null) { progressLabel.textProperty().unbind(); progressLabel.setText(""); }
         if (dispatcher != null)    { dispatcher.stop();    dispatcher = null; }
         if (watcherService != null) { watcherService.stop(); watcherService = null; }

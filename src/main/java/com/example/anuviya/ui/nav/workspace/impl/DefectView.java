@@ -8,6 +8,10 @@ import com.example.anuviya.orchestration.AnalysisEngine;
 import com.example.anuviya.ui.nav.workspace.Workspace;
 import com.example.anuviya.analyzer.ai.ui.NoProviderPane;
 import com.example.anuviya.analyzer.ai.platform.model.ModelInfo;
+import com.example.anuviya.platform.ServicePackage;
+import com.example.anuviya.platform.environment.SystemEnvironmentManager;
+import com.example.anuviya.platform.environment.model.MemorySnapshot;
+import com.example.anuviya.platform.registry.domain.PackageRegistry;
 import com.example.anuviya.platform.state.PlatformState;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -30,6 +34,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Workspace for the DEFECTS tab.
@@ -350,12 +358,58 @@ public class DefectView implements Workspace {
         return empty;
     }
 
+    private String resolveModelId(String displayName) {
+        if (displayName == null) return "qwen2.5-3b";
+        return PackageRegistry.getInstance().all().stream()
+            .filter(p -> p.displayName().equalsIgnoreCase(displayName) || p.id().equalsIgnoreCase(displayName))
+            .map(ServicePackage::id)
+            .findFirst()
+            .orElseGet(() -> {
+                String lower = displayName.toLowerCase();
+                if (lower.contains("1.5b")) return "qwen2.5-1.5b";
+                if (lower.contains("llama")) return "llama3.2-3b";
+                if (lower.contains("phi")) return "phi4-mini";
+                return "qwen2.5-3b";
+            });
+    }
+
     private void handleRunAnalysis() {
         if (lastEngine == null) return;
 
         InvestigationPane activePane = panes.get(selectedAnalysisType);
         if (activePane == null) return;
 
+        String modelId = resolveModelId(modelSelector.getValue());
+        MemorySnapshot mem = SystemEnvironmentManager.getInstance().readCurrentMemory(modelId);
+
+        if (mem.isLowMemory()) {
+            showLowMemoryDialog(mem, modelId, activePane);
+            return;
+        }
+
+        startAnalysisTask(activePane);
+    }
+
+    private void showLowMemoryDialog(MemorySnapshot mem, String modelId, InvestigationPane activePane) {
+        ServicePackage pkg = PackageRegistry.getInstance().get(modelId).orElse(null);
+        Runnable proceed = mem.isCriticallyLow() ? null : () -> {
+            startAnalysisTask(activePane);
+        };
+
+        Pane overlayTarget = null;
+        if (root.getScene() != null && root.getScene().getRoot() instanceof Pane sceneRoot) {
+            overlayTarget = sceneRoot;
+        } else {
+            overlayTarget = contentHolder;
+        }
+
+        LowMemoryAlertDialog dialog = new LowMemoryAlertDialog(
+            mem, pkg, () -> {}, proceed, overlayTarget
+        );
+        dialog.show();
+    }
+
+    private void startAnalysisTask(InvestigationPane activePane) {
         runButton.setDisable(true);
         showRunningState();
         
@@ -379,7 +433,25 @@ public class DefectView implements Workspace {
 
         activeAnalysisTask = task;
 
+        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+        ScheduledFuture<?> ramWatcher = executor.scheduleAtFixedRate(() -> {
+            String modelId = resolveModelId(modelSelector.getValue());
+            MemorySnapshot current = SystemEnvironmentManager.getInstance().readCurrentMemory(modelId);
+            if (current.isCriticallyLow() && task.isRunning()) {
+                task.cancel(true);
+                Platform.runLater(() -> {
+                    activePane.handleAnalysisFailure(
+                        "Analysis stopped: system memory critically low (" +
+                        current.freePhysicalMb() + " MB free). Close other applications to free up RAM and retry."
+                    );
+                    resetRunButton();
+                });
+            }
+        }, 10, 10, TimeUnit.SECONDS);
+
         task.setOnSucceeded(e -> {
+            ramWatcher.cancel(false);
+            executor.shutdown();
             String findings = task.getValue();
             Platform.runLater(() -> {
                 activePane.finalizeAnalysis(findings, selectedAnalysisType);
@@ -455,46 +527,55 @@ public class DefectView implements Workspace {
             });
         });
 
-        task.setOnFailed(e -> Platform.runLater(() -> {
-            Throwable ex = task.getException();
-            if (ex != null) {
-                ex.printStackTrace();
-            }
-            
-            // Check if failure is due to missing AI components or offline providers
-            if (ex != null && (ex.getMessage().contains("No active AI provider") || 
-                              ex.getMessage().contains("No installed model") || 
-                              ex.getMessage().contains("offline"))) {
+        task.setOnFailed(e -> {
+            ramWatcher.cancel(false);
+            executor.shutdown();
+            Platform.runLater(() -> {
+                Throwable ex = task.getException();
+                if (ex != null) {
+                    ex.printStackTrace();
+                }
                 
-                String reqModel = (modelSelector != null && modelSelector.getValue() != null && !modelSelector.getValue().startsWith("No "))
-                    ? modelSelector.getValue()
-                    : "qwen2.5-3b";
-                NoProviderPane noProvider = new NoProviderPane(reqModel, 
-                    () -> {
-                        // complete callback: retry the analysis
-                        Platform.runLater(() -> {
-                            contentStack.getChildren().removeIf(node -> node instanceof NoProviderPane);
-                            handleRunAnalysis();
-                        });
-                    },
-                    () -> {
-                        // cancel callback: reset view to empty state
-                        Platform.runLater(() -> {
-                            contentStack.getChildren().removeIf(node -> node instanceof NoProviderPane);
-                            resetRunButton();
-                            switchView(emptyStateView);
-                        });
-                    }
-                );
-                
-                contentStack.getChildren().add(noProvider);
-                switchView(noProvider);
-            } else {
-                String error = "Analysis failed: " + (ex != null ? excMessage(ex) : "Unknown error");
-                activePane.handleAnalysisFailure(error);
-                resetRunButton();
-            }
-        }));
+                // Check if failure is due to missing AI components or offline providers
+                if (ex != null && (ex.getMessage() != null && (ex.getMessage().contains("No active AI provider") || 
+                                  ex.getMessage().contains("No installed model") || 
+                                  ex.getMessage().contains("offline")))) {
+                    
+                    String reqModel = (modelSelector != null && modelSelector.getValue() != null && !modelSelector.getValue().startsWith("No "))
+                        ? modelSelector.getValue()
+                        : "qwen2.5-3b";
+                    NoProviderPane noProvider = new NoProviderPane(reqModel, 
+                        () -> {
+                            // complete callback: retry the analysis
+                            Platform.runLater(() -> {
+                                contentStack.getChildren().removeIf(node -> node instanceof NoProviderPane);
+                                handleRunAnalysis();
+                            });
+                        },
+                        () -> {
+                            // cancel callback: reset view to empty state
+                            Platform.runLater(() -> {
+                                contentStack.getChildren().removeIf(node -> node instanceof NoProviderPane);
+                                resetRunButton();
+                                switchView(emptyStateView);
+                            });
+                        }
+                    );
+                    
+                    contentStack.getChildren().add(noProvider);
+                    switchView(noProvider);
+                } else {
+                    String error = "Analysis failed: " + (ex != null ? excMessage(ex) : "Unknown error");
+                    activePane.handleAnalysisFailure(error);
+                    resetRunButton();
+                }
+            });
+        });
+
+        task.setOnCancelled(e -> {
+            ramWatcher.cancel(false);
+            executor.shutdown();
+        });
 
         new Thread(task, "Bodhak-AI-Analysis-Thread").start();
     }

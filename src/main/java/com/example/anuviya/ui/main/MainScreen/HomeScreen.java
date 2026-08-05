@@ -38,7 +38,6 @@ public class HomeScreen {
      * @param navBar         The {@link com.example.anuviya.ui.nav.BodhakNavBar} node,
      *                       or {@code null} to omit the navigation strip.
      * @param onShowHome     Runnable to show Workspace Home, or {@code null} to omit.
-     * @param onLoadProject  Called with the chosen recent project File to load it directly.
      */
     public Node createTopBar(Consumer<Button> onSelectFolder, Node navBar, Runnable onShowHome) {
         return createTopBar(onSelectFolder, navBar, onShowHome, null);
@@ -215,37 +214,19 @@ public class HomeScreen {
         return root;
     }
 
-    public Node createBottomBar(ProgressBar progress, Label status) {
+    public Node createBottomBar() {
 
         BorderPane root = new BorderPane();
         root.getStyleClass().add("bottom-bar");
 
-        // ================= PROGRESS =================
-        if (progress != null) {
-            progress.getStyleClass().add("bottom-progress");
 
-            // Set progress bar to half the length of the bottom bar
-            progress.prefWidthProperty().bind(root.widthProperty().divide(2));
-            progress.setMaxWidth(Region.USE_PREF_SIZE);
-            progress.setPrefHeight(3);
 
-            HBox progressBox = new HBox(progress);
-            progressBox.setAlignment(Pos.CENTER_LEFT);
-            progressBox.setPadding(new Insets(0, 0, 0, 16));
-            root.setCenter(progressBox);
-        }
-
-        // ================= STATUS =================
-        status.getStyleClass().add("bottom-status");
-
-        HBox statusBox = new HBox(status);
-        statusBox.setAlignment(Pos.CENTER_RIGHT);
-        statusBox.setPadding(new Insets(0, 12, 0, 0));
-
-        // ================= LAYOUT =================
-        root.setRight(statusBox);   // text on right
 
         return root;
+    }
+
+    public Node createBottomBar(ProgressBar progress, Label status) {
+        return createBottomBar();
     }
 
     private String formatRelativeTime(java.time.Instant instant) {

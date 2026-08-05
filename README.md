@@ -6,7 +6,6 @@
   ![Java](https://img.shields.io/badge/Java-24-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
   ![JavaFX](https://img.shields.io/badge/JavaFX-21-0095D5?style=for-the-badge)
   ![AI](https://img.shields.io/badge/AI-Ollama-00C7B7?style=for-the-badge)
-  ![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
   ![Status](https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge)
 </div>
 

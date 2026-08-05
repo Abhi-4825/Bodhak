@@ -1,14 +1,14 @@
 schemaVersion: 1
-id: qwen2.5-3b
-displayName: Qwen 2.5 3B
-description: Compact reasoning model optimized for architecture and code analysis.
+id: qwen2.5-1.5b
+displayName: Qwen 2.5 1.5B
+description: Ultra-compact model for constrained hardware. Suitable for lightweight code and architecture analysis.
 category: AI_MODEL
 version: "2.5"
 license: apache-2.0
-contextLength: 16384
-requiredRamGb: 8
+contextLength: 8192
+requiredRamGb: 4
 criticalRamMb: 512
-requiredVramGb: 4
+requiredVramGb: 2
 capabilities:
   - reasoning
   - json
@@ -21,11 +21,11 @@ preferredTopP: 0.9
 package:
   download:
     ollama:
-      command: pull qwen2.5:3b
+      command: pull qwen2.5:1.5b
     lmstudio:
-      repository: qwen/qwen2.5-3b
+      repository: qwen/qwen2.5-1.5b
   verification:
-    expectedSizeGb: 2.1
+    expectedSizeGb: 1.1
   dependencies:
     - id: ollama
       versionConstraint: ">= 0.10.0"

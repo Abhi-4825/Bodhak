@@ -2,7 +2,9 @@ package com.example.anuviya.platform.environment;
 
 import com.example.anuviya.platform.environment.model.DiskInfo;
 import com.example.anuviya.platform.environment.model.HardwareInfo;
+import com.example.anuviya.platform.environment.model.MemorySnapshot;
 import com.example.anuviya.platform.environment.model.NetworkStatus;
+import com.example.anuviya.platform.registry.domain.PackageRegistry;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -103,5 +105,30 @@ public class EnvironmentScanner {
         double totalGb = Math.round((workspaceDir.getTotalSpace() / (1024.0 * 1024.0 * 1024.0)) * 10.0) / 10.0;
         double freeGb = Math.round((workspaceDir.getFreeSpace() / (1024.0 * 1024.0 * 1024.0)) * 10.0) / 10.0;
         return new DiskInfo(totalGb, freeGb);
+    }
+
+    public MemorySnapshot readMemorySnapshot(String modelId) {
+        long totalMb = 8192;
+        long freeMb = 4096;
+        try {
+            com.sun.management.OperatingSystemMXBean os =
+                (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+            totalMb = os.getTotalMemorySize() / (1024 * 1024);
+            freeMb  = os.getFreeMemorySize()  / (1024 * 1024);
+        } catch (Throwable t) {
+            // fallback
+        }
+
+        final long[] warnMb = new long[] { 8L * 1024 };
+        final long[] criticalMb = new long[] { 512L };
+
+        if (modelId != null) {
+            PackageRegistry.getInstance().get(modelId).ifPresent(pkg -> {
+                if (pkg.requiredRamGb() > 0) warnMb[0] = pkg.requiredRamGb() * 1024L;
+                if (pkg.criticalRamMb() > 0) criticalMb[0] = pkg.criticalRamMb();
+            });
+        }
+
+        return new MemorySnapshot(totalMb, freeMb, warnMb[0], criticalMb[0]);
     }
 }

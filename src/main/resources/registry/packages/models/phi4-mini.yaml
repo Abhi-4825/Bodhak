@@ -1,14 +1,14 @@
 schemaVersion: 1
-id: qwen2.5-3b
-displayName: Qwen 2.5 3B
-description: Compact reasoning model optimized for architecture and code analysis.
+id: phi4-mini
+displayName: Phi-4 Mini
+description: Microsoft's efficient 3.8B parameter model, tuned for reasoning and structured output.
 category: AI_MODEL
-version: "2.5"
-license: apache-2.0
+version: "4"
+license: mit
 contextLength: 16384
-requiredRamGb: 8
+requiredRamGb: 6
 criticalRamMb: 512
-requiredVramGb: 4
+requiredVramGb: 3
 capabilities:
   - reasoning
   - json
@@ -21,11 +21,11 @@ preferredTopP: 0.9
 package:
   download:
     ollama:
-      command: pull qwen2.5:3b
+      command: pull phi4-mini
     lmstudio:
-      repository: qwen/qwen2.5-3b
+      repository: microsoft/phi-4-mini
   verification:
-    expectedSizeGb: 2.1
+    expectedSizeGb: 2.5
   dependencies:
     - id: ollama
       versionConstraint: ">= 0.10.0"

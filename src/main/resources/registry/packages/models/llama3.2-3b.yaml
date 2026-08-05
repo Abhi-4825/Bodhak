@@ -1,11 +1,11 @@
 schemaVersion: 1
-id: qwen2.5-3b
-displayName: Qwen 2.5 3B
-description: Compact reasoning model optimized for architecture and code analysis.
+id: llama3.2-3b
+displayName: Llama 3.2 3B
+description: Meta's compact instruction model — fast and capable for code and reasoning tasks.
 category: AI_MODEL
-version: "2.5"
-license: apache-2.0
-contextLength: 16384
+version: "3.2"
+license: llama3
+contextLength: 8192
 requiredRamGb: 8
 criticalRamMb: 512
 requiredVramGb: 4
@@ -16,16 +16,16 @@ capabilities:
 recommendedTasks:
   - architecture
   - scalability
-preferredTemperature: 0.15
+preferredTemperature: 0.2
 preferredTopP: 0.9
 package:
   download:
     ollama:
-      command: pull qwen2.5:3b
+      command: pull llama3.2:3b
     lmstudio:
-      repository: qwen/qwen2.5-3b
+      repository: meta/llama3.2-3b
   verification:
-    expectedSizeGb: 2.1
+    expectedSizeGb: 2.0
   dependencies:
     - id: ollama
       versionConstraint: ">= 0.10.0"

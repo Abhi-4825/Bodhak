@@ -40,6 +40,9 @@ public class RegistryManager {
 
         // 2. Load Models
         loadPackage("registry/packages/models/qwen2.5-3b.yaml");
+        loadPackage("registry/packages/models/qwen2.5-1.5b.yaml");
+        loadPackage("registry/packages/models/llama3.2-3b.yaml");
+        loadPackage("registry/packages/models/phi4-mini.yaml");
 
         // 3. Load Profiles
         loadProfile("registry/ai/profiles/architecture.yaml");
@@ -73,6 +76,7 @@ public class RegistryManager {
             double sizeGb = data.containsKey("sizeGb") ? ((Number) data.get("sizeGb")).doubleValue() : 0.0;
             int contextLength = data.containsKey("contextLength") ? ((Number) data.get("contextLength")).intValue() : 0;
             int requiredRamGb = data.containsKey("requiredRamGb") ? ((Number) data.get("requiredRamGb")).intValue() : 0;
+            int criticalRamMb = data.containsKey("criticalRamMb") ? ((Number) data.get("criticalRamMb")).intValue() : 512;
             int requiredVramGb = data.containsKey("requiredVramGb") ? ((Number) data.get("requiredVramGb")).intValue() : 0;
             
             List<String> capabilities = (List<String>) data.getOrDefault("capabilities", new ArrayList<>());
@@ -134,7 +138,7 @@ public class RegistryManager {
 
             ServicePackage pkg = new ServicePackage(
                 id, displayName, description, category, version, license,
-                sizeGb, contextLength, requiredRamGb, requiredVramGb,
+                sizeGb, contextLength, requiredRamGb, criticalRamMb, requiredVramGb,
                 capabilities, recommendedTasks,
                 data.containsKey("preferredTemperature") ? ((Number) data.get("preferredTemperature")).doubleValue() : 0.15,
                 data.containsKey("preferredTopP") ? ((Number) data.get("preferredTopP")).doubleValue() : 0.9,

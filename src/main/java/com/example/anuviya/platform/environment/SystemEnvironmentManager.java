@@ -1,5 +1,7 @@
 package com.example.anuviya.platform.environment;
 
+import com.example.anuviya.platform.environment.model.MemorySnapshot;
+
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -41,6 +43,10 @@ public class SystemEnvironmentManager {
         } else {
             Platform.runLater(() -> snapshotProperty.set(newSnapshot));
         }
+    }
+
+    public MemorySnapshot readCurrentMemory(String modelId) {
+        return scanner.readMemorySnapshot(modelId);
     }
 
     public NetworkService getNetworkService() {

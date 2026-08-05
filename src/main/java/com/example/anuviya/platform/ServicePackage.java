@@ -17,6 +17,7 @@ public record ServicePackage(
     double sizeGb,
     int contextLength,
     int requiredRamGb,
+    int criticalRamMb,
     int requiredVramGb,
     List<String> capabilities,
     List<String> recommendedTasks,

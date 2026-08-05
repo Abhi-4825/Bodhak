@@ -74,7 +74,16 @@ public class TypingMessageBubble extends HBox {
             if (changed) {
                 textLabel.setText(displayText);
                 if (this.parentScroll != null) {
-                    this.parentScroll.setVvalue(1.0);
+                    double vvalue = this.parentScroll.getVvalue();
+                    double contentHeight = (this.parentScroll.getContent() != null)
+                            ? this.parentScroll.getContent().getBoundsInLocal().getHeight()
+                            : 0;
+                    double viewportHeight = this.parentScroll.getViewportBounds().getHeight();
+
+                    // Only auto-scroll to bottom if user is near the bottom or content fits within viewport
+                    if (contentHeight <= viewportHeight || vvalue >= 0.90) {
+                        this.parentScroll.setVvalue(1.0);
+                    }
                 }
             }
         }));
